@@ -75,7 +75,7 @@ class User extends Authenticatable
     }
 
     // Role Admin
-    public function Admin (): HasOne
+    public function admin (): HasOne
     {
         return $this->hasOne(Admin::class);
     }

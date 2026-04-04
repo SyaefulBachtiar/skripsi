@@ -15,11 +15,11 @@ return new class extends Migration
         // Users
         Schema::create('users', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->string('name');
+            $table->string('name', 50);
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
-            $table->string('role')->default('customer');
+            $table->string('role', 10)->nullable();
             $table->string('google_id')->nullable()->unique();
             $table->string('avatar')->nullable();
             $table->rememberToken();
@@ -30,12 +30,14 @@ return new class extends Migration
         Schema::create('technician', function (Blueprint $table) {
             $table->id();
             $table->foreignUuid('user_id')->constrained('users')->onDelete('cascade');
-            $table->string('specialization');
-            $table->integer('experience_year')->default(0);
-            $table->decimal('location_lat', 10, 8)->nullable();
-            $table->decimal('location_lng', 3, 2)->nullable();
-            $table->decimal('rating_avg', 3, 2)->default(0);
-            $table->integer('total_reviews')->default(0);
+            $table->decimal('saldo', 15, 2)->nullable();
+            $table->json('spesialisasi')->nullable();
+            $table->json('pengalaman')->nullable();
+            $table->json('sertifikat')->nullable();
+            $table->string('deskripsi', 100)->nullable();
+            $table->text('detail_alamat')->nullable();
+            $table->decimal('latitude', 10, 8)->nullable();
+            $table->decimal('longitude', 11, 8)->nullable();
             $table->timestamps();
         });
 
@@ -43,12 +45,10 @@ return new class extends Migration
         Schema::create('customer', function (Blueprint $table) {
             $table->id();
             $table->foreignUuid('user_id')->constrained('users')->onDelete('cascade');
-            $table->text('address')->nullable();
-
-            // Pecah preferred_location untuk koordinat map
-            $table->decimal('pref_lat', 10, 8)->nullable();
-            $table->decimal('pref_lng', 11, 8)->nullable();
-
+            $table->decimal('saldo', 15, 2)->nullable();
+            $table->text('detail_alamat')->nullable();
+            $table->decimal('latitude', 10, 8);
+            $table->decimal('longitude', 11, 8);
             $table->timestamps();
         });
 

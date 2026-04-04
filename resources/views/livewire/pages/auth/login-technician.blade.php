@@ -1,6 +1,6 @@
 <?php
 
-use App\Livewire\Forms\LoginForm;
+use App\Livewire\Forms\LoginFormTechnician;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 use Livewire\Attributes\Layout;
@@ -8,7 +8,7 @@ use Livewire\Volt\Component;
 
 new #[Layout('layouts.guest')] class extends Component
 {
-    public LoginForm $form;
+    public LoginFormTechnician $form;
 
     /**
      * Handle an incoming authentication request.
@@ -21,8 +21,8 @@ new #[Layout('layouts.guest')] class extends Component
 
         Session::regenerate();
 
-        // $this->redirect(route('beranda', absolute: false), navigate: true);
-        $this->redirectIntended(default: route('beranda', absolute: false), navigate: true);
+        // $this->redirect($url, navigate: true);
+        $this->redirectIntended(default: route('dashboard_technician', absolute: false), navigate: true);
     }
 }; ?>
 
@@ -30,12 +30,12 @@ new #[Layout('layouts.guest')] class extends Component
     <!-- Header -->
     <div class="text-center mb-8">
         <h2 class="text-3xl font-bold text-slate-900 dark:text-white mb-2">
-            Masuk ke Akun
+            Masuk ke Akun Teknisi
         </h2>
         <p class="text-slate-600 dark:text-slate-400">
-            Belum punya akun? 
-            <a href="{{ route('register') }}" wire:navigate class="font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors">
-                Daftar sekarang
+            Belum punya akun teknisi? 
+            <a href="{{ route('register.technician') }}" wire:navigate class="font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors">
+                Daftar
             </a>
         </p>
     </div>

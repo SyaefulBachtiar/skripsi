@@ -23,9 +23,10 @@ new class extends Component
             <div class="flex">
                 <!-- Logo -->
                 <div class="shrink-0 flex items-center">
-                    <a href="{{ route('dashboard') }}" wire:navigate>
+                    <div class="flex items-center gap-4">
                         <x-application-logo class="block h-9 w-auto fill-current text-gray-800 dark:text-gray-200" />
-                    </a>
+                        <h1 class="font-semibold text-lg">Servisio</h1>
+                    </div>
                 </div>
 
                 <!-- Navigation Links -->
@@ -39,8 +40,8 @@ new class extends Component
                             {{ __('Pesan') }}
                         </x-nav-link>
 
-                        <x-nav-link :href="route('posting')" :active="request()->routeIs('posting')" wire:navigate>
-                            {{ __('Posting') }}
+                        <x-nav-link :href="route('profile.technician')" :active="request()->routeIs('profile.technician')" wire:navigate>
+                            {{ __('Profile') }}
                         </x-nav-link>
                     @elseif(auth()->user()->role === 'customer')
                         <x-nav-link :href="route('beranda')" :active="request()->routeIs('beranda')" wire:navigate>
@@ -51,8 +52,8 @@ new class extends Component
                             {{ __('Lacak') }}
                         </x-nav-link>
 
-                        <x-nav-link :href="route('notifikasi')" :active="request()->routeIs('notifikasi')" wire:navigate>
-                            {{ __('Notifikasi') }}
+                        <x-nav-link :href="route('riwayat')" :active="request()->routeIs('riwayat')" wire:navigate>
+                            {{ __('riwayat') }}
                         </x-nav-link>
 
                         <x-nav-link :href="route('pesan')" :active="request()->routeIs('pesan')" wire:navigate>
@@ -86,13 +87,21 @@ new class extends Component
 
                     <x-slot name="content">
                         <x-dropdown-link :href="route('profile')" wire:navigate>
-                            {{ __('Profile') }}
+                            {{-- {{ __('Saya') }} --}}
+                            <div class="flex items-center gap-1">
+                                <i class="bi bi-person-fill"></i>
+                                <span>Saya</span>
+                            </div>
                         </x-dropdown-link>
 
                         <!-- Authentication -->
                         <button wire:click="logout" class="w-full text-start">
                             <x-dropdown-link>
-                                {{ __('Log Out') }}
+                                {{-- {{ __('Log Out') }} --}}
+                                <div class="flex items-center gap-1">
+                                    <i class="bi bi-box-arrow-right"></i>
+                                    <span>Log Out</span>
+                                </div>
                             </x-dropdown-link>
                         </button>
                     </x-slot>

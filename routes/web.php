@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\Auth\GoogleController;
+use App\Models\Role_users\Technician;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
 Route::view('/', 'welcome');
@@ -15,16 +17,20 @@ Route::middleware(['auth'])->group(function () {
         ->group(function () {
 
             // Routing To Page Dashboard
-            Route::view('dashboard', 'pages.technician.dashboard')
-                ->name('dashboard_technician');
+            Route::get('dashboard', function() {
+                
+                $data = Technician::where('user_id', Auth::id())->first();
+
+                return view('pages.technician.dashboard', ['data' => $data]);
+            })->name('dashboard_technician');
 
             // Routing To Page Pesan
             Route::view('pesan', 'pages.technician.pesan')
                 ->name('pesan_technician');
 
             // Route To Page Posting
-            Route::view('posting', 'pages/technician.posting')
-                ->name('posting');
+            Route::view('profile-teknisi', 'pages.technician.profile')
+                ->name('profile.technician');
 
         });
 
@@ -42,12 +48,17 @@ Route::middleware(['auth'])->group(function () {
                 ->name('lacak');
 
             // Route To Page Notifikasi
-            Route::view('notifikasi', 'pages.customer.notifikasi')
-                ->name('notifikasi');
+            Route::view('riwayat', 'pages.customer.riwayat')
+                ->name('riwayat');
 
             // Route To Page Pesan 
             Route::view('pesan', 'pages.customer.pesan')
                 ->name('pesan');
+
+
+            // Route To Page Detail Product
+            Route::view('detail/produk', 'pages.customer.detail-product')
+                ->name('detail-product');
             
         });
 
@@ -59,6 +70,10 @@ Route::middleware(['auth'])->group(function () {
                 ->name('dashboard_admin');
         });
 });
+
+// Route To Page Set Address
+Route::view('atur-alamat', 'pages.customer.atur-alamat')
+    ->name('atur_alamat');
 
 Route::view('dashboard', 'dashboard')
     ->middleware(['auth', 'verified'])

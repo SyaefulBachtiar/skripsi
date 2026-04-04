@@ -37,8 +37,8 @@
                     <div class="hidden md:flex items-center gap-8">
                         <a href="#features" class="text-slate-600 hover:text-blue-600 font-medium transition-colors">Fitur</a>
                         <a href="#how-it-works" class="text-slate-600 hover:text-blue-600 font-medium transition-colors">Cara Kerja</a>
-                        <a href="#technicians" class="text-slate-600 hover:text-blue-600 font-medium transition-colors">Teknisi</a>
-                        <a href="#testimonials" class="text-slate-600 hover:text-blue-600 font-medium transition-colors">Testimoni</a>
+                        <a href="{{ route('register.technician') }}" class="text-slate-600 hover:text-blue-600 font-medium transition-colors">Teknisi</a>
+                        {{-- <a href="#testimonials" class="text-slate-600 hover:text-blue-600 font-medium transition-colors">Testimoni</a> --}}
                     </div>
 
                     <!-- CTA Buttons -->
@@ -47,6 +47,10 @@
                             @auth
                                 @if(auth()->user()->role === 'technician')
                                     <a href="{{ url('/teknisi/dashboard') }}" class="items-center justify-center px-5 py-2.5 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-all shadow-lg shadow-blue-600/20">
+                                        Dashboard
+                                    </a>
+                                @elseif(auth()->user()->role === 'customer')
+                                    <a href="{{ url('/beranda') }}" class="items-center justify-center px-5 py-2.5 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-all shadow-lg shadow-blue-600/20">
                                         Dashboard
                                     </a>
                                 @endif
@@ -99,7 +103,7 @@
                         </p>
 
                         <div class="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start mb-12">
-                            <a href="#booking" class="inline-flex items-center justify-center px-8 py-4 text-base font-semibold text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-all shadow-xl shadow-blue-600/20 hover:shadow-blue-600/30 hover:-translate-y-0.5">
+                            <a href="{{ route('beranda') }}" class="inline-flex items-center justify-center px-8 py-4 text-base font-semibold text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-all shadow-xl shadow-blue-600/20 hover:shadow-blue-600/30 hover:-translate-y-0.5">
                                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                                 </svg>

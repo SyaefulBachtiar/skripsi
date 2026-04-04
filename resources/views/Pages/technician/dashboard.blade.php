@@ -1,11 +1,30 @@
 <x-app-layout>
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6 text-gray-900 dark:text-gray-100">
-                    {{ __("Page Dashboard! Technician") }}
+
+    <x-slot name="title">
+        {{ 'Dashboard' }}
+    </x-slot>
+
+    <div class="py-10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
+
+            {{-- Address --}}
+            <livewire:services.address-card/>
+
+            @if(!empty($data->spesialisasi))
+
+                {{-- Pekerjaan --}}
+                {{-- <livewire:services.dashboard-technician.pekerjaan/> --}}
+
+                {{-- List Antrian --}}
+                <livewire:services.dashboard-technician.list-antrian/>
+
+            @else
+                <div class="pb-12 sm:pb-0">
+                    <livewire:services.dashboard-technician.form-technician/>
                 </div>
-            </div>
+
+            @endif
+
         </div>
     </div>
 </x-app-layout>

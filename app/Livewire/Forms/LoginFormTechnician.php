@@ -10,7 +10,7 @@ use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Validate;
 use Livewire\Form;
 
-class LoginForm extends Form
+class LoginFormTechnician extends Form
 {
     #[Validate('required|string|email')]
     public string $email = '';
@@ -40,7 +40,7 @@ class LoginForm extends Form
 
         $user = Auth::user();
     
-        if ($user->role !== 'customer') {
+        if ($user->role !== 'technician') {
             // Logout kembali karena dia bukan customer (mungkin teknisi/admin)
             Auth::logout();
             
@@ -49,7 +49,7 @@ class LoginForm extends Form
             request()->session()->regenerateToken();
 
             throw ValidationException::withMessages([
-                'form.email' => 'Akun ini tidak terdaftar sebagai Customer.',
+                'form.email' => 'Akun ini tidak terdaftar sebagai Teknisi.',
             ]);
         }
 
