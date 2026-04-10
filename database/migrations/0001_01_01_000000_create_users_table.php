@@ -30,12 +30,17 @@ return new class extends Migration
         Schema::create('technician', function (Blueprint $table) {
             $table->id();
             $table->foreignUuid('user_id')->constrained('users')->onDelete('cascade');
+            $table->string('verifikasi', 10)->nullable();
             $table->decimal('saldo', 15, 2)->nullable();
             $table->json('spesialisasi')->nullable();
             $table->json('pengalaman')->nullable();
             $table->json('sertifikat')->nullable();
             $table->string('deskripsi', 100)->nullable();
             $table->text('detail_alamat')->nullable();
+            $table->string('provinsi', 50)->nullable();
+            $table->string('kabupaten', 50)->nullable();
+            $table->string('kecamatan', 50)->nullable();
+            $table->string('kelurahan', 50)->nullable();
             $table->decimal('latitude', 10, 8)->nullable();
             $table->decimal('longitude', 11, 8)->nullable();
             $table->timestamps();
@@ -45,6 +50,7 @@ return new class extends Migration
         Schema::create('customer', function (Blueprint $table) {
             $table->id();
             $table->foreignUuid('user_id')->constrained('users')->onDelete('cascade');
+            $table->string('verifikasi', 10)->default('diproses');
             $table->decimal('saldo', 15, 2)->nullable();
             $table->text('detail_alamat')->nullable();
             $table->decimal('latitude', 10, 8);

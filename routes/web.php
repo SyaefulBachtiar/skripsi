@@ -28,9 +28,47 @@ Route::middleware(['auth'])->group(function () {
             Route::view('pesan', 'pages.technician.pesan')
                 ->name('pesan_technician');
 
-            // Route To Page Posting
+            // Route To Page Profile
             Route::view('profile-teknisi', 'pages.technician.profile')
                 ->name('profile.technician');
+
+            
+            Route::prefix('dashboard')
+                ->group(function () {
+                    
+                    // Route To Page Posting Jasa
+                    Route::view('posting-jasa', 'pages.technician.posting')
+                        ->name('posting.jasa');
+
+                    // Route To Page Riwayat
+                    Route::view('riwayat', 'pages.technician.riwayat')
+                        ->name('riwayat.technician');
+
+                    // Route To Page Jasa Saya
+                    Route::view('jasa', 'pages.technician.jasa-saya')
+                        ->name('jasa.technician');
+
+                    // Route To Page Detail Jasa
+                    Route::get('detail-jasa/{id_jasa}', function ($id_jasa) {
+                            return view('pages.detail-jasa', [
+                                'id_jasa' => $id_jasa
+                            ]);
+                    })->name('detail_jasa.technician');
+
+                    // Route To Page Laporan
+                    Route::view('laporan', 'pages.technician.laporan')
+                        ->name('laporan.technician');
+
+                    // Route To Page Edit Jasa
+                    Route::get('edit-jasa/{id_jasa}', function ($id_jasa) {
+                        return view('pages.technician.edit-jasa', [
+                            'id_jasa' => $id_jasa
+                        ]);
+                    })->name('edit.jasa');
+                    
+                });
+
+            
 
         });
 
@@ -72,7 +110,7 @@ Route::middleware(['auth'])->group(function () {
 });
 
 // Route To Page Set Address
-Route::view('atur-alamat', 'pages.customer.atur-alamat')
+Route::view('atur-alamat', 'pages.atur-alamat')
     ->name('atur_alamat');
 
 Route::view('dashboard', 'dashboard')

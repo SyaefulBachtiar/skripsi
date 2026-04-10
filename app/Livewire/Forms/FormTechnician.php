@@ -9,16 +9,30 @@ use Livewire\Form;
 
 class FormTechnician extends Form {
     
-    #[Validate('required|array|min:1')]
+    #[Validate([
+        'spesialisasi' => 'required|array|min:1'
+    ], message: [
+        'spesialisasi.required' => 'Spesialisasi wajib diisi'
+    ])]
     public $spesialisasi = [];
 
-    #[Validate('required|array|min:1')]
+    #[Validate('nullable|array|min:1')]
     public $experience_list = [''];
 
-    #[Validate('nullable|string|min:10')]
+    #[Validate([
+        'bio' => 'required|string|min:5'
+    ], message: [
+        'bio.required' => 'Deskripsi wajib diisi!',
+        'bio.min' => 'Minimal 5 karakter!'
+    ])]
     public $bio = '';
 
-    #[Validate(['certificates.*' => 'nullable|image|max:2048'])] // Max 2MB per file
+    #[Validate([
+        'certificates' => 'nullable|array|max:5',
+        'certificates.*' => 'image|max:2048'
+    ], message: [
+        'certificates.max' => 'Maksimal hanya boleh mengunggah 5 gambar!',
+    ])]
     public $certificates = [];
 
     public $existing_certificates = [];

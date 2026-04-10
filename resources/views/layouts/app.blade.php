@@ -24,17 +24,12 @@
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
     <body class="font-sans antialiased">
-        <div class="min-h-screen bg-gray-100 dark:bg-gray-900 overflow-hidden">
+        <div class="min-h-screen bg-gray-100 dark:bg-gray-900 overflow-hidden relative">
             <livewire:layout.navigation />
 
-            <!-- Page Heading -->
-            {{-- @if (isset($header))
-                <header class="bg-white dark:bg-gray-800 shadow">
-                    <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-                        {{ $header }}
-                    </div>
-                </header>
-            @endif --}}
+            <header class="flex sm:hidden">
+                {{ $header ?? '' }}
+            </header>
 
             <!-- Page Content -->
             <main class="mt-10">
@@ -42,7 +37,7 @@
             </main>
 
             {{-- Alert Container --}}
-            <div class="fixed right-5 bottom-20 flex flex-col gap-3">
+            <div class="fixed right-5 bottom-20 flex flex-col gap-3 z-50">
                 
                 {{-- Alert Success --}}
                 @if (session()->has('success'))
@@ -92,88 +87,6 @@
                 </div>
                 @endif
             </div>
-
-             {{-- Bottom bar --}}
-            <nav class="flex sm:hidden fixed bottom-0 w-full bg-white/80 dark:bg-slate-900/80 backdrop-blur-lg border-t border-slate-200 dark:border-slate-800 z-50 pb-safe">
-                <div class="flex justify-around items-center w-full h-16 px-2">
-
-                    @php
-                        // Helper untuk styling link aktif
-                        $activeClass = 'text-blue-600 dark:text-blue-400 relative';
-                        $inactiveClass = 'text-slate-400 dark:text-slate-500 hover:text-slate-600';
-                    @endphp
-
-                    {{-- Logika untuk Technician --}}
-                    @if(auth()->user()->role === 'technician')
-                        
-                        {{-- Dashboard --}}
-                        <a href="{{ route('dashboard_technician') }}" class="flex-1 flex flex-col items-center justify-center transition-all duration-300 {{ request()->routeIs('dashboard_technician') ? $activeClass : $inactiveClass }}">
-                            <i class="bi {{ request()->routeIs('dashboard_technician') ? 'bi-columns-gap' : 'bi-columns-gap' }} text-xl"></i>
-                            <span class="text-[10px] font-medium mt-1">Dashboard</span>
-                            @if(request()->routeIs('dashboard_technician'))
-                                <div class="absolute -top-[17px] w-8 h-1 bg-blue-600 rounded-b-full"></div>
-                            @endif
-                        </a>
-
-                        {{-- Pesan --}}
-                        <a href="{{ route('pesan_technician') }}" class="flex-1 flex flex-col items-center justify-center transition-all duration-300 {{ request()->routeIs('pesan_technician') ? $activeClass : $inactiveClass }}">
-                            <i class="bi {{ request()->routeIs('pesan_technician') ? 'bi-chat-dots-fill' : 'bi-chat-dots' }} text-xl"></i>
-                            <span class="text-[10px] font-medium mt-1">Pesan</span>
-                            @if(request()->routeIs('pesan_technician'))
-                                <div class="absolute -top-[17px] w-8 h-1 bg-blue-600 rounded-b-full"></div>
-                            @endif
-                        </a>
-
-                        {{-- Halaman Saya(Profile) --}}
-                        <a href="{{ route('profile.technician') }}" class="flex-1 flex flex-col items-center justify-center transition-all duration-300 {{ request()->routeIs('profile.technician') ? $activeClass : $inactiveClass }}">
-                            <i class="bi bi-person {{ request()->routeIs('profile.technician') ? '-fill' : '' }} text-2xl"></i>
-                            <span class="text-[10px] font-medium mt-1">Saya</span>
-                            @if(request()->routeIs('profile.technician'))
-                                <div class="absolute -top-[17px] w-8 h-1 bg-blue-600 rounded-b-full"></div>
-                            @endif
-                        </a>
-
-                    {{-- Logika untuk Customer --}}
-                    @elseif(auth()->user()->role === 'customer')
-
-                        {{-- Beranda --}}
-                        <a href="{{ route('beranda') }}" class="flex-1 flex flex-col items-center justify-center transition-all duration-300 {{ request()->routeIs('beranda') || request()->routeIs('detail-product') ? $activeClass : $inactiveClass }}">
-                            <i class="bi {{ request()->routeIs('beranda') ? 'bi-house-fill' : 'bi-house' }} text-xl"></i>
-                            <span class="text-[10px] font-medium mt-1">Beranda</span>
-                            @if(request()->routeIs('beranda') || request()->routeIs('detail-product'))
-                                <div class="absolute -top-[17px] w-8 h-1 bg-blue-600 rounded-b-full"></div>
-                            @endif
-                        </a>
-
-                        {{-- Lacak --}}
-                        <a href="{{ route('lacak') }}" class="flex-1 flex flex-col items-center justify-center transition-all duration-300 {{ request()->routeIs('lacak') ? $activeClass : $inactiveClass }}">
-                            <i class="bi {{ request()->routeIs('lacak') ? 'bi-list-check' : 'bi-list-task' }} text-xl"></i>
-                            <span class="text-[10px] font-medium mt-1">Lacak</span>
-                            @if(request()->routeIs('lacak'))
-                                <div class="absolute -top-[17px] w-8 h-1 bg-blue-600 rounded-b-full"></div>
-                            @endif
-                        </a>
-
-                        {{-- Riwayat --}}
-                        <a href="{{ route('riwayat') }}" class="flex-1 flex flex-col items-center justify-center transition-all duration-300 {{ request()->routeIs('riwayat') ? $activeClass : $inactiveClass }}">
-                            <i class="bi {{ request()->routeIs('riwayat') ? 'bi-clock-fill' : 'bi-clock-history' }} text-xl"></i>
-                            <span class="text-[10px] font-medium mt-1">Riwayat</span>
-                            @if(request()->routeIs('riwayat'))
-                                <div class="absolute -top-[17px] w-8 h-1 bg-blue-600 rounded-b-full"></div>
-                            @endif
-                        </a>
-
-                        {{-- Pesan --}}
-                        <a href="{{ route('pesan') }}" class="flex-1 flex flex-col items-center justify-center transition-all duration-300 {{ request()->routeIs('pesan') ? $activeClass : $inactiveClass }}">
-                            <i class="bi {{ request()->routeIs('pesan') ? 'bi-chat-dots-fill' : 'bi-chat-dots' }} text-xl"></i>
-                            <span class="text-[10px] font-medium mt-1">Pesan</span>
-                            @if(request()->routeIs('pesan'))
-                                <div class="absolute -top-[17px] w-8 h-1 bg-blue-600 rounded-b-full"></div>
-                            @endif
-                        </a>
-                    @endif
-                </div>
-            </nav>
         </div>
     </body>
 </html>

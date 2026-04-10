@@ -12,14 +12,19 @@
         searchResults: [],
 
         initMap() {
-            // Gunakan koordinat dari Livewire, jika kosong pakai default (Jakarta)
             let lat = this.latitude || -6.200000;
             let lng = this.longitude || 106.816666;
 
             this.map = L.map(this.$refs.mapContainer).setView([lat, lng], 15);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(this.map);
-            
             this.marker = L.marker([lat, lng], { draggable: false }).addTo(this.map);
+
+            // ✅ Fix: paksa Leaflet recalculate ukuran container setelah render
+            this.$nextTick(() => {
+                setTimeout(() => {
+                    this.map.invalidateSize();
+                }, 100);
+            });
         },
 
         updateCoords(latlng) {
@@ -41,13 +46,16 @@
                     this.modalMap = L.map(this.$refs.modalMapContainer).setView([lat, lng], 15);
                     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(this.modalMap);
                     this.modalMarker = L.marker([lat, lng], { draggable: true }).addTo(this.modalMap);
-                    
+
                     this.modalMarker.on('dragend', (e) => { this.updateCoords(e.target.getLatLng()); });
                     this.modalMap.on('click', (e) => { this.updateCoords(e.latlng); });
+
+                    // ✅ Fix: sama seperti initMap, modal container baru saja muncul
+                    setTimeout(() => { this.modalMap.invalidateSize(); }, 150);
                 } else {
                     this.modalMap.setView([lat, lng], 15);
                     this.modalMarker.setLatLng([lat, lng]);
-                    setTimeout(() => { this.modalMap.invalidateSize(); }, 100);
+                    setTimeout(() => { this.modalMap.invalidateSize(); }, 150);
                 }
             });
         },
@@ -82,14 +90,54 @@
     <h1 class="text-lg sm:text-xl font-semibold text-gray-800">Atur Alamat</h1>
     
     <form class="pt-4 space-y-4 sm:space-y-6" wire:submit.prevent="save">
+        {{-- Dropdown Wilayah Indonesia --}}
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <x-select-search 
+                label="Provinsi"
+                placeholder="Cari Provinsi..."
+                model="provinsi"
+                searchModel="searchProvinsi"
+                :options="$provinces"
+            />
+
+            <x-select-search 
+                label="Kota/Kabupaten"
+                placeholder="Cari Kota/Kabupaten..."
+                model="kabupaten"
+                searchModel="searchKabupaten"
+                :options="$cities"
+                :disabled="empty($cities)"
+            />
+
+            <x-select-search 
+                label="Kecamatan"
+                placeholder="Cari Kecamatan..."
+                model="kecamatan"
+                searchModel="searchKecamatan"
+                :options="$districts"
+                :disabled="empty($districts)"
+            />
+
+            <x-select-search 
+                label="Kelurahan"
+                placeholder="Cari Kelurahan..."
+                model="kelurahan"
+                searchModel="searchKelurahan"
+                :options="$villages"
+                :disabled="empty($villages)"
+            />
+        </div>
+
+        {{-- Detail Alamat (Input Textarea Anda) --}}
         <div>
             <x-input-label for="detail_alamat" :value="__('Nama Jalan, Gedung, No.Rumah')" />
-            <x-textarea-input id="detail_alamat" class="w-full" wire:model="detail_alamat" />
+            <x-textarea-input id="detail_alamat" class="w-full" wire:model="detail_alamat" placeholder="Contoh: Jl. Merdeka No. 123, Komplek A" />
             <x-input-error :messages="$errors->get('detail_alamat')" class="mt-2" />
         </div>
 
-        <div class="space-y-2">
-             <div class="flex justify-between items-end">
+        {{-- SESUDAH --}}
+        <div class="space-y-2" wire:ignore>
+            <div class="flex justify-between items-end">
                 <x-input-label :value="__('Lokasi di Peta')" />
                 <button 
                     type="button"

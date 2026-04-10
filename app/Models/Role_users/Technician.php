@@ -2,6 +2,7 @@
 
 namespace App\Models\Role_users;
 
+use App\Models\Jasa;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -19,6 +20,10 @@ class Technician extends Model
         'sertifikat',
         'deskripsi',
         'detail_alamat',
+        'provinsi',
+        'kabupaten',
+        'kecamatan',
+        'kelurahan',
         'latitude',
         'longitude'
     ];
@@ -31,6 +36,11 @@ class Technician extends Model
 
     public function user (): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'user_id', 'id');
+    }
+
+    public function jasa (): HasOne
+    {
+        return $this->hasOne(Jasa::class, 'id_technician', 'id');
     }
 }

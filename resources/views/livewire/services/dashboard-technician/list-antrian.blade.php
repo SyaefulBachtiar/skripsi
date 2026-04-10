@@ -5,12 +5,12 @@
         {{-- Header --}}
         <div class="flex items-center justify-between border-b border-gray-300 pb-2">
             <div>
-                <h1 class="text-lg sm:text-xl font-semibold text-gray-800">Antrian</h1>
-                <p class="text-sm sm:text-md text-gray-500">4 Antrian</p>
+                <h1 class="text-sm sm:text-base font-semibold text-gray-800">Antrian</h1>
+                <p class="text-xs sm:text-sm text-gray-500">4 Antrian</p>
             </div>
 
            <div class="flex items-center justify-center p-2 rounded-md bg-green-400">
-                <i class="bi bi-list-ol text-lg sm:text-xl leading-none"></i>
+                <i class="bi bi-list-ol text-lg sm:text-xl leading-none text-white"></i>
             </div>
         </div>
 

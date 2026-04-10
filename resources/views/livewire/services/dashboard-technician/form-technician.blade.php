@@ -26,19 +26,51 @@ new class extends Component
     public function save()
     {
         try {
-            // Memanggil method store() di dalam Form Object
-            $status = $this->form->store();
-
-            if ($status) {
-                session()->flash('success', 'Berhasil!');
-
-                // Refresh halaman saat ini
-                return $this->redirect(request()->header('Referer'), navigate: true);
-            }
+            // dd($this->form->all());
+            \Illuminate\Support\Facades\DB::transaction(function () {
+                $this->form->store();
+            });
+            session()->flash('success', 'Berhasil disimpan!');
+            return redirect()->to(request()->header('Referer'));
+            
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            throw $e;
         } catch (Exception $e) {
             session()->flash('error', 'Terjadi kesalahan: ' . $e->getMessage());
-            return $this->redirect(request()->header('Referer'), navigate: true);
+            return redirect()->to(request()->header('Referer'));
         }
+    }
+
+    public function removeNewCertificate($index)
+    {
+        // Cek apakah index valid
+        if (!isset($this->form->certificates[$index])) {
+            return;
+        }
+
+        $file = $this->form->certificates[$index];
+
+        // Hapus file temporary dari storage livewire-tmp
+        try {
+            if (is_object($file) && method_exists($file, 'getRealPath')) {
+                $realPath = $file->getRealPath();
+                if (file_exists($realPath)) {
+                    unlink($realPath);
+                }
+            }
+        } catch (\Exception $e) {
+            // Log error tapi jangan stop execution
+            logger('Error deleting temp file: ' . $e->getMessage());
+        }
+
+        // Hapus dari array Livewire
+        unset($this->form->certificates[$index]);
+        
+        // Re-index array (penting untuk menjaga konsistensi index)
+        $this->form->certificates = array_values($this->form->certificates);
+
+        // Dispatch event ke Alpine bahwa sudah terhapus
+        $this->dispatch('certificate-removed', remaining: count($this->form->certificates));
     }
 
     public function deleteOldCertificate($index)
@@ -49,25 +81,22 @@ new class extends Component
         if (isset($certs[$index])) {
             $pathFile = $certs[$index];
 
-            // 2. OPSIONAL: Hapus file fisik dari storage agar tidak jadi sampah (sangat disarankan)
             if (\Illuminate\Support\Facades\Storage::disk('public')->exists($pathFile)) {
                 \Illuminate\Support\Facades\Storage::disk('public')->delete($pathFile);
             }
 
-            // 3. Hapus dari array lokal
             unset($certs[$index]);
-            $newCerts = array_values($certs); // Reset index array
+            $newCerts = array_values($certs);
 
-            // 4. UPDATE LANGSUNG KE DATABASE
             \App\Models\Role_users\Technician::where('user_id', auth()->id())
                 ->update([
-                    'sertifikat' => $newCerts // Laravel otomatis melakukan json_encode karena ada $casts di Model
+                    'sertifikat' => $newCerts
                 ]);
 
-            // 5. Update state di Form Object agar tampilan sinkron
             $this->form->existing_certificates = $newCerts;
 
             session()->flash('success', 'Foto sertifikat berhasil dihapus permanen.');
+            return redirect()->to(request()->header('Referer'));
         }
     }
 };
@@ -87,6 +116,20 @@ new class extends Component
     </div>
 
     <form wire:submit.prevent="save" class="space-y-5">
+
+        {{-- Deskripsi --}}
+        <div>
+            <x-input-label for="deskripsi" :value="__('Deskripsi Singkat')" class="mb-2" />
+            <textarea 
+                wire:model.live="form.bio"
+                rows="4"
+                class="w-full border-slate-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
+                placeholder="Ceritakan singkat tentang keahlian Anda..."
+            ></textarea>
+            <x-input-error :messages="$errors->get('form.bio')" class="mt-2" />
+        </div>
+
+        <hr class="border-slate-200 dark:border-slate-700">
         
         {{-- Spesialisasi (Multi-select) --}}
         <div x-data="{ 
@@ -226,10 +269,11 @@ new class extends Component
                 });
             },
 
-            removeImage(index) {
+            async removeImage(index) {
                 this.images.splice(index, 1);
-                // Catatan: Jika ingin menghapus file di backend Livewire juga, 
-                // Anda butuh logika tambahan menggunakan wire.upload
+
+                await $wire.removeNewCertificate(index);
+                this.images = this.images.map((img, idx) => ({...img, index: idx}));
             },
 
             openModal(url) {
@@ -247,7 +291,7 @@ new class extends Component
             >
                 <div class="text-center">
                     <i class="bi bi-cloud-arrow-up text-4xl text-slate-400"></i>
-                    <div class="mt-4 flex text-sm text-slate-600 dark:text-slate-400">
+                    <div class="mt-4 flex text-sm text-slate-600 dark:text-slate-400 justify-center">
                         <label class="relative font-semibold text-indigo-600 focus-within:outline-none hover:text-indigo-500" :class="images.length >= 10 ? 'pointer-events-none' : 'cursor-pointer'">
                             <span>Upload files</span>
                             <input 
@@ -271,19 +315,63 @@ new class extends Component
                 
                 {{-- Tampilkan Sertifikat LAMA dari Database --}}
                 @foreach($form->existing_certificates as $index => $path)
-                    <div class="relative group aspect-square bg-slate-100 rounded-lg overflow-hidden border border-slate-200">
+                    <div class="relative aspect-square bg-slate-100 rounded-lg overflow-hidden border border-slate-200 shadow-sm">
                         <img src="{{ asset('storage/' . $path) }}" class="h-full w-full object-cover">
-                        <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button type="button" wire:click="deleteOldCertificate({{ $index }})" class="p-1.5 bg-red-500 rounded-full text-white">
-                                <i class="bi bi-trash"></i>
-                            </button>
+                        
+                        {{-- Tombol Hapus SELALU TERLIHAT (tanpa hover) --}}
+                        <button 
+                            type="button" 
+                            wire:click="deleteOldCertificate({{ $index }})"
+                            wire:loading.attr="disabled"
+                            wire:loading.class="opacity-50"
+                            class="absolute top-2 right-2 p-1.5 bg-red-500 hover:bg-red-600 active:bg-red-700 text-white rounded-full shadow-lg shadow-red-500/30 transition-all duration-200 hover:scale-110 active:scale-95 z-10"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+                            </svg>
+                        </button>
+
+                        {{-- Label Lama --}}
+                        <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent text-[10px] text-white px-2 py-2 font-medium backdrop-blur-[2px]">
+                            <span class="flex items-center gap-1">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" fill="currentColor" viewBox="0 0 16 16">
+                                    <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                                    <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
+                                </svg>
+                                Lama
+                            </span>
                         </div>
                     </div>
                 @endforeach
 
                 {{-- Tampilkan Sertifikat BARU (Temporary Upload) --}}
                 <template x-for="(img, index) in images" :key="index">
-                    </template>
+                    <div class="relative aspect-square bg-slate-100 rounded-lg overflow-hidden border border-slate-200 shadow-sm">
+                        <img :src="img.url" class="h-full w-full object-cover cursor-pointer" @click="openModal(img.url)">
+                        
+                        {{-- Tombol Hapus SELALU TERLIHAT (tanpa hover) --}}
+                        <button 
+                            type="button" 
+                            @click="removeImage(index)"
+                            class="absolute top-2 right-2 p-1.5 bg-red-500 hover:bg-red-600 active:bg-red-700 text-white rounded-full shadow-lg shadow-red-500/30 transition-all duration-200 hover:scale-110 active:scale-95 z-10"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+                            </svg>
+                        </button>
+
+                        {{-- Label Baru dengan Nama File --}}
+                        <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent text-[10px] text-white px-2 py-2 backdrop-blur-[2px]">
+                            <span class="flex items-center gap-1 truncate">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" fill="currentColor" viewBox="0 0 16 16">
+                                    <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                                    <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
+                                </svg>
+                                <span x-text="img.name" class="truncate max-w-[80px]"></span>
+                            </span>
+                        </div>
+                    </div>
+                </template>
             </div>
 
             <x-input-error :messages="$errors->get('form.certificates')" class="mt-2" />
@@ -303,24 +391,12 @@ new class extends Component
                 style="display: none;"
             >
                 {{-- Close Modal --}}
-                <button @click="showModal = false" class="absolute top-5 right-5 text-white text-3xl hover:text-slate-300">
+                <button @click="showModal = false" type="button" class="absolute top-5 right-5 text-white text-3xl hover:text-slate-300 transition-colors">
                     <i class="bi bi-x-lg"></i>
                 </button>
 
                 <img :src="modalImage" class="max-w-full max-h-full rounded-lg shadow-2xl shadow-white/10">
             </div>
-        </div>
-
-        {{-- Deskripsi --}}
-        <div>
-            <x-input-label for="deskripsi" :value="__('Deskripsi Singkat')" class="mb-2" />
-            <textarea 
-                wire:model="form.bio"
-                rows="4"
-                class="w-full border-slate-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
-                placeholder="Ceritakan singkat tentang keahlian Anda..."
-            ></textarea>
-            <x-input-error :messages="$errors->get('form.bio')" class="mt-2" />
         </div>
 
         {{-- Submit Button --}}

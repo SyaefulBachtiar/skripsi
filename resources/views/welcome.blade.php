@@ -5,7 +5,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="description" content="Platform jasa service elektronik terpercaya dengan tracking real-time dan teknisi verified">
 
-        <title>ServiceElektronik - Platform Jasa Service Terpercaya</title>
+        <title>Servisio - Platform Jasa Service Terpercaya</title>
 
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
@@ -29,7 +29,7 @@
                             </svg>
                         </div>
                         <span class="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                            ServiceElektronik
+                            Servisio
                         </span>
                     </div>
 
@@ -416,7 +416,7 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
                                 </svg>
                             </div>
-                            <span class="text-xl font-bold text-slate-900">ServiceElektronik</span>
+                            <span class="text-xl font-bold text-slate-900">Servisio</span>
                         </div>
                         <p class="text-slate-600 max-w-sm">
                             Platform terpercaya untuk layanan perbaikan elektronik dengan teknisi profesional dan tracking real-time.

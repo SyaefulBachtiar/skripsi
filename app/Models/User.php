@@ -7,12 +7,13 @@ namespace App\Models;
 use App\Models\Role_users\Admin;
 use App\Models\Role_users\Customer;
 use App\Models\Role_users\Technician;
-use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Support\Str;
 
 class User extends Authenticatable
 {
@@ -62,10 +63,28 @@ class User extends Authenticatable
         ];
     }
 
+    protected function profilePhotoUrl(): Attribute
+    {
+        return Attribute::get(function () {
+            // 1. Jika avatar kosong, kembalikan gambar default
+            if (!$this->avatar) {
+                return asset('assets/images/default-avatar.webp');
+            }
+
+            // 2. Jika avatar adalah URL (Mulai dengan http/https, biasanya dari Google)
+            if (Str::startsWith($this->avatar, ['http://', 'https://'])) {
+                return $this->avatar;
+            }
+
+            // 3. Jika avatar adalah file lokal (tersimpan di storage)
+            return asset('storage/' . $this->avatar);
+        });
+    }
+
     // Role Technician
     public function technician (): HasOne
     {
-        return $this->hasOne(Technician::class);
+        return $this->hasOne(Technician::class, 'user_id', 'id');
     }
 
     // Role Customer

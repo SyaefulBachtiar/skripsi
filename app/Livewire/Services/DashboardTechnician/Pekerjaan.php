@@ -4,7 +4,7 @@ namespace App\Livewire\Services\DashboardTechnician;
 
 use Livewire\Component;
 
-class Statistik extends Component
+class Pekerjaan extends Component
 {
     public function render()
     {

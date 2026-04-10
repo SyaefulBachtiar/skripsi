@@ -1,20 +1,37 @@
 <div x-data="{
+    isLoading: true,
     editingName: false,
     name: '{{ auth()->user()->name }}',
     oldName: '{{ auth()->user()->name }}',
-    imageUrl: '{{ auth()->user()->avatar ?? '' }}',
-    oldImageUrl: '{{ auth()->user()->avatar ?? '' }}',
+    imageUrl: '{{ 
+        auth()->user()->avatar 
+            ? (Str::startsWith(auth()->user()->avatar, 'http') 
+                ? auth()->user()->avatar 
+                : asset('storage/' . auth()->user()->avatar)) 
+            : '' 
+    }}',
+    
+    oldImageUrl: '', {{-- Akan diisi di x-init --}}
     showStatus: false,
     hasNewFile: false,
 
-    saveData() {
+    init() {
+        this.oldImageUrl = this.imageUrl;
+        setTimeout(() => this.isLoading = false, 800);
+    },
+    showStatus: false,
+    hasNewFile: false,
+
+    async saveData() {
+
+        await $wire.updateProfile(this.name, this.hasNewFile);
+
         this.editingName = false;
         this.hasNewFile = false;
         this.oldName = this.name;
         this.oldImageUrl = this.imageUrl;
         this.showStatus = true;
-        setTimeout(() => this.showStatus = false, 2000);
-        // Logic axios.post() di sini
+        setTimeout(() => this.showStatus = false, 3000);
     },
     cancelEditName() {
         this.editingName = false;
@@ -29,12 +46,32 @@
         if (file) {
             this.imageUrl = URL.createObjectURL(file);
             this.hasNewFile = true;
+
+            @this.upload('photo', file);
         }
     }
 }"
 class="flex items-center justify-center">
 
-    <div class="bg-white border border-gray-100 rounded-2xl p-6 w-full shadow-md">
+    {{-- SKELETON WIREFRAME --}}
+    <div x-show="isLoading" class="bg-white border border-gray-100 rounded-2xl p-6 w-full shadow-md animate-pulse">
+        <div class="flex items-start gap-5">
+            {{-- Avatar Skeleton --}}
+            <div class="w-20 h-20 rounded-full bg-gray-200 shrink-0"></div>
+            
+            {{-- Text Skeleton --}}
+            <div class="flex-1 space-y-3 pt-2">
+                <div class="h-5 bg-gray-200 rounded w-3/4"></div>
+                <div class="h-4 bg-gray-200 rounded w-1/2"></div>
+            </div>
+        </div>
+    </div>
+
+    <div 
+        x-show="!isLoading" 
+        x-cloak x-transition.opacity.duration.500ms
+        class="bg-white border border-gray-100 rounded-2xl p-6 w-full shadow-md"
+    >
 
         <div class="flex items-start gap-5">
 
@@ -61,7 +98,7 @@ class="flex items-center justify-center">
                             <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                             <circle cx="12" cy="13" r="4" stroke="white" stroke-width="2"/>
                         </svg>
-                        <input type="file" class="hidden" accept="image/*" @change="previewFile">
+                        <input wire:model="photo" type="file" class="hidden" accept="image/*" @change="previewFile">
                     </label>
                 </div>
 
