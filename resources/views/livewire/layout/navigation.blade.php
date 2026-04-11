@@ -143,7 +143,7 @@ new class extends Component
                         <span class="text-[10px] font-medium mt-1">Dashboard</span>
                         @if(request()->routeIs('dashboard_technician'))
                             <div class="absolute -top-[17px] w-8 h-1 bg-blue-600 rounded-b-full"></div>
-                        @endifdfgfdgfgd
+                        @endif
                     </a>
                     {{-- Pesan --}}
                     <a href="{{ route('pesan_technician') }}" class="flex-1 flex flex-col items-center justify-center transition-all duration-300 {{ request()->routeIs('pesan_technician') ? $activeClass : $inactiveClass }}">
