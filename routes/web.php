@@ -7,6 +7,10 @@ use Illuminate\Support\Facades\Route;
 
 Route::view('/', 'welcome');
 
+// Route To Page Beranda
+Route::view('beranda', 'pages.customer.beranda')
+    ->name('beranda');
+
 
 // Route Authentication
 Route::middleware(['auth'])->group(function () {
@@ -77,10 +81,6 @@ Route::middleware(['auth'])->group(function () {
     Route::middleware(['role:customer'])
         ->group(function () {
 
-            // Route To Page Beranda
-            Route::view('beranda', 'pages.customer.beranda')
-                ->name('beranda');
-
             // Route To Page Lacak
             Route::view('lacak', 'pages.customer.lacak')
                 ->name('lacak');
@@ -93,9 +93,12 @@ Route::middleware(['auth'])->group(function () {
             Route::view('pesan', 'pages.customer.pesan')
                 ->name('pesan');
 
-
             // Route To Page Detail Product
-            Route::view('detail/produk', 'pages.customer.detail-product')
+            Route::get('detail/{id}', function ($id) {
+                return view('pages.detail-jasa', [
+                    'id_jasa' => $id
+                ]);
+            })
                 ->name('detail-product');
             
         });

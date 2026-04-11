@@ -89,7 +89,7 @@
 >
     <h1 class="text-lg sm:text-xl font-semibold text-gray-800">Atur Alamat</h1>
     
-    <form class="pt-4 space-y-4 sm:space-y-6" wire:submit.prevent="save">
+    <form class="pt-2 space-y-4 sm:space-y-6" wire:submit.prevent="save">
         {{-- Dropdown Wilayah Indonesia --}}
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <x-select-search 

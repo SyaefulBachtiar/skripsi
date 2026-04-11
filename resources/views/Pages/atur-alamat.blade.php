@@ -17,13 +17,13 @@
     </x-slot>
 
     <div 
-        class="pt-10"
+        class="pt-4"
         x-data="{ isLoading: true }" x-init="setTimeout(() => isLoading = false, 600)"
     >
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4 pb-20 sm:pb-0">
 
             {{-- SKELETON LOADING --}}
-            <div x-show="isLoading" class="space-y-6 p-4 rounded-xl bg-white border border-gray-100 animate-pulse">
+            <div x-show="isLoading" class="space-y-6 p-4 mt-2 rounded-xl bg-white border border-gray-100 animate-pulse">
                 {{-- Skeleton Header --}}
                 <div class="h-6 bg-gray-200 rounded w-1/4 mb-8"></div>
 
@@ -57,7 +57,7 @@
             </div>
             <div 
                 x-show="!isLoading" 
-                 x-cloak x-transition.opacity.duration.500ms
+                x-cloak x-transition.opacity.duration.500ms
             >
                 <livewire:services.alamat.form-alamat/>
             </div>

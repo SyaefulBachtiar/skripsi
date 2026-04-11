@@ -15,7 +15,7 @@
         <label class="block text-sm font-bold text-gray-700 mb-1">{{ $label }}</label>
     @endif
 
-    <div class="relative">
+    <div class="relative w-full">
         <input 
             type="text"
             placeholder="{{ $placeholder }}"
@@ -27,16 +27,6 @@
         >
         
         <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-400">
-            {{-- Spinner: muncul saat loading request untuk searchModel ini --}}
-            <svg 
-                wire:loading 
-                wire:target="{{ $searchModel }}" 
-                class="w-4 h-4 animate-spin text-indigo-500" 
-                fill="none" viewBox="0 0 24 24"
-            >
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-            </svg>
 
             {{-- Chevron bawah: sembunyikan saat loading --}}
             <svg 
@@ -68,14 +58,22 @@
         x-transition:leave="transition ease-in duration-75"
         x-transition:leave-start="opacity-100 transform scale-100"
         x-transition:leave-end="opacity-0 transform scale-95"
-        class="absolute z-[100] mt-2 w-full bg-white border border-gray-200 rounded-2xl shadow-xl max-h-60 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-200"
+        class="absolute z-[9999] mt-2 w-full bg-white border border-gray-200 rounded-2xl shadow-xl max-h-60 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-200"
         style="display: none;"
     >
         {{-- Skeleton loading rows --}}
-        <div wire:loading wire:target="{{ $searchModel }}" class="p-2 space-y-1">
-            @foreach(range(1, 4) as $i)
-                <div class="h-9 bg-gray-100 rounded-xl animate-pulse"></div>
-            @endforeach
+        <div wire:loading wire:target="{{ $searchModel }}" class="p-2 space-y-1 flex items-center justify-center w-full">
+            <div class="flex items-center flex-col justify-center gap-2">
+                <svg 
+                    class="w-6 h-6 animate-spin text-indigo-500" 
+                    fill="none" viewBox="0 0 24 24"
+                >
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                </svg>
+
+                <span class="text-gray-400">Mencari...</span>
+            </div>
         </div>
 
         {{-- Hasil opsi: sembunyikan saat loading agar tidak flicker --}}

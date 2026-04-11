@@ -1,38 +1,67 @@
 <div class="space-y-4">
-    {{-- Fillter --}}
-    <div class="bg-white rounded p-3">
-        <div class="grid grid-cols-4 text-sm gap-4">
-            <input 
-                type="text" 
-                class="col-span-3 rounded"
-                placeholder="Cari"
+    {{-- Filter --}}
+    {{-- PENTING: overflow-visible agar dropdown tidak terpotong, z-10 agar di atas grid produk --}}
+    <div class="relative z-10 bg-white rounded-2xl p-4 shadow-sm border border-gray-100 space-y-3 overflow-visible">
+        <x-select-search 
+            placeholder="Cari jasa servis (misal: AC, Kulkas)..."
+            model="search" 
+            searchModel="searchJasa"
+            :options="$nama_jasa"
+        />
+
+        <div class="flex gap-2">
+            <div class="flex-1">
+                <x-select-search 
+                    placeholder="Pilih Wilayah..."
+                    model="wilayah" 
+                    searchModel="searchWilayah"
+                    :options="$list_wilayah"
+                />
+            </div>
+
+            <button 
+                type="button"
+                wire:click="resetFilter"
+                class="inline-flex items-center gap-1.5 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-600 text-sm font-semibold rounded-xl transition whitespace-nowrap"
             >
-            <button class="col-span-1 bg-blue-700 rounded text-white">Kirim</button>
+                <i class="bi bi-arrow-counterclockwise text-base leading-none"></i>
+                Hapus
+            </button>
         </div>
     </div>
+
     {{-- Products --}}
-    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4">
-        
-        {{-- Product Card --}}
-        <a href="{{ route('detail-product') }}" class="bg-white p-2 sm:p-4 rounded space-y-2 shadow-sm sm:shadow-md">
-            {{-- Image --}}
-            <div>
-                <img 
-                    src="{{ asset('assets/icons/empty_image.webp') }}" 
-                    alt="Kosong"
-                    class="object-contain"
-                >
-            </div>
-            <div>
-                <div class="flex items-center gap-1 text-sm sm:text-lg leading-none">
-                    <h1 class="font-semibold">Jasa Servis Ac</h1>
-                    <div class="flex items-center gap-0.5 text-yellow-500 border border-yellow-400 rounded p-0.5 leading-none">
-                        <span class="text-[12px] sm:text-xs font-bold leading-none">4.8</span>
-                        <i class="bi bi-star-fill text-[10px] sm:text-[12px] leading-none mb-[1px]"></i>
-                    </div>
+    <div class="grid grid-cols-2 gap-3 px-1">
+        @forelse ($produk as $item)
+            <a 
+                href="{{ route('detail-product', ['id' => $item->id]) }}"
+                class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-200"
+            >
+                <div class="aspect-square bg-gray-50 overflow-hidden">
+                    <img 
+                        src="{{ asset('storage/' . ($item->first_thumbnail ?? 'default.jpg')) }}" 
+                        class="w-full h-full object-cover"
+                        loading="lazy"
+                    >
                 </div>
-                <p class="text-xs sm:text-md truncate">Servis sparepart ac pendingin, kipas dll</p>
+                <div class="p-3 space-y-1">
+                    <h3 class="font-semibold text-sm text-gray-800 line-clamp-2 leading-snug">
+                        {{ $item->nama_jasa }}
+                    </h3>
+                    <p class="text-indigo-600 font-bold text-sm">
+                        Rp {{ number_format($item->harga_jasa, 0, ',', '.') }}
+                    </p>
+                </div>
+            </a>
+        @empty
+            <div class="col-span-2 py-14 text-center text-gray-400 space-y-2">
+                <i class="bi bi-search text-4xl block"></i>
+                <p class="text-sm">Jasa tidak ditemukan.</p>
             </div>
-        </a>
+        @endforelse
+    </div>
+
+    <div class="px-1 pb-10">
+        {{ $produk->links() }}
     </div>
 </div>

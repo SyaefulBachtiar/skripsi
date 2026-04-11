@@ -131,7 +131,7 @@
                 </div>
             </div>
 
-            @if(auth()->user()->id === $jasa->id_technician)
+            @if(auth()->user()->id !== $jasa->technician->user_id)
                 <button class="p-2.5 rounded-2xl bg-gray-50 text-gray-400 hover:text-rose-500 hover:bg-rose-50 transition border border-gray-100 shrink-0">
                     <i class="bi bi-bookmark-fill text-lg"></i>
                 </button>
@@ -154,7 +154,7 @@
         <hr class="border-gray-100">
 
         {{-- ── Card Teknisi ── --}}
-        @if(auth()->user()->id === $jasa->id_technician)
+        @if(auth()->user()->id !== $jasa->technician->user_id)
             @if($jasa->technician?->user)
                 <div class="flex items-center justify-between gap-4 p-4 bg-indigo-50 rounded-2xl border border-indigo-100">
                     <div class="flex items-center gap-3">
@@ -423,7 +423,7 @@
                 </div>
             </div>
 
-            @if(auth()->user()->id === $jasa->id_technician)
+            @if(auth()->user()->id !== $jasa->technician->user_id)
                 <div class="border-t border-gray-100 sticky bottom-0">
                     <button type="button" wire:click="submitOrder" wire:loading.attr="disabled" class="w-full py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-2xl shadow-lg transition-all flex items-center justify-center gap-2">
                         <span wire:loading.remove wire:target="submitOrder">Pesan Jasa Sekarang</span>

@@ -58,7 +58,6 @@ class FormAlamat extends Component
     {
         $this->$target = $name;
         
-        // ✅ Set search input agar input terisi nama terpilih
         $searchVar = 'search' . ucfirst($target);
         $this->$searchVar = $name;
 
