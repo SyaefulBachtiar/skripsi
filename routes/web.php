@@ -96,8 +96,14 @@ Route::middleware(['auth'])->group(function () {
                 return view('pages.detail-jasa', [
                     'id_jasa' => $id
                 ]);
-            })
-                ->name('detail-product');
+            })->name('detail-product');
+
+            // Route To Profile Teknisi
+            Route::get('teknisi/{id}', function ($id) {
+                return view('pages.profile-technician', [
+                    'id_technician' => $id
+                ]);
+            })->name('technician.profile');
             
         });
 

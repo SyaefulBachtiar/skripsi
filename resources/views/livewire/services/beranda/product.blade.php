@@ -22,10 +22,10 @@
             <button 
                 type="button"
                 wire:click="resetFilter"
-                class="inline-flex items-center gap-1.5 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-600 text-sm font-semibold rounded-xl transition whitespace-nowrap"
+                class="inline-flex items-center gap-1.5 px-4 py-2.5 bg-blue-700 hover:bg-blue-800 text-gray-600 text-sm font-semibold rounded-xl transition whitespace-nowrap"
             >
-                <i class="bi bi-arrow-counterclockwise text-base leading-none"></i>
-                Hapus
+                <i class="bi bi-arrow-counterclockwise text-base leading-none text-white"></i>
+                <span class="text-white">Hapus</span>
             </button>
         </div>
     </div>

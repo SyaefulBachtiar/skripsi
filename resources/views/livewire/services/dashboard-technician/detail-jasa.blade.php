@@ -171,9 +171,9 @@
                             <p class="text-[10px] text-indigo-500 font-bold uppercase tracking-widest">Teknisi Elektronik</p>
                         </div>
                     </div>
-                    <a href="#" class="flex items-center gap-1.5 px-3 py-2 bg-white text-indigo-600 rounded-xl text-xs font-bold border border-indigo-100 hover:bg-indigo-600 hover:text-white hover:border-indigo-600 transition-all shadow-sm">
+                    <a href="{{ route('technician.profile', ['id' => $jasa->id_technician]) }}" class="flex items-center gap-1.5 px-3 py-2 bg-white text-indigo-600 rounded-xl text-xs font-bold border border-indigo-100 hover:bg-indigo-600 hover:text-white hover:border-indigo-600 transition-all shadow-sm">
                         <i class="bi bi-shop text-sm"></i>
-                        <span>Profil</span>
+                        <span>Profile</span>
                     </a>
                 </div>
             @endif
@@ -371,7 +371,7 @@
                             x-transition:enter-start="opacity-0"
                             x-transition:enter-end="opacity-100"
                             x-transition:leave="transition ease-in duration-200"
-                            class="fixed inset-0 z-[100] flex items-end justify-center bg-black/50 backdrop-blur-sm"
+                            class="fixed inset-0 z-[99999] flex items-end justify-center bg-black/50 backdrop-blur-sm"
                             style="display: none;">
                             
                             <div class="absolute inset-0" @click="openModal = null"></div>

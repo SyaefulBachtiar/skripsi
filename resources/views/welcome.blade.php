@@ -134,7 +134,7 @@
 <div id="mobileMenu" class="hidden fixed top-16 left-0 right-0 z-40 bg-white border-b border-slate-200 shadow-lg px-5 py-4 md:hidden">
     <a href="#features" onclick="toggleMenu()" class="block py-3 text-sm font-medium text-slate-700 border-b border-slate-100 no-underline">Fitur</a>
     <a href="#how-it-works" onclick="toggleMenu()" class="block py-3 text-sm font-medium text-slate-700 border-b border-slate-100 no-underline">Cara Kerja</a>
-    <a href="#" onclick="toggleMenu()" class="block py-3 text-sm font-medium text-slate-700 border-b border-slate-100 no-underline">Teknisi</a>
+    <a href="{{ route('register.technician') }}" onclick="toggleMenu()" class="block py-3 text-sm font-medium text-slate-700 border-b border-slate-100 no-underline">Teknisi</a>
     <a href="{{ route('login') }}" onclick="toggleMenu()" class="block py-3 text-sm font-medium text-slate-700 border-b border-slate-100 no-underline">Masuk</a>
     <a href="#" class="mt-3 w-full flex items-center justify-center px-4 py-2.5 text-sm font-semibold text-white bg-blue-600 rounded-lg no-underline">
         Daftar Sekarang

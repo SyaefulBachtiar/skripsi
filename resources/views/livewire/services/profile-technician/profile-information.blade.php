@@ -3,13 +3,7 @@
     editingName: false,
     name: '{{ auth()->user()->name }}',
     oldName: '{{ auth()->user()->name }}',
-    imageUrl: '{{ 
-        auth()->user()->avatar 
-            ? (Str::startsWith(auth()->user()->avatar, 'http') 
-                ? auth()->user()->avatar 
-                : asset('storage/' . auth()->user()->avatar)) 
-            : '' 
-    }}',
+    imageUrl: '{{ auth()->user()->profile_photo_url }}',
     
     oldImageUrl: '', {{-- Akan diisi di x-init --}}
     showStatus: false,
