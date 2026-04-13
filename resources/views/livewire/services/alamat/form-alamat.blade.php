@@ -12,19 +12,26 @@
         searchResults: [],
 
         initMap() {
+            if (this.map) return;
+
+            this.$nextTick(() => {
             let lat = this.latitude || -6.200000;
             let lng = this.longitude || 106.816666;
 
             this.map = L.map(this.$refs.mapContainer).setView([lat, lng], 15);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(this.map);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap'
+            }).addTo(this.map);
+            
             this.marker = L.marker([lat, lng], { draggable: false }).addTo(this.map);
 
-            // ✅ Fix: paksa Leaflet recalculate ukuran container setelah render
-            this.$nextTick(() => {
-                setTimeout(() => {
-                    this.map.invalidateSize();
-                }, 100);
-            });
+            let count = 0;
+            let interval = setInterval(() => {
+                this.map.invalidateSize();
+                count++;
+                if (count > 5) clearInterval(interval); // Berhenti setelah 5 kali usaha
+            }, 300);
+        });
         },
 
         updateCoords(latlng) {
@@ -135,7 +142,6 @@
             <x-input-error :messages="$errors->get('detail_alamat')" class="mt-2" />
         </div>
 
-        {{-- SESUDAH --}}
         <div class="space-y-2" wire:ignore>
             <div class="flex justify-between items-end">
                 <x-input-label :value="__('Lokasi di Peta')" />

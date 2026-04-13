@@ -111,24 +111,33 @@
                 </div>
 
                 {{-- Sertifikat Section --}}
-                <section>
+                <section x-data="{ 
+                    showModal: false, 
+                    modalImage: '',
+                    openModal(url) {
+                        this.modalImage = url;
+                        this.showModal = true;
+                    }
+                }">
                     <h1 class="text-md sm:text-base font-bold text-gray-800 flex items-center gap-2 mb-4">
                         <i class="bi bi-patch-check text-indigo-500"></i> Sertifikat Keahlian
                     </h1>
                     
                     <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                         @forelse($data->sertifikat ?? [] as $item)
-                            <div class="group relative aspect-square overflow-hidden rounded-xl border-2 border-gray-100 hover:border-indigo-300 transition-all shadow-sm">
+                            <div 
+                                @click="openModal('{{ asset('storage/' . $item) }}')"
+                                class="relative aspect-square overflow-hidden rounded-xl border-2 border-gray-100 shadow-sm cursor-pointer"
+                            >
                                 <img 
                                     src="{{ asset('storage/' . $item) }}" 
                                     alt="Sertifikat" 
-                                    class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                                    class="w-full h-full object-cover"
                                 >
-                                {{-- Overlay saat hover --}}
-                                <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all flex items-center justify-center">
-                                    <a href="{{ asset('storage/' . $item) }}" target="_blank" class="opacity-0 group-hover:opacity-100 bg-white p-2 rounded-full shadow-lg">
-                                        <i class="bi bi-eye-fill text-indigo-600"></i>
-                                    </a>
+                                
+                                {{-- Indikator klik (statis) --}}
+                                <div class="absolute bottom-2 right-2 bg-black/40 p-1.5 rounded-lg">
+                                    <i class="bi bi-fullscreen text-white text-xs"></i>
                                 </div>
                             </div>
                         @empty
@@ -138,6 +147,32 @@
                             </div>
                         @endforelse
                     </div>
+
+                    {{-- Lightbox Modal --}}
+                    <template x-teleport="body">
+                        <div 
+                            x-show="showModal" 
+                            class="fixed inset-0 z-[999] flex items-center justify-center bg-slate-900/95 p-4"
+                            style="display: none;"
+                            @keydown.escape.window="showModal = false"
+                        >
+                            {{-- Tombol Close --}}
+                            <button 
+                                @click="showModal = false" 
+                                class="absolute top-5 right-5 text-white/80 p-2 hover:text-white"
+                            >
+                                <i class="bi bi-x-lg text-3xl"></i>
+                            </button>
+
+                            {{-- Image Wrapper --}}
+                            <div class="max-w-5xl w-full h-full flex items-center justify-center" @click.away="showModal = false">
+                                <img 
+                                    :src="modalImage" 
+                                    class="max-w-full max-h-full rounded-lg object-contain border border-white/10 shadow-2xl"
+                                >
+                            </div>
+                        </div>
+                    </template>
                 </section>
             </div>
         </div>

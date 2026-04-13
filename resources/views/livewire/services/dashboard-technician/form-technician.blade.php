@@ -2,6 +2,8 @@
 
 use App\Livewire\Forms\FormTechnician;
 use App\Models\Role_users\Technician;
+use Illuminate\Database\QueryException;
+use Illuminate\Validation\ValidationException;
 use Livewire\Volt\Component;
 use Livewire\WithFileUploads;
 
@@ -9,94 +11,50 @@ new class extends Component
 {
     use WithFileUploads;
 
-    // Inisialisasi Form Object
     public FormTechnician $form;
 
-    public function mount()
+    public function mount(): void
     {
-        // Ambil data teknisi berdasarkan user login
         $technician = Technician::where('user_id', auth()->id())->first();
         
-        // Isi form dengan data tersebut
         if ($technician) {
             $this->form->setValues($technician);
         }
     }
 
-    public function save()
+    public function removeOldCert($index)
+    {
+        // Panggil fungsi removeExistingCertificate yang ada di FormTechnician
+        $this->form->removeExistingCertificate($index);
+    }
+
+    public function removeNewCert($index)
+    {
+        $this->form->removeCertificate($index);
+    }
+
+    public function updatedFormNewCertificate(): void
+    {
+        $this->form->addCertificate();
+    }
+
+    public function save(): void
     {
         try {
-            // dd($this->form->all());
-            \Illuminate\Support\Facades\DB::transaction(function () {
-                $this->form->store();
-            });
-            session()->flash('success', 'Berhasil disimpan!');
-            return redirect()->to(request()->header('Referer'));
+            $this->form->store();
             
-        } catch (\Illuminate\Validation\ValidationException $e) {
+            session()->flash('success', 'Profil teknisi berhasil disimpan!');
+            $this->redirect(request()->header('Referer') ?? route('dashboard'));
+            
+        } catch (ValidationException $e) {
+            // Biarkan Livewire menangani error validasi otomatis
             throw $e;
-        } catch (Exception $e) {
-            session()->flash('error', 'Terjadi kesalahan: ' . $e->getMessage());
-            return redirect()->to(request()->header('Referer'));
-        }
-    }
-
-    public function removeNewCertificate($index)
-    {
-        // Cek apakah index valid
-        if (!isset($this->form->certificates[$index])) {
-            return;
-        }
-
-        $file = $this->form->certificates[$index];
-
-        // Hapus file temporary dari storage livewire-tmp
-        try {
-            if (is_object($file) && method_exists($file, 'getRealPath')) {
-                $realPath = $file->getRealPath();
-                if (file_exists($realPath)) {
-                    unlink($realPath);
-                }
-            }
+        } catch (QueryException $e) {
+            session()->flash('error', 'Terjadi kesalahan database. Silakan coba lagi.');
+            $this->dispatch('notify', type: 'error', message: 'Database error occurred');
         } catch (\Exception $e) {
-            // Log error tapi jangan stop execution
-            logger('Error deleting temp file: ' . $e->getMessage());
-        }
-
-        // Hapus dari array Livewire
-        unset($this->form->certificates[$index]);
-        
-        // Re-index array (penting untuk menjaga konsistensi index)
-        $this->form->certificates = array_values($this->form->certificates);
-
-        // Dispatch event ke Alpine bahwa sudah terhapus
-        $this->dispatch('certificate-removed', remaining: count($this->form->certificates));
-    }
-
-    public function deleteOldCertificate($index)
-    {
-        // 1. Ambil array sertifikat lama dari form object
-        $certs = $this->form->existing_certificates;
-
-        if (isset($certs[$index])) {
-            $pathFile = $certs[$index];
-
-            if (\Illuminate\Support\Facades\Storage::disk('public')->exists($pathFile)) {
-                \Illuminate\Support\Facades\Storage::disk('public')->delete($pathFile);
-            }
-
-            unset($certs[$index]);
-            $newCerts = array_values($certs);
-
-            \App\Models\Role_users\Technician::where('user_id', auth()->id())
-                ->update([
-                    'sertifikat' => $newCerts
-                ]);
-
-            $this->form->existing_certificates = $newCerts;
-
-            session()->flash('success', 'Foto sertifikat berhasil dihapus permanen.');
-            return redirect()->to(request()->header('Referer'));
+            session()->flash('error', 'Terjadi kesalahan: ' . $e->getMessage());
+            $this->dispatch('notify', type: 'error', message: $e->getMessage());
         }
     }
 };
@@ -115,13 +73,27 @@ new class extends Component
         </div>
     </div>
 
+    {{-- Flash Messages --}}
+    @if (session()->has('success'))
+        <div class="mb-4 p-4 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-lg">
+            {{ session('success') }}
+        </div>
+    @endif
+
+    @if (session()->has('error'))
+        <div class="mb-4 p-4 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded-lg">
+            {{ session('error') }}
+        </div>
+    @endif
+
     <form wire:submit.prevent="save" class="space-y-5">
 
         {{-- Deskripsi --}}
         <div>
-            <x-input-label for="deskripsi" :value="__('Deskripsi Singkat')" class="mb-2" />
+            <x-input-label for="bio" :value="__('Deskripsi Singkat')" class="mb-2" />
             <textarea 
-                wire:model.live="form.bio"
+                wire:model.live.debounce.300ms="form.bio"
+                id="bio"
                 rows="4"
                 class="w-full border-slate-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
                 placeholder="Ceritakan singkat tentang keahlian Anda..."
@@ -133,24 +105,24 @@ new class extends Component
         
         {{-- Spesialisasi (Multi-select) --}}
         <div x-data="{ 
-            selected: @entangle('form.spesialisasi') || [],
+            selected: @entangle('form.spesialisasi'),
             options: ['AC', 'Kulkas', 'Kelistrikan', 'Mesin Cuci', 'Water Heater', 'Pompa Air'],
             showManual: false,
             manualInput: '',
             
             add(option) {
-                if(option === 'custom') {
+                if (option === 'custom') {
                     this.showManual = true;
                     return;
                 }
-                if(option && !this.selected.includes(option) && this.selected.length < 5) {
+                if (option && !this.selected.includes(option) && this.selected.length < 5) {
                     this.selected.push(option);
                 }
             },
             
             addManual() {
-                let val = this.manualInput.trim();
-                if(val && !this.selected.includes(val) && this.selected.length < 5) {
+                const val = this.manualInput.trim();
+                if (val && !this.selected.includes(val) && this.selected.length < 5) {
                     this.selected.push(val);
                     this.manualInput = '';
                     this.showManual = false;
@@ -165,7 +137,7 @@ new class extends Component
             
             {{-- Indikator Kuota --}}
             <div class="flex justify-between items-center mb-2">
-                <p class="text-xs text-slate-500 font-medium" :class="selected.length >= 5 ? 'text-amber-600' : ''">
+                <p class="text-xs font-medium" :class="selected.length >= 5 ? 'text-amber-600 dark:text-amber-400' : 'text-slate-500 dark:text-slate-400'">
                     Terpilih <span x-text="selected.length"></span> dari 5
                 </p>
             </div>
@@ -187,19 +159,19 @@ new class extends Component
                 <select 
                     @change="add($event.target.value); $event.target.value = ''" 
                     :disabled="selected.length >= 5"
-                    :class="selected.length >= 5 ? 'bg-slate-50 cursor-not-allowed opacity-60' : ''"
+                    :class="selected.length >= 5 ? 'bg-slate-50 dark:bg-slate-800 cursor-not-allowed opacity-60' : ''"
                     class="w-full border-slate-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm transition-all"
                 >
-                    <option value="" x-text="selected.length >= 5 ? 'Maksimal 5' : '-- Pilih Spesialisasi --'"></option>
+                    <option value="" x-text="selected.length >= 5 ? 'Maksimal 5 spesialisasi' : '-- Pilih Spesialisasi --'"></option>
                     
                     <template x-for="opt in options" :key="opt">
                         <option :value="opt" x-text="opt" :disabled="selected.includes(opt)"></option>
                     </template>
 
-                    <option value="custom" class="text-indigo-600 font-bold">Lainnya</option>
+                    <option value="custom" class="text-indigo-600 font-bold">+ Lainnya</option>
                 </select>
 
-                {{-- Input Manual Field (Muncul jika pilih custom) --}}
+                {{-- Input Manual Field --}}
                 <div x-show="showManual" 
                     x-transition 
                     class="flex gap-2 p-3 bg-slate-50 dark:bg-slate-900/50 rounded-lg border border-slate-200 dark:border-slate-700 w-full">
@@ -209,10 +181,10 @@ new class extends Component
                         placeholder="Ketik keahlian lainnya..." 
                         class="text-sm w-full" 
                     />
-                    <button type="button" @click="addManual()" class="px-2 bg-indigo-600 text-white rounded-md text-sm hover:bg-indigo-700">
+                    <button type="button" @click="addManual()" class="px-3 py-1 bg-indigo-600 text-white rounded-md text-sm hover:bg-indigo-700 transition-colors">
                         Tambah
                     </button>
-                    <button type="button" @click="showManual = false" class="px-2 text-slate-500 text-sm">
+                    <button type="button" @click="showManual = false" class="px-3 py-1 text-slate-500 text-sm hover:text-slate-700 dark:hover:text-slate-300">
                         Batal
                     </button>
                 </div>
@@ -224,187 +196,185 @@ new class extends Component
         <hr class="border-slate-200 dark:border-slate-700">
 
         {{-- Pengalaman (Dynamic Input) --}}
-        <div x-data="{ items: @entangle('form.experience_list') || [''] }">
-            <x-input-label :value="__('Riwayat Pengalaman Kerja (Optional)')" class="mb-2" />
+        <div x-data="{ items: @entangle('form.experience_list') }">
+            <x-input-label :value="__('Riwayat Pengalaman Kerja (Opsional)')" class="mb-2" />
             <div class="space-y-3">
                 <template x-for="(item, index) in items" :key="index">
                     <div class="flex gap-2">
-                        <x-text-input type="text" x-model="items[index]" placeholder="PT. Maju Jaya (2019-2021)" class="flex-1" />
-                        <button type="button" @click="items.length > 1 ? items.splice(index, 1) : items[0] = ''" class="text-red-500 hover:text-red-700 p-2">
+                        <x-text-input 
+                            type="text" 
+                            x-model="items[index]" 
+                            placeholder="PT. Maju Jaya (2019-2021)" 
+                            class="flex-1" 
+                        />
+                        <button 
+                            type="button" 
+                            @click="items.length > 1 ? items.splice(index, 1) : items[index] = ''" 
+                            class="text-red-500 hover:text-red-700 dark:hover:text-red-400 p-2 transition-colors"
+                        >
                             <i class="bi bi-trash-fill"></i>
                         </button>
                     </div>
                 </template>
-                <button type="button" @click="items.push('')" class="inline-flex items-center text-sm font-semibold text-indigo-600 dark:text-indigo-400 hover:underline">
+                <button 
+                    type="button" 
+                    @click="items.push('')" 
+                    class="inline-flex items-center text-sm font-semibold text-indigo-600 dark:text-indigo-400 hover:underline"
+                >
                     <i class="bi bi-plus-lg mr-1"></i> Tambah Pengalaman
                 </button>
             </div>
             <x-input-error :messages="$errors->get('form.experience_list')" class="mt-2" />
         </div>
 
+        <hr class="border-slate-200 dark:border-slate-700">
+
         {{-- Sertifikasi (Upload & Preview) --}}
         <div x-data="{ 
-            images: [], 
             showModal: false, 
             modalImage: '',
-            
-            handleFiles(event) {
-                const newFiles = Array.from(event.target.files);
-                
-                // Cek jika total gambar melebihi 10
-                if (this.images.length + newFiles.length > 10) {
-                    alert('Maksimal 10 gambar saja yang diperbolehkan.');
-                    return;
-                }
-
-                newFiles.forEach(file => {
-                    const reader = new FileReader();
-                    reader.onload = (e) => {
-                        this.images.push({
-                            url: e.target.result,
-                            name: file.name
-                        });
-                    };
-                    reader.readAsDataURL(file);
-                });
-            },
-
-            async removeImage(index) {
-                this.images.splice(index, 1);
-
-                await $wire.removeNewCertificate(index);
-                this.images = this.images.map((img, idx) => ({...img, index: idx}));
-            },
-
             openModal(url) {
                 this.modalImage = url;
                 this.showModal = true;
             }
         }" class="space-y-4">
             
-            <x-input-label :value="__('Sertifikasi Keahlian (Optional)')" class="mb-2" />
+            <x-input-label :value="__('Sertifikasi Keahlian (Opsional)')" class="mb-2" />
             
             {{-- Upload Area --}}
-            <div 
-                class="relative mt-2 flex justify-center rounded-lg border border-dashed border-slate-300 dark:border-slate-700 px-6 py-10 transition-colors hover:border-indigo-400"
-                :class="images.length >= 10 ? 'opacity-50 cursor-not-allowed bg-slate-100 dark:bg-slate-900' : 'cursor-pointer'"
-            >
+            <div class="relative mt-2 flex justify-center rounded-xl border-2 border-dashed border-slate-300 dark:border-slate-700 px-6 py-10 hover:border-indigo-400 dark:hover:border-indigo-600 transition-colors">
                 <div class="text-center">
-                    <i class="bi bi-cloud-arrow-up text-4xl text-slate-400"></i>
+                    <div class="mx-auto h-12 w-12 text-slate-400">
+                        <i class="bi bi-cloud-arrow-up text-4xl"></i>
+                    </div>
                     <div class="mt-4 flex text-sm text-slate-600 dark:text-slate-400 justify-center">
-                        <label class="relative font-semibold text-indigo-600 focus-within:outline-none hover:text-indigo-500" :class="images.length >= 10 ? 'pointer-events-none' : 'cursor-pointer'">
+                        <label class="relative cursor-pointer rounded-md font-semibold text-indigo-600 focus-within:outline-none hover:text-indigo-500">
                             <span>Upload files</span>
                             <input 
                                 type="file" 
-                                wire:model="form.certificates" 
+                                wire:model="form.newCertificate"
                                 class="sr-only" 
                                 multiple 
-                                accept="image/*"
-                                :disabled="images.length >= 10"
-                                @change="handleFiles($event)"
+                                accept="image/jpeg,image/png,image/jpg"
                             >
                         </label>
-                        <p class="pl-1 text-slate-500">or drag and drop</p>
+                        <p class="pl-1 text-slate-500">atau drag & drop</p>
                     </div>
-                    <p class="text-xs text-slate-500 italic">Terupload: <span x-text="images.length"></span>/10</p>
+                    <p class="text-xs text-slate-400 mt-1 italic">
+                        JPG, JPEG, PNG hingga 2MB (Maks. 5 foto)
+                    </p>
+                    
+                    @php
+                        $totalCerts = count($form->existing_certificates) + count($form->certificates);
+                    @endphp
+                    
+                    <div class="mt-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $totalCerts >= 5 ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300' : 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300' }}">
+                        {{ $totalCerts }} / 5 Terupload
+                    </div>
                 </div>
             </div>
 
+            <x-input-error :messages="$errors->get('form.newCertificate')" class="mt-2" />
+            <x-input-error :messages="$errors->get('form.newCertificate.*')" class="mt-2" />
+
             {{-- Preview Grid --}}
-            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 mt-4">
-                
-                {{-- Tampilkan Sertifikat LAMA dari Database --}}
-                @foreach($form->existing_certificates as $index => $path)
-                    <div class="relative aspect-square bg-slate-100 rounded-lg overflow-hidden border border-slate-200 shadow-sm">
-                        <img src="{{ asset('storage/' . $path) }}" class="h-full w-full object-cover">
-                        
-                        {{-- Tombol Hapus SELALU TERLIHAT (tanpa hover) --}}
-                        <button 
-                            type="button" 
-                            wire:click="deleteOldCertificate({{ $index }})"
-                            wire:loading.attr="disabled"
-                            wire:loading.class="opacity-50"
-                            class="absolute top-2 right-2 p-1.5 bg-red-500 hover:bg-red-600 active:bg-red-700 text-white rounded-full shadow-lg shadow-red-500/30 transition-all duration-200 hover:scale-110 active:scale-95 z-10"
-                        >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" viewBox="0 0 16 16">
-                                <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
-                            </svg>
-                        </button>
-
-                        {{-- Label Lama --}}
-                        <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent text-[10px] text-white px-2 py-2 font-medium backdrop-blur-[2px]">
-                            <span class="flex items-center gap-1">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" fill="currentColor" viewBox="0 0 16 16">
-                                    <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
-                                    <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
-                                </svg>
-                                Lama
-                            </span>
+            @if (count($form->existing_certificates) > 0 || count($form->certificates) > 0)
+                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 mt-6">
+                    
+                    {{-- Existing Certificates (Database) --}}
+                    @foreach($form->existing_certificates as $index => $path)
+                        <div class="relative aspect-square group">
+                            <div 
+                                @click="openModal('{{ Storage::url($path) }}')"
+                                class="w-full h-full rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 cursor-pointer shadow-sm hover:shadow-md transition-shadow"
+                            >
+                                <img src="{{ Storage::url($path) }}" class="w-full h-full object-cover" alt="Sertifikat {{ $index + 1 }}">
+                            </div>
+                            <button 
+                                type="button" 
+                                wire:click="removeOldCert({{ $index }})" 
+                                class="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center shadow-md z-10 transition-colors"
+                                wire:loading.attr="disabled"
+                            >
+                                <i class="bi bi-x text-lg"></i>
+                            </button>
                         </div>
-                    </div>
-                @endforeach
+                    @endforeach
 
-                {{-- Tampilkan Sertifikat BARU (Temporary Upload) --}}
-                <template x-for="(img, index) in images" :key="index">
-                    <div class="relative aspect-square bg-slate-100 rounded-lg overflow-hidden border border-slate-200 shadow-sm">
-                        <img :src="img.url" class="h-full w-full object-cover cursor-pointer" @click="openModal(img.url)">
-                        
-                        {{-- Tombol Hapus SELALU TERLIHAT (tanpa hover) --}}
-                        <button 
-                            type="button" 
-                            @click="removeImage(index)"
-                            class="absolute top-2 right-2 p-1.5 bg-red-500 hover:bg-red-600 active:bg-red-700 text-white rounded-full shadow-lg shadow-red-500/30 transition-all duration-200 hover:scale-110 active:scale-95 z-10"
-                        >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" viewBox="0 0 16 16">
-                                <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
-                            </svg>
-                        </button>
-
-                        {{-- Label Baru dengan Nama File --}}
-                        <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent text-[10px] text-white px-2 py-2 backdrop-blur-[2px]">
-                            <span class="flex items-center gap-1 truncate">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" fill="currentColor" viewBox="0 0 16 16">
-                                    <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
-                                    <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
-                                </svg>
-                                <span x-text="img.name" class="truncate max-w-[80px]"></span>
-                            </span>
+                    {{-- New Temporary Certificates --}}
+                    @foreach($form->certificates as $index => $file)
+                        <div class="relative aspect-square group">
+                            @if ($file && method_exists($file, 'temporaryUrl'))
+                                <div 
+                                    @click="openModal('{{ $file->temporaryUrl() }}')"
+                                    class="w-full h-full rounded-xl overflow-hidden border border-indigo-200 dark:border-indigo-900 cursor-pointer shadow-sm hover:shadow-md transition-shadow"
+                                >
+                                    <img src="{{ $file->temporaryUrl() }}" class="w-full h-full object-cover" alt="Preview {{ $index + 1 }}">
+                                </div>
+                            @else
+                                <div class="w-full h-full bg-slate-100 dark:bg-slate-800 rounded-xl flex items-center justify-center border border-slate-200 dark:border-slate-700">
+                                    <i class="bi bi-hourglass-split text-slate-400 animate-pulse"></i>
+                                </div>
+                            @endif
+                            
+                            <button 
+                                type="button" 
+                                wire:click="removeNewCert({{ $index }})" 
+                                class="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center shadow-md z-10 transition-colors"
+                                wire:loading.attr="disabled"
+                            >
+                                <i class="bi bi-x text-lg"></i>
+                            </button>
                         </div>
-                    </div>
-                </template>
-            </div>
-
-            <x-input-error :messages="$errors->get('form.certificates')" class="mt-2" />
+                    @endforeach
+                </div>
+            @endif
 
             {{-- Lightbox Modal --}}
-            <div 
-                x-show="showModal" 
-                x-transition:enter="transition ease-out duration-300"
-                x-transition:enter-start="opacity-0"
-                x-transition:enter-end="opacity-100"
-                x-transition:leave="transition ease-in duration-200"
-                x-transition:leave-start="opacity-100"
-                x-transition:leave-end="opacity-0"
-                class="fixed inset-0 z-[99] flex items-center justify-center bg-black/90 p-4"
-                @click.away="showModal = false"
-                @keydown.escape.window="showModal = false"
-                style="display: none;"
-            >
-                {{-- Close Modal --}}
-                <button @click="showModal = false" type="button" class="absolute top-5 right-5 text-white text-3xl hover:text-slate-300 transition-colors">
-                    <i class="bi bi-x-lg"></i>
-                </button>
+            <template x-teleport="body">
+                <div 
+                    x-show="showModal" 
+                    class="fixed inset-0 z-[999] flex items-center justify-center bg-slate-900/90 p-4 sm:p-10"
+                    style="display: none;"
+                    @keydown.escape.window="showModal = false"
+                    x-transition.opacity
+                >
+                    {{-- Tombol Close --}}
+                    <button 
+                        @click="showModal = false" 
+                        class="absolute top-5 right-5 text-white/70 hover:text-white p-2 transition-colors"
+                    >
+                        <i class="bi bi-x-lg text-3xl"></i>
+                    </button>
 
-                <img :src="modalImage" class="max-w-full max-h-full rounded-lg shadow-2xl shadow-white/10">
-            </div>
+                    {{-- Image Wrapper --}}
+                    <div class="max-w-5xl w-full h-full flex items-center justify-center" @click.away="showModal = false">
+                        <img 
+                            :src="modalImage" 
+                            class="max-w-full max-h-full rounded-lg object-contain border border-white/10 shadow-2xl"
+                            x-show="showModal"
+                            x-transition
+                            alt="Preview Sertifikat"
+                        >
+                    </div>
+                </div>
+            </template>
         </div>
 
         {{-- Submit Button --}}
-        <div class="flex items-center justify-end border-t border-slate-100 dark:border-slate-700">
-            <x-primary-button wire:loading.attr="disabled" class="w-full flex justify-center space-x-2 !bg-blue-700">
-                <i wire:loading.remove class="bi bi-send-check text-lg sm:text-2xl"></i>
-                <span wire:loading class="animate-spin mr-2"><i class="bi bi-arrow-repeat text-lg sm:text-2xl"></i></span>
-                <span class="text-md sm:text-lg">Simpan Profil</span>
+        <div class="flex items-center justify-end border-t border-slate-100 dark:border-slate-700 pt-6">
+            <x-primary-button 
+                wire:loading.attr="disabled" 
+                wire:target="save"
+                class="w-full flex justify-center items-center space-x-2 !bg-blue-700 hover:!bg-blue-800 transition-colors"
+            >
+                <span wire:loading.remove wire:target="save">
+                    <i class="bi bi-send-check text-lg sm:text-xl"></i>
+                </span>
+                <span wire:loading wire:target="save" class="animate-spin">
+                    <i class="bi bi-arrow-repeat text-lg sm:text-xl"></i>
+                </span>
+                <span class="text-base sm:text-lg">Simpan Profil</span>
             </x-primary-button>
         </div>
     </form>

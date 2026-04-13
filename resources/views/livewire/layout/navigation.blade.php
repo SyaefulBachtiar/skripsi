@@ -63,13 +63,16 @@ new class extends Component
                                 </x-nav-link>
                             @endif
                         @endauth
-                        <x-nav-link :href="route('beranda')" :active="request()->routeIs('beranda')" wire:navigate>
-                            {{ __('Beranda') }}
-                        </x-nav-link>
+                        
+                        @guest
+                            <x-nav-link :href="route('beranda')" :active="request()->routeIs('beranda')" wire:navigate>
+                                {{ __('Beranda') }}
+                            </x-nav-link>
 
-                        <x-nav-link :href="route('login')" wire:navigate>
-                            {{ __('Login') }}
-                        </x-nav-link>
+                            <x-nav-link :href="route('login')" wire:navigate>
+                                {{ __('Login') }}
+                            </x-nav-link>
+                        @endguest
                     </div>
                 </div>
 
