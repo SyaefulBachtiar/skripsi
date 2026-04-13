@@ -37,7 +37,7 @@ class Jasa extends Model
     protected function firstThumbnail (): Attribute
     {
         return Attribute::get(function () {
-            return $this->thumbnails[0];
+            return $this->thumbnails[0] ?? null;
         });
     }
 

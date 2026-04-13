@@ -35,45 +35,37 @@ new class extends Component
         }
     }
 
-    public function removeOldImage($path)
+    public function updatedFormNewImages()
     {
-        if ($this->jasa) {
-        // 1. Ambil data thumbnails terbaru dari database
-        $currentThumbnails = $this->jasa->thumbnails ?? [];
-
-        // 2. Buat array baru tanpa path yang ingin dihapus
-        $updatedThumbnails = array_values(array_diff($currentThumbnails, [$path]));
-
-        // 3. Update database secara langsung
-        $this->jasa->update([
-            'thumbnails' => $updatedThumbnails
-        ]);
-
-        // 4. Sinkronkan property Form agar tampilan UI tetap update
-        $this->form->old_image_paths = $updatedThumbnails;
-
-        // 5. (Opsional) Hapus file fisik dari storage agar tidak memenuhi server
-        if (\Illuminate\Support\Facades\Storage::disk('public')->exists($path)) {
-            \Illuminate\Support\Facades\Storage::disk('public')->delete($path);
-        }
-
-        // 6. Beritahu Alpine.js bahwa data sudah berubah
-        // $this->dispatch('old-images-updated', paths: $updatedThumbnails);
-        
-        session()->flash('success', 'Image berhasil di hapus!');
-        return redirect()->to(request()->header('Referer'));
-
-
-        }
+        $this->form->addImage();
     }
 
     public function removeNewImage($index)
     {
-        unset($this->new_images[$index]);
-        $this->new_images = array_values($this->new_images);
-        
-        // ⭐ DISPATCH EVENT: Beritahu Alpine.js
-        $this->dispatch('new-images-updated', count: count($this->new_images));
+        $this->form->removeNewImage($index);
+    }
+
+    public function removeOldImage($path)
+    {
+        if ($this->jasa) {
+            // 1. Update array di Form Object
+            $this->form->old_image_paths = array_values(array_diff($this->form->old_image_paths, [$path]));
+
+            // 2. Update database langsung (Opsional, agar database bersih seketika)
+            $this->jasa->update([
+                'thumbnails' => $this->form->old_image_paths
+            ]);
+
+            // 3. Hapus file fisik
+            if (\Illuminate\Support\Facades\Storage::disk('public')->exists($path)) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($path);
+            }
+
+            // ⭐ PENTING: Kirim event ke Alpine.js agar variabel 'oldPaths' di JS ter-update
+            $this->dispatch('old-images-updated', paths: $this->form->old_image_paths);
+            
+            // session()->flash('success', 'Gambar berhasil dihapus!');
+        }
     }
 
     public function save($payload)
@@ -88,12 +80,6 @@ new class extends Component
         $this->form->layanan_tambahan = $payload['layanan'];
         $this->form->old_image_paths = $payload['oldImagePaths'] ?? [];
         $this->form->new_images      = $this->new_images ?? [];
-
-        // $this->form->store($this->jasa?->id);
-
-        // session()->flash('success', $this->jasa ? 'Jasa berhasil diperbarui!' : 'Jasa berhasil diposting!');
-
-        // return $this->redirect(request()->header('Referer'), navigate: true);
 
         try {
             \Illuminate\Support\Facades\DB::transaction(function () {
@@ -189,10 +175,12 @@ new class extends Component
                         this.layanan = [{ judul: '', items: [{ nama: '', harga: '' }] }];
                     }
                     $wire.on('old-images-updated', (event) => {
-                        this.oldPaths = event.paths;
+                        // Karena event Livewire 3 mengirim data dalam object/array
+                        this.oldPaths = event.paths; 
+                        console.log('Alpine oldPaths updated:', this.oldPaths);
                     });
+
                     $wire.on('new-images-updated', (event) => {
-                        // Force update UI
                         this.$nextTick(() => {
                             console.log('New images count:', event.count);
                         });
@@ -275,131 +263,93 @@ new class extends Component
                     <x-input-error :messages="$errors->get('form.deskripsi_jasa')" class="mt-2" />
                 </div>
 
-                <div class="space-y-4">
+                {{-- Bagian Upload & Preview --}}
+                <div x-data="{ 
+                    showModal: false, 
+                    modalImage: '',
+                    openModal(url) {
+                        this.modalImage = url;
+                        this.showModal = true;
+                    }
+                }" class="space-y-4">
                     <x-input-label :value="__('Foto Thumbnail Jasa (Maksimal 5)')" />
 
+                    {{-- Area Drop/Click Upload --}}
                     <div 
-                        class="relative border-2 border-dashed border-gray-300 rounded-2xl p-6 transition-all duration-300 hover:border-indigo-400 hover:bg-indigo-50/30 bg-gray-50 flex flex-col items-center justify-center cursor-pointer group"
-                        :class="(oldPaths.length + $wire.new_images.length) >= maxImages ? 'opacity-50 cursor-not-allowed grayscale' : ''"
-                        @click="if((oldPaths.length + $wire.new_images.length) < maxImages) $refs.fileInput.click()"
+                        class="relative border-2 border-dashed border-gray-300 rounded-2xl p-6 bg-gray-50 flex flex-col items-center justify-center cursor-pointer"
+                        :class="(oldPaths.length + $wire.form.images.length) >= 5 ? 'opacity-50 cursor-not-allowed' : ''"
+                        @click="if((oldPaths.length + $wire.form.images.length) < 5) $refs.fileInput.click()"
                     >
-                        {{-- Loading Indikator saat Upload --}}
+
                         <div 
-                            wire:loading 
-                            wire:target="new_images" 
-                            class="absolute inset-0 bg-white/90 backdrop-blur-sm z-10 flex items-center justify-center rounded-2xl transition-opacity duration-300"
+                            wire:loading.flex 
+                            wire:target="form.new_images"
+                            class="absolute inset-0 bg-white/70 backdrop-blur-sm items-center justify-center rounded-2xl z-10"
                         >
-                            <div class="flex flex-col items-center animate-pulse">
-                                <div class="relative">
-                                    <svg class="animate-spin h-10 w-10 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                    </svg>
-                                    <div class="absolute inset-0 animate-ping h-10 w-10 rounded-full bg-indigo-400 opacity-20"></div>
-                                </div>
-                                <span class="text-xs text-indigo-600 mt-3 font-semibold tracking-wide">Mengunggah...</span>
-                                <span class="text-[10px] text-gray-500 mt-1">Mohon tunggu sebentar</span>
+                            <div class="flex flex-col items-center gap-2">
+                                <i class="bi bi-arrow-repeat animate-spin text-2xl text-indigo-600"></i>
+                                <span class="text-xs text-gray-600 font-medium">Uploading...</span>
                             </div>
                         </div>
-
-                        <div class="transition-transform duration-300 group-hover:scale-110 group-hover:-translate-y-1">
-                            <i class="bi bi-cloud-arrow-up text-4xl text-gray-400 group-hover:text-indigo-500 transition-colors duration-300"></i>
-                        </div>
-                        <p class="text-xs text-gray-600 mt-3 font-medium group-hover:text-indigo-600 transition-colors">Klik untuk upload</p>
-                        <p class="text-[10px] text-gray-400 mt-1">PNG, JPG up to 2MB</p>
+                        
+                        <i class="bi bi-cloud-arrow-up text-4xl text-gray-400"></i>
+                        <p class="text-xs text-gray-600 mt-2 font-medium">Klik untuk upload foto jasa</p>
                         
                         <input 
                             type="file" 
-                            wire:model="new_images"
+                            wire:model="form.new_images"
                             x-ref="fileInput" 
                             class="hidden" 
-                            accept="image/*" 
+                            accept=".jpg,.jpeg,.png" 
                             multiple 
                         >
                     </div>
 
+                    {{-- Grid Preview --}}
                     <div class="grid grid-cols-2 sm:grid-cols-5 gap-4">
-                        @foreach(($jasa?->thumbnails ?? []) as $index => $thumb)
-                            @if(in_array($thumb, $form->old_image_paths ?? []))
-                                <div class="relative aspect-square rounded-xl overflow-hidden border border-gray-200 group hover:shadow-lg transition-all duration-300 hover:-translate-y-1" wire:key="old-{{ $index }}">
-                                    {{-- Loading Overlay Hapus Gambar Lama --}}
-                                    <div 
-                                        wire:loading 
-                                        wire:target="removeOldImage('{{ $thumb }}')" 
-                                        class="absolute inset-0 bg-white/80 backdrop-blur-sm z-10 flex flex-col items-center justify-center transition-opacity duration-200"
-                                    >
-                                        <svg class="animate-spin h-6 w-6 text-red-500 mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                        </svg>
-                                        <span class="text-[10px] text-red-500 font-medium">Menghapus...</span>
-                                    </div>
-
-                                    <img src="{{ Storage::url($thumb) }}" class="w-full h-full object-cover duration-500">
-                                    
-                                    <button type="button" 
-                                        wire:click="removeOldImage('{{ $thumb }}')"
-                                        wire:loading.attr="disabled"
-                                        class="absolute top-2 right-2 bg-red-500/90 backdrop-blur-sm text-white rounded-full p-1.5 z-10 shadow-lg"
-                                    >
-                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                                            <line x1="18" y1="6" x2="6" y2="18"></line>
-                                            <line x1="6" y1="6" x2="18" y2="18"></line>
-                                        </svg>
-                                    </button>
-                                    
-                                    <div class="absolute bottom-0 w-full bg-gradient-to-t from-black/70 to-transparent text-white text-[10px] text-center py-1.5 font-medium backdrop-blur-sm">
-                                        Lama
-                                    </div>
+                        
+                        {{-- Preview Gambar Lama (Database) --}}
+                        @foreach($form->old_image_paths as $index => $path)
+                            <div class="relative aspect-square" wire:key="old-img-{{ $index }}">
+                                <div @click="openModal('{{ Storage::url($path) }}')" class="w-full h-full rounded-xl overflow-hidden border border-gray-200 cursor-pointer shadow-sm">
+                                    <img src="{{ Storage::url($path) }}" class="w-full h-full object-cover">
+                                    <div class="absolute bottom-0 w-full bg-black/50 text-white text-[8px] text-center py-1">Lama</div>
                                 </div>
-                            @endif
+                                <button type="button" wire:click="removeOldImage('{{ $path }}')" class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center shadow-md">
+                                    <i class="bi bi-x"></i>
+                                </button>
+                            </div>
                         @endforeach
 
-                        @foreach($new_images as $index => $image)
-                            <div class="relative aspect-square rounded-xl overflow-hidden border border-gray-200 group hover:shadow-lg transition-all duration-300 hover:-translate-y-1" wire:key="new-{{ $index }}">
-                                {{-- Loading Overlay Hapus Gambar Baru --}}
-                                <div 
-                                    wire:loading 
-                                    wire:target="removeNewImage({{ $index }})" 
-                                    class="absolute inset-0 bg-white/80 backdrop-blur-sm z-10 flex flex-col items-center justify-center transition-opacity duration-200"
-                                >
-                                    <svg class="animate-spin h-6 w-6 text-red-500 mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                    </svg>
-                                    <span class="text-[10px] text-red-500 font-medium">Menghapus...</span>
-                                </div>
-
-                                <img src="{{ $image->temporaryUrl() }}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
-                                
-                                <button type="button" 
-                                    wire:click="removeNewImage({{ $index }})"
-                                    wire:loading.attr="disabled"
-                                    class="absolute top-2 right-2 bg-red-500/90 backdrop-blur-sm text-white rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-red-600 hover:scale-110 z-20 shadow-lg"
-                                >
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                                        <line x1="18" y1="6" x2="6" y2="18"></line>
-                                        <line x1="6" y1="6" x2="18" y2="18"></line>
-                                    </svg>
+                        {{-- Preview Gambar Baru (Temporary) --}}
+                        @foreach($form->images as $index => $file)
+                            <div class="relative aspect-square" wire:key="new-img-{{ $index }}">
+                                @if ($file && method_exists($file, 'temporaryUrl'))
+                                    <div @click="openModal('{{ $file->temporaryUrl() }}')" class="w-full h-full rounded-xl overflow-hidden border border-indigo-200 cursor-pointer shadow-sm">
+                                        <img src="{{ $file->temporaryUrl() }}" class="w-full h-full object-cover">
+                                        <div class="absolute bottom-0 w-full bg-indigo-600/50 text-white text-[8px] text-center py-1">Baru</div>
+                                    </div>
+                                @else
+                                    <div class="w-full h-full bg-gray-200 animate-pulse rounded-xl flex items-center justify-center">
+                                        <i class="bi bi-hourglass-split animate-spin text-gray-400"></i>
+                                    </div>
+                                @endif
+                                <button type="button" wire:click="removeNewImage({{ $index }})" class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center shadow-md">
+                                    <i class="bi bi-x"></i>
                                 </button>
-                                
-                                <div class="absolute bottom-0 w-full bg-gradient-to-t from-black/70 to-transparent text-white text-[10px] text-center py-1.5 font-medium backdrop-blur-sm">
-                                    Baru
-                                </div>
                             </div>
                         @endforeach
                     </div>
 
-                    <div class="flex items-center justify-between">
-                        <p class="text-[10px] font-semibold text-gray-500">
-                            Total: <span x-text="oldPaths.length + $wire.new_images.length" class="text-indigo-600 font-bold"></span> / 5
-                        </p>
-                        <div x-show="oldPaths.length + $wire.new_images.length >= maxImages" x-transition class="text-[10px] text-amber-600 font-medium">
-                            <i class="bi bi-exclamation-triangle-fill mr-1"></i>Batas maksimal tercapai
+                    {{-- Lightbox Modal --}}
+                    <template x-teleport="body">
+                        <div x-show="showModal" class="fixed inset-0 z-[999] flex items-center justify-center bg-slate-900/90 p-4" style="display: none;" @keydown.escape.window="showModal = false">
+                            <button @click="showModal = false" class="absolute top-5 right-5 text-white/70 p-2"><i class="bi bi-x-lg text-3xl"></i></button>
+                            <div class="max-w-5xl w-full h-full flex items-center justify-center" @click.away="showModal = false">
+                                <img :src="modalImage" class="max-w-full max-h-full rounded-lg object-contain border border-white/10">
+                            </div>
                         </div>
-                    </div>
-                    
-                    <x-input-error :messages="Arr::flatten($errors->get('form.new_images.*'))" class="mt-1" />
+                    </template>
                 </div>
 
                 <hr class="border-gray-100">

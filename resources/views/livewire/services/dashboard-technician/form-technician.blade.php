@@ -242,36 +242,32 @@ new class extends Component
             <x-input-label :value="__('Sertifikasi Keahlian (Opsional)')" class="mb-2" />
             
             {{-- Upload Area --}}
-            <div class="relative mt-2 flex justify-center rounded-xl border-2 border-dashed border-slate-300 dark:border-slate-700 px-6 py-10 hover:border-indigo-400 dark:hover:border-indigo-600 transition-colors">
-                <div class="text-center">
-                    <div class="mx-auto h-12 w-12 text-slate-400">
-                        <i class="bi bi-cloud-arrow-up text-4xl"></i>
-                    </div>
-                    <div class="mt-4 flex text-sm text-slate-600 dark:text-slate-400 justify-center">
-                        <label class="relative cursor-pointer rounded-md font-semibold text-indigo-600 focus-within:outline-none hover:text-indigo-500">
-                            <span>Upload files</span>
-                            <input 
-                                type="file" 
-                                wire:model="form.newCertificate"
-                                class="sr-only" 
-                                multiple 
-                                accept="image/jpeg,image/png,image/jpg"
-                            >
-                        </label>
-                        <p class="pl-1 text-slate-500">atau drag & drop</p>
-                    </div>
-                    <p class="text-xs text-slate-400 mt-1 italic">
-                        JPG, JPEG, PNG hingga 2MB (Maks. 5 foto)
-                    </p>
-                    
-                    @php
-                        $totalCerts = count($form->existing_certificates) + count($form->certificates);
-                    @endphp
-                    
-                    <div class="mt-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $totalCerts >= 5 ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300' : 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300' }}">
-                        {{ $totalCerts }} / 5 Terupload
+            <div 
+                class="relative border-2 border-dashed border-gray-300 rounded-2xl p-6 bg-gray-50 flex flex-col items-center justify-center cursor-pointer"
+                :class="($wire.form.existing_certificates.length + $wire.form.certificates.length) >= 5 ? 'opacity-50 cursor-not-allowed' : ''"
+                @click="if(($wire.form.existing_certificates.length + $wire.form.certificates.length) < 5) $refs.fileInput.click()"
+            >
+                <div 
+                    wire:loading.flex 
+                    wire:target="form.newCertificate"
+                    class="absolute inset-0 bg-white/70 backdrop-blur-sm items-center justify-center rounded-2xl z-10"
+                >
+                    <div class="flex flex-col items-center gap-2">
+                        <i class="bi bi-arrow-repeat animate-spin text-2xl text-indigo-600"></i>
+                        <span class="text-xs text-gray-600 font-medium">Uploading...</span>
                     </div>
                 </div>
+                
+                <i class="bi bi-cloud-arrow-up text-4xl text-gray-400"></i>
+                <p class="text-xs text-gray-600 mt-2 font-medium">Klik untuk upload foto jasa</p>
+                <input 
+                    type="file" 
+                    wire:model="form.newCertificate"
+                    x-ref="fileInput"
+                    class="sr-only" 
+                    multiple 
+                    accept="image/jpeg,image/png,image/jpg"
+                >
             </div>
 
             <x-input-error :messages="$errors->get('form.newCertificate')" class="mt-2" />

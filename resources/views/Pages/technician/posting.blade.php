@@ -4,7 +4,7 @@
     </x-slot>
 
     <x-slot name="header">
-        <div class=" flex items-center gap-2 py-4 px-4 bg-gray-100 fixed top-0 w-full z-50 shadow-sm">
+        <div class=" flex items-center gap-2 py-4 px-4 bg-gray-50 fixed top-0 w-full z-50 shadow-sm">
             <a 
                 href="{{ route('dashboard_technician') }}"
                 class="leading-none"

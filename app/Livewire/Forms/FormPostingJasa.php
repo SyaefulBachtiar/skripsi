@@ -5,6 +5,7 @@ namespace App\Livewire\Forms;
 use App\Models\Jasa;
 use App\Models\Role_users\Technician;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Attributes\Validate;
 use Livewire\Form;
 
@@ -47,7 +48,47 @@ class FormPostingJasa extends Form
     ])]
     public $new_images = [];
 
+    public $images = [];
+
     public $old_image_paths = [];
+
+    public function addImage()
+    {
+        // Validasi input temporary
+        $this->validateOnly('new_images');
+
+        if (empty($this->new_images)) return;
+
+        foreach ($this->new_images as $file) {
+            // Batasi maksimal 5 total gambar (lama + baru)
+            if ((count($this->images) + count($this->old_image_paths)) < 5) {
+                $this->images[] = $file;
+            }
+        }
+
+        // Reset input agar bisa upload file yang sama jika perlu
+        $this->reset('new_images');
+    }
+
+    public function removeNewImage($index)
+    {
+        if (isset($this->images[$index])) {
+            unset($this->images[$index]);
+            $this->images = array_values($this->images);
+        }
+    }
+
+    public function removeExistingCertificate(int $index): void
+    {
+        if (isset($this->old_image_paths[$index])) {
+            // Hapus file dari storage jika ada
+            $path = $this->old_image_paths[$index];
+            if (Storage::disk('public')->exists($path)) {
+                Storage::disk('public')->delete($path);
+            }
+            array_splice($this->old_image_paths, $index, 1);
+        }
+    }
 
     public function store($id = null)
     {
@@ -55,16 +96,11 @@ class FormPostingJasa extends Form
 
         $technician = Technician::where('user_id', Auth::id())->first();
 
-        $imagePaths = $this->old_image_paths ?? [];
+        // Gabungkan path lama yang tersisa dengan upload baru
+        $finalPaths = $this->old_image_paths;
 
-        if (!empty($this->new_images)) {
-            foreach ($this->new_images as $image) {
-                // Pastikan ini adalah TemporaryUploadedFile
-                if ($image && method_exists($image, 'store')) {
-                    $path = $image->store('services/thumbnails', 'public');
-                    $imagePaths[] = $path;
-                }
-            }
+        foreach ($this->images as $file) {
+            $finalPaths[] = $file->store('services/thumbnails', 'public');
         }
 
         $data = [
@@ -77,17 +113,10 @@ class FormPostingJasa extends Form
             'ketersediaan_jam'      => $this->ketersediaan_jam,
             'layanan_tambahan'      => $this->layanan_tambahan,
             'keluhan'               => $this->keluhan,
-            'thumbnails'            => $imagePaths
+            'thumbnails'            => array_values($finalPaths)
         ];
 
-        // Jika upload gambar baru, tambahkan ke data yang diupdate
-        if(!empty($imagePaths)) {
-            $data['thumbnails'] = $imagePaths;
-        }
-
-        // Menggunakan updateOrCreate
         Jasa::updateOrCreate(['id' => $id], $data);
-
         return true;
     }
 }

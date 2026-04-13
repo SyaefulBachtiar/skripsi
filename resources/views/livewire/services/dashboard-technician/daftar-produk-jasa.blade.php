@@ -51,9 +51,15 @@
             @forelse($jasa as $item)
                 <a href="{{ route('detail_jasa.technician', ['id_jasa' => $item->id]) }}" class="group card p-4 border rounded-xl hover:shadow-md transition-all">
                     <div class="overflow-hidden rounded-lg">
-                        <img src="{{ asset('storage/' . $item->first_thumbnail) }}" 
-                             alt="{{ $item->nama_jasa }}" 
-                             class="w-full h-40 object-cover group-hover:scale-105 transition-transform duration-300">
+                        @if($item->first_thumbnail)
+                            <img src="{{ asset('storage/' . $item->first_thumbnail) }}" 
+                                alt="{{ $item->nama_jasa }}" 
+                                class="w-full h-40 object-cover group-hover:scale-105 transition-transform duration-300">
+                        @else
+                            <div class="w-full h-40 flex items-center justify-center">
+                                <span>Kosong</span>
+                            </div>
+                        @endif
                     </div>
                     
                     <h3 class="font-bold mt-2 truncate">{{ $item->nama_jasa }}</h3>
