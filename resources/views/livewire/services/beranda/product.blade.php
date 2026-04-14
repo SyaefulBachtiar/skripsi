@@ -1,16 +1,21 @@
 <div class="space-y-4">
-    {{-- Filter --}}
-    {{-- PENTING: overflow-visible agar dropdown tidak terpotong, z-10 agar di atas grid produk --}}
-    <div class="relative z-10 bg-white rounded-2xl p-4 shadow-sm border border-gray-100 space-y-3 overflow-visible">
-        <x-select-search 
-            placeholder="Cari jasa servis (misal: AC, Kulkas)..."
-            model="search" 
-            searchModel="searchJasa"
-            :options="$nama_jasa"
-        />
+    {{-- Filter Section --}}
+    {{-- Menggunakan grid pada filter agar rapi di layar besar dan bertumpuk di mobile --}}
+    <div class="relative z-20 bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-slate-700 overflow-visible">
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-3">
+            
+            {{-- Search Jasa --}}
+            <div class="md:col-span-6">
+                <x-select-search 
+                    placeholder="Cari jasa servis (misal: AC, Kulkas)..."
+                    model="search" 
+                    searchModel="searchJasa"
+                    :options="$nama_jasa"
+                />
+            </div>
 
-        <div class="flex gap-2">
-            <div class="flex-1">
+            {{-- Filter Wilayah --}}
+            <div class="md:col-span-4">
                 <x-select-search 
                     placeholder="Pilih Wilayah..."
                     model="wilayah" 
@@ -19,49 +24,68 @@
                 />
             </div>
 
-            <button 
-                type="button"
-                wire:click="resetFilter"
-                class="inline-flex items-center gap-1.5 px-4 py-2.5 bg-blue-700 hover:bg-blue-800 text-gray-600 text-sm font-semibold rounded-xl transition whitespace-nowrap"
-            >
-                <i class="bi bi-arrow-counterclockwise text-base leading-none text-white"></i>
-                <span class="text-white">Hapus</span>
-            </button>
+            {{-- Button Reset --}}
+            <div class="md:col-span-2">
+                <button 
+                    type="button"
+                    wire:click="resetFilter"
+                    class="w-full h-full inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-700 hover:bg-blue-800 text-white text-sm font-semibold rounded-xl transition duration-200 shadow-sm"
+                >
+                    <i class="bi bi-arrow-counterclockwise text-lg"></i>
+                    <span class="md:hidden lg:inline">Hapus</span>
+                </button>
+            </div>
         </div>
     </div>
 
-    {{-- Products --}}
-    <div class="grid grid-cols-2 gap-3 px-1">
+    {{-- Products Grid --}}
+    {{-- Mobile: 2 kolom, Tablet: 3 kolom, Desktop: 4 kolom, Large Desktop: 5 kolom --}}
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
         @forelse ($produk as $item)
             <a 
                 href="{{ route('detail-product', ['id' => $item->id]) }}"
-                class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-200"
+                class="group bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
             >
-                <div class="aspect-square bg-gray-50 overflow-hidden">
+                {{-- Container Image dengan Aspect Ratio tetap --}}
+                <div class="aspect-square bg-gray-50 dark:bg-slate-900 overflow-hidden relative">
                     <img 
-                        src="{{ asset('storage/' . ($item->first_thumbnail ?? 'default.jpg')) }}" 
-                        class="w-full h-full object-cover"
+                        src="{{ asset('storage/' . ($item->thumbnails[0] ?? 'default.jpg')) }}" 
+                        class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                         loading="lazy"
+                        alt="{{ $item->nama_jasa }}"
                     >
+                    {{-- Overlay Tipis saat hover --}}
+                    <div class="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                 </div>
-                <div class="p-3 space-y-1">
-                    <h3 class="font-semibold text-sm text-gray-800 line-clamp-2 leading-snug">
+
+                {{-- Konten Teks --}}
+                <div class="p-3 space-y-2">
+                    <h3 class="font-bold text-xs sm:text-sm text-gray-800 dark:text-white line-clamp-2 leading-snug h-9 sm:h-10 group-hover:text-blue-700 transition-colors uppercase">
                         {{ $item->nama_jasa }}
                     </h3>
-                    <p class="text-indigo-600 font-bold text-sm">
-                        Rp {{ number_format($item->harga_jasa, 0, ',', '.') }}
-                    </p>
+                    
+                    <div class="flex flex-col">
+                        <p class="text-[10px] text-gray-400 uppercase font-semibold">Mulai dari</p>
+                        <p class="text-blue-700 dark:text-blue-400 font-extrabold text-sm sm:text-base">
+                            Rp {{ number_format($item->harga_jasa, 0, ',', '.') }}
+                        </p>
+                    </div>
                 </div>
             </a>
         @empty
-            <div class="col-span-2 py-14 text-center text-gray-400 space-y-2">
-                <i class="bi bi-search text-4xl block"></i>
-                <p class="text-sm">Jasa tidak ditemukan.</p>
+            {{-- Empty State yang lebih cantik --}}
+            <div class="col-span-full py-20 text-center bg-gray-50 dark:bg-slate-900/50 rounded-3xl border-2 border-dashed border-gray-200 dark:border-slate-800">
+                <div class="inline-flex items-center justify-center w-16 h-16 bg-gray-100 dark:bg-slate-800 rounded-full mb-4">
+                    <i class="bi bi-search text-3xl text-gray-400"></i>
+                </div>
+                <h3 class="text-gray-800 dark:text-white font-bold">Jasa Tidak Ditemukan</h3>
+                <p class="text-sm text-gray-500">Coba gunakan kata kunci lain atau hapus filter.</p>
             </div>
         @endforelse
     </div>
 
-    <div class="px-1 pb-10">
+    {{-- Pagination --}}
+    <div class="pt-6 pb-12">
         {{ $produk->links() }}
     </div>
 </div>

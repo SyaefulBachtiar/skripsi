@@ -23,17 +23,17 @@ Route::middleware('guest')->group(function () {
         ->name('password.reset');
     
     // Technician
-    Route::prefix('teknisi')
-        ->group(function () {
+    // Route::prefix('teknisi')
+    //     ->group(function () {
             
-            // Teknisi Register
-            Volt::route('register', 'pages.auth.register-technician')
-                ->name('register.technician');
+    //         // Teknisi Register
+    //         Volt::route('register', 'pages.auth.register-technician')
+    //             ->name('register.technician');
             
-            // Teknisi Login
-            Volt::route('login', 'pages.auth.login-technician')
-                ->name('login.technician');
-        });
+    //         // Teknisi Login
+    //         Volt::route('login', 'pages.auth.login-technician')
+    //             ->name('login.technician');
+    //     });
     
 });
 

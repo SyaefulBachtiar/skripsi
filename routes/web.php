@@ -4,12 +4,25 @@ use App\Http\Controllers\Auth\GoogleController;
 use App\Models\Role_users\Technician;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
+use Livewire\Volt\Volt;
 
 Route::view('/', 'welcome');
 
 // Route To Page Beranda
 Route::view('beranda', 'pages.customer.beranda')
     ->name('beranda');
+
+ Route::prefix('teknisi')
+        ->group(function () {
+            
+            // Teknisi Register
+            Volt::route('register', 'pages.auth.register-technician')
+                ->name('register.technician');
+            
+            // Teknisi Login
+            Volt::route('login', 'pages.auth.login-technician')
+                ->name('login.technician');
+        });
 
 
 // Route Authentication
@@ -120,9 +133,9 @@ Route::middleware(['auth'])->group(function () {
 Route::view('atur-alamat', 'pages.atur-alamat')
     ->name('atur_alamat');
 
-// Route::view('dashboard', 'dashboard')
-//     ->middleware(['auth', 'verified'])
-//     ->name('dashboard');
+Route::view('dashboard', 'dashboard')
+    ->middleware(['auth', 'verified'])
+    ->name('dashboard');
 
 Route::view('profile', 'profile')
     ->middleware(['auth'])

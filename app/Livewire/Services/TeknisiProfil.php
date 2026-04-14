@@ -59,26 +59,38 @@ class TeknisiProfil extends Component
         }
 
         // 3. Olah Dropdown Kategori (Dari array spesialisasi Teknisi)
-        // Kita ubah array ["AC", "Kulkas"] menjadi format yang dikenali select-search
         $spesialisasi_raw = $technician->spesialisasi ?? [];
         $options_kategori = collect($spesialisasi_raw)
             ->filter(function ($item) {
-                // Filter berdasarkan teks yang diketik di kolom kategori
                 return empty($this->searchKategori) || str_contains(strtolower($item), strtolower($this->searchKategori));
             })
             ->map(function ($item) {
                 return (object) ['name' => $item];
             });
 
-        // 4. Query Data Jasa (Filter Utama)
+        // 4. Query Data Jasa (Filter Utama dengan Relevansi)
         $query = Jasa::where('id_technician', $this->id_technician);
 
         // Filter Nama Jasa (Search)
         if ($this->search !== '') {
-            $query->where('nama_jasa', 'like', '%' . $this->search . '%');
+            $searchTerm = $this->search;
+            $lowerSearch = strtolower($searchTerm);
+            
+            $query->where('nama_jasa', 'like', '%' . $searchTerm . '%')
+                  ->orderByRaw("
+                      CASE 
+                          WHEN LOWER(nama_jasa) = ? THEN 1
+                          WHEN LOWER(nama_jasa) LIKE ? THEN 2
+                          WHEN LOWER(nama_jasa) LIKE ? THEN 3
+                          ELSE 4
+                      END
+                  ", [$lowerSearch, $lowerSearch . '%', '%' . $lowerSearch . '%']);
+        } else {
+            // Jika tidak ada search, urutkan by created_at
+            $query->orderBy('created_at', 'desc');
         }
 
-        // Filter Kategori (Mencari di nama jasa atau deskripsi karena kategori adalah spesialisasi teknisi)
+        // Filter Kategori (Mencari di nama jasa atau deskripsi)
         if ($this->kategori !== '') {
             $query->where(function($q) {
                 $q->where('nama_jasa', 'like', '%' . $this->kategori . '%')
