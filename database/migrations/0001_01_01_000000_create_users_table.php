@@ -30,7 +30,7 @@ return new class extends Migration
         Schema::create('technician', function (Blueprint $table) {
             $table->id();
             $table->foreignUuid('user_id')->constrained('users')->onDelete('cascade');
-            $table->string('verifikasi', 10)->nullable();
+            $table->string('verifikasi', 20)->nullable();
             $table->decimal('saldo', 15, 2)->nullable();
             $table->json('spesialisasi')->nullable();
             $table->json('pengalaman')->nullable();
@@ -43,6 +43,10 @@ return new class extends Migration
             $table->string('kelurahan', 50)->nullable();
             $table->decimal('latitude', 10, 8)->nullable();
             $table->decimal('longitude', 11, 8)->nullable();
+            $table->string('nama_asli', 20)->nullable();
+            $table->string('foto_wajah')->nullable();
+            $table->json('foto_kegiatan')->nullable();
+            $table->string('alasan_ditolak')->nullable();
             $table->timestamps();
         });
 

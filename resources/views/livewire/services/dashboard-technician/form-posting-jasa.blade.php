@@ -189,109 +189,102 @@ new class extends Component
     </script>
 
     <div 
-        class="py-10" 
+        class="pt-8"
         x-data="postingJasa($wire)"
         x-init="init()"
     >
-        <div class="px-4 sm:px-6 lg:px-8 pb-10 sm:pb-0">
-            
-            {{-- Flash Messages --}}
-            @if (session()->has('success'))
-                <div class="mb-4 p-4 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-lg">
-                    {{ session('success') }}
-                </div>
-            @endif
+        <div class="px-4 sm:px-6 lg:px-8 pb-20 sm:pb-0">
 
-            @if (session()->has('error'))
-                <div class="mb-4 p-4 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded-lg">
-                    {{ session('error') }}
-                </div>
-            @endif
-
-            <form @submit.prevent="submitForm" class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 space-y-4">
+            <form @submit.prevent="submitForm" class="bg-white p-4 rounded-2xl shadow-sm border border-gray-200">
                 @csrf
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {{-- Nama Jasa --}}
-                    <div>
-                        <x-input-label for="nama_jasa" :value="__('Nama Jasa')" />
-                        <x-text-input 
-                            id="nama_jasa" 
-                            x-model="nama_jasa"
-                            type="text" 
-                            class="mt-1 block w-full" 
-                            placeholder="Contoh: Service AC Split"
-                            required 
-                        />
-                        <x-input-error :messages="$errors->get('form.nama_jasa')" class="mt-2" />
-                    </div>
-
-                    {{-- Harga Jasa --}}
-                    <div>
-                        <x-input-label for="harga_jasa" :value="__('Harga Jasa (Mulai Dari)')" />
-                        <div class="relative mt-1">
-                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <span class="text-gray-500 sm:text-sm">Rp</span>
-                            </div>
+                {{-- Section 1: Informasi Dasar --}}
+                <div class="space-y-4">
+                    <h3 class="text-lg font-semibold text-gray-900 border-b border-gray-100 pb-2">Informasi Jasa</h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {{-- Nama Jasa --}}
+                        <div>
+                            <x-input-label for="nama_jasa" :value="__('Nama Jasa')" />
                             <x-text-input 
+                                id="nama_jasa" 
+                                x-model="nama_jasa"
                                 type="text" 
-                                x-model="hargaUtama"
-                                @input="hargaUtama = formatRupiah($event.target.value)"
-                                class="pl-10 block w-full" 
-                                placeholder="0" 
+                                class="mt-2 block w-full" 
+                                placeholder="Contoh: Service AC Split"
+                                required 
                             />
+                            <x-input-error :messages="$errors->get('form.nama_jasa')" class="mt-2" />
+                        </div>
+
+                        {{-- Harga Jasa --}}
+                        <div>
+                            <x-input-label for="harga_jasa" :value="__('Harga Jasa (Mulai Dari)')" />
+                            <div class="relative mt-2">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <span class="text-gray-500 text-sm font-medium">Rp</span>
+                                </div>
+                                <x-text-input 
+                                    type="text" 
+                                    x-model="hargaUtama"
+                                    @input="hargaUtama = formatRupiah($event.target.value)"
+                                    class="pl-10 block w-full" 
+                                    placeholder="0" 
+                                />
+                            </div>
                             <x-input-error :messages="$errors->get('form.harga_jasa')" class="mt-2" />
                         </div>
                     </div>
+
+                    {{-- Deskripsi --}}
+                    <div>
+                        <x-input-label for="deskripsi_jasa" :value="__('Deskripsi Jasa')" />
+                        <textarea 
+                            id="deskripsi_jasa"
+                            rows="4" 
+                            x-model="deskripsi_jasa"
+                            class="mt-2 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-lg shadow-sm" 
+                            placeholder="Jelaskan detail layanan Anda..."
+                        ></textarea>
+                        <x-input-error :messages="$errors->get('form.deskripsi_jasa')" class="mt-2" />
+                    </div>
                 </div>
 
-                {{-- Deskripsi --}}
-                <div>
-                    <x-input-label for="deskripsi_jasa" :value="__('Deskripsi Jasa')" />
-                    <textarea 
-                        id="deskripsi_jasa"
-                        rows="3" 
-                        x-model="deskripsi_jasa"
-                        class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm" 
-                        placeholder="Jelaskan detail layanan Anda..."
-                    ></textarea>
-                    <x-input-error :messages="$errors->get('form.deskripsi_jasa')" class="mt-2" />
-                </div>
-
-                <hr class="border-gray-100">
-
-                {{-- Foto Thumbnail dengan Lightbox --}}
-                <div x-data="{ 
+                {{-- Section 2: Foto Thumbnail --}}
+                <div class="space-y-2 pt-4" x-data="{ 
                     showModal: false, 
                     modalImage: '',
                     openModal(url) {
                         this.modalImage = url;
                         this.showModal = true;
                     }
-                }" class="space-y-4">
-                    <x-input-label :value="__('Foto Thumbnail Jasa (Maksimal 5)')" />
+                }">
+                    <h3 class="text-lg font-semibold text-gray-900 border-b border-gray-100 pb-2">Foto Thumbnail</h3>
+                    <p class="text-sm text-gray-500">Unggah foto untuk menampilkan jasa Anda (Maksimal 5 foto)</p>
 
                     {{-- Upload Area --}}
                     <div 
-                        class="relative border-2 border-dashed border-gray-300 rounded-2xl p-6 bg-gray-50 flex flex-col items-center justify-center cursor-pointer hover:border-indigo-400 transition-all"
+                        class="relative border-2 border-dashed border-gray-300 rounded-xl p-6 bg-gray-50 flex flex-col items-center justify-center cursor-pointer hover:border-indigo-400 hover:bg-indigo-50/50 transition-all"
                         :class="(oldPaths.length + $wire.form.images.length) >= maxImages ? 'opacity-50 cursor-not-allowed' : ''"
                         @click="if((oldPaths.length + $wire.form.images.length) < maxImages) $refs.fileInput.click()"
                     >
                         {{-- Loading Indicator --}}
                         <div 
-                            wire:loading 
+                            wire:loading.flex 
                             wire:target="form.new_images"
-                            class="absolute inset-0 bg-white/90 backdrop-blur-sm z-10 flex items-center justify-center rounded-2xl"
+                            class="absolute inset-0 bg-white/90 backdrop-blur-sm z-10 items-center justify-center rounded-xl"
                         >
-                            <div class="flex flex-col items-center animate-pulse">
+                            <div class="flex flex-col items-center">
                                 <i class="bi bi-arrow-repeat animate-spin text-3xl text-indigo-600"></i>
-                                <span class="text-xs text-indigo-600 mt-2 font-semibold">Mengunggah...</span>
+                                <span class="text-sm text-indigo-600 mt-2 font-medium">Mengunggah...</span>
                             </div>
                         </div>
                         
-                        <i class="bi bi-cloud-arrow-up text-4xl text-gray-400 group-hover:text-indigo-500 transition-colors"></i>
-                        <p class="text-xs text-gray-600 mt-2 font-medium">Klik untuk upload foto jasa</p>
-                        <p class="text-[10px] text-gray-400 mt-1">JPG, JPEG, PNG up to 2MB</p>
+                        <div class="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mb-3">
+                            <i class="bi bi-cloud-arrow-up text-2xl text-indigo-600"></i>
+                        </div>
+                        <p class="text-sm font-medium text-gray-700">Klik untuk upload foto jasa</p>
+                        <p class="text-xs text-gray-400 mt-1">Format: JPG, JPEG, PNG (Max 2MB)</p>
                         
                         <input 
                             type="file" 
@@ -308,25 +301,25 @@ new class extends Component
                     <x-input-error :messages="$errors->get('form.new_images.*')" class="mt-2" />
 
                     {{-- Preview Grid --}}
-                    <div class="grid grid-cols-2 sm:grid-cols-5 gap-4">
+                    <div class="grid grid-cols-2 sm:grid-cols-5 gap-2">
                         
                         {{-- Old Images --}}
                         @foreach($form->old_image_paths as $index => $path)
                             <div class="relative aspect-square group" wire:key="old-img-{{ $index }}">
                                 <div 
                                     @click="openModal('{{ Storage::url($path) }}')"
-                                    class="w-full h-full rounded-xl overflow-hidden border border-gray-200 cursor-pointer shadow-sm hover:shadow-md transition-all"
+                                    class="w-full h-full rounded-xl overflow-hidden border border-gray-200 cursor-pointer hover:shadow-md transition-all"
                                 >
                                     <img src="{{ Storage::url($path) }}" class="w-full h-full object-cover" alt="Thumbnail {{ $index + 1 }}">
-                                    <div class="absolute bottom-0 w-full bg-black/50 text-white text-[10px] text-center py-1">Lama</div>
+                                    <div class="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-xs text-center py-1.5 font-medium">Lama</div>
                                 </div>
                                 <button 
                                     type="button" 
                                     wire:click="removeOldImage({{ $index }})"
                                     wire:loading.attr="disabled"
-                                    class="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center shadow-md z-10 transition-colors"
+                                    class="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-7 h-7 flex items-center justify-center shadow-lg transition-colors"
                                 >
-                                    <i class="bi bi-x"></i>
+                                    <i class="bi bi-x text-sm"></i>
                                 </button>
                             </div>
                         @endforeach
@@ -337,35 +330,36 @@ new class extends Component
                                 @if ($file && method_exists($file, 'temporaryUrl'))
                                     <div 
                                         @click="openModal('{{ $file->temporaryUrl() }}')"
-                                        class="w-full h-full rounded-xl overflow-hidden border border-indigo-200 cursor-pointer shadow-sm hover:shadow-md transition-all"
+                                        class="w-full h-full rounded-xl overflow-hidden border-2 border-indigo-200 cursor-pointer hover:shadow-md transition-all"
                                     >
                                         <img src="{{ $file->temporaryUrl() }}" class="w-full h-full object-cover" alt="New {{ $index + 1 }}">
-                                        <div class="absolute bottom-0 w-full bg-indigo-600/50 text-white text-[10px] text-center py-1">Baru</div>
+                                        <div class="absolute bottom-0 left-0 right-0 bg-indigo-600 text-white text-xs text-center py-1.5 font-medium">Baru</div>
                                     </div>
                                 @else
                                     <div class="w-full h-full bg-gray-100 rounded-xl flex items-center justify-center border border-gray-200">
-                                        <i class="bi bi-hourglass-split text-gray-400 animate-pulse"></i>
+                                        <i class="bi bi-hourglass-split text-gray-400 animate-pulse text-xl"></i>
                                     </div>
                                 @endif
                                 <button 
                                     type="button" 
                                     wire:click="removeNewImage({{ $index }})"
                                     wire:loading.attr="disabled"
-                                    class="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center shadow-md z-10 transition-colors"
+                                    class="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-7 h-7 flex items-center justify-center shadow-lg transition-colors"
                                 >
-                                    <i class="bi bi-x"></i>
+                                    <i class="bi bi-x text-sm"></i>
                                 </button>
                             </div>
                         @endforeach
                     </div>
 
                     {{-- Counter --}}
-                    <div class="flex items-center justify-between">
-                        <p class="text-[10px] font-semibold text-gray-500">
-                            Total: <span x-text="oldPaths.length + $wire.form.images.length" class="text-indigo-600 font-bold"></span> / 5
+                    <div class="flex items-center justify-between bg-gray-50 rounded-lg">
+                        <p class="text-sm text-gray-600">
+                            Total foto: <span x-text="oldPaths.length + $wire.form.images.length" class="text-indigo-600 font-bold"></span> / 5
                         </p>
-                        <div x-show="oldPaths.length + $wire.form.images.length >= maxImages" x-transition class="text-[10px] text-amber-600 font-medium">
-                            <i class="bi bi-exclamation-triangle-fill mr-1"></i>Batas maksimal tercapai
+                        <div x-show="oldPaths.length + $wire.form.images.length >= maxImages" x-transition class="text-sm text-amber-600 font-medium flex items-center gap-1">
+                            <i class="bi bi-exclamation-triangle-fill"></i>
+                            <span>Batas maksimal tercapai</span>
                         </div>
                     </div>
 
@@ -373,16 +367,16 @@ new class extends Component
                     <template x-teleport="body">
                         <div 
                             x-show="showModal" 
-                            class="fixed inset-0 z-[999] flex items-center justify-center bg-slate-900/90 p-4 sm:p-10"
+                            class="fixed inset-0 z-[999] flex items-center justify-center bg-slate-900/95 p-4"
                             style="display: none;"
                             @keydown.escape.window="showModal = false"
-                            x-transition.opacity
+                            x-transition.opacity.duration.300ms
                         >
                             <button 
                                 @click="showModal = false" 
                                 class="absolute top-5 right-5 text-white/70 hover:text-white p-2 transition-colors"
                             >
-                                <i class="bi bi-x-lg text-3xl"></i>
+                                <i class="bi bi-x-lg text-2xl"></i>
                             </button>
                             <div 
                                 class="max-w-5xl w-full h-full flex items-center justify-center" 
@@ -390,9 +384,9 @@ new class extends Component
                             >
                                 <img 
                                     :src="modalImage" 
-                                    class="max-w-full max-h-full rounded-lg object-contain border border-white/10 shadow-2xl"
+                                    class="max-w-full max-h-[85vh] rounded-xl object-contain shadow-2xl"
                                     x-show="showModal"
-                                    x-transition
+                                    x-transition.scale.duration.300ms
                                     alt="Preview"
                                 >
                             </div>
@@ -400,165 +394,178 @@ new class extends Component
                     </template>
                 </div>
 
-                <hr class="border-gray-100">
-
-                {{-- Pilihan Keluhan --}}
-                <div class="space-y-3">
-                    <x-input-label :value="__('Pilihan Keluhan Umum')" />
-                    <p class="text-[10px] text-slate-500">Tambahkan keluhan yang sering dialami pelanggan.</p>
+                {{-- Section 3: Pilihan Keluhan --}}
+                <div class="space-y-2 pt-4">
+                    <div class="border-b border-gray-100 pb-2">
+                        <h3 class="text-lg font-semibold text-gray-900">Pilihan Keluhan</h3>
+                        <p class="text-sm text-gray-500 mt-1">Tambahkan keluhan umum yang sering dialami pelanggan</p>
+                    </div>
                     
-                    <div class="space-y-2 mt-2">
+                    <div class="space-y-3">
                         <template x-for="(keluhan, index) in pilihanKeluhan" :key="index">
-                            <div class="flex gap-2">
+                            <div class="flex gap-3 items-center">
                                 <div class="relative flex-1">
-                                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
+                                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
                                         <i class="bi bi-patch-question"></i>
                                     </span>
                                     <x-text-input 
                                         type="text" 
                                         x-model="pilihanKeluhan[index]" 
-                                        class="block w-full text-sm pl-10" 
+                                        class="block w-full pl-10" 
                                         placeholder="Contoh: Mati Total / Tidak Dingin"
                                         required
                                     />
                                 </div>
-                                <button type="button" @click="removeKeluhan(index)" class="text-red-500 hover:text-red-700 p-2">
+                                <button type="button" @click="removeKeluhan(index)" class="text-red-500 hover:text-red-700 hover:bg-red-50 p-2 rounded-lg transition-colors">
                                     <i class="bi bi-trash"></i>
                                 </button>
                             </div>
                         </template>
                     </div>
 
-                    <button type="button" @click="addKeluhan()" class="inline-flex items-center text-sm font-medium text-indigo-600 hover:text-indigo-800">
-                        <i class="bi bi-plus-circle-fill mr-2"></i> Tambah Pilihan Keluhan
+                    <button type="button" @click="addKeluhan()" class="inline-flex items-center gap-2 text-sm font-medium text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 px-4 py-2 rounded-lg transition-colors">
+                        <i class="bi bi-plus-circle-fill"></i>
+                        <span>Tambah Pilihan Keluhan</span>
                     </button>
                     
                     <x-input-error :messages="$errors->get('form.keluhan')" class="mt-2" />
                 </div>
 
-                <hr class="border-gray-100">
+                {{-- Section 4: Ketersediaan --}}
+                <div class="space-y-2 pt-4">
+                    <h3 class="text-lg font-semibold text-gray-900 border-b border-gray-100 pb-2">Ketersediaan</h3>
+                    
+                    {{-- Tanggal --}}
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between">
+                            <x-input-label :value="__('Tanggal Ketersediaan')" />
+                            
+                            <label class="inline-flex items-center gap-2 cursor-pointer bg-indigo-50 px-3 py-2 rounded-lg">
+                                <input type="checkbox" x-model="isEveryday" @change="if(isEveryday) tanggalKetersediaan = []" class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500 w-4 h-4">
+                                <span class="text-sm font-medium text-indigo-700">{{ __('Tersedia Setiap Hari') }}</span>
+                            </label>
+                        </div>
 
-                {{-- Tanggal Ketersediaan --}}
-                <div class="space-y-4">
-                    <div class="flex items-center justify-between">
-                        <x-input-label :value="__('Tanggal Ketersediaan')" />
-                        
-                        <label class="inline-flex items-center cursor-pointer">
-                            <input type="checkbox" x-model="isEveryday" @change="if(isEveryday) tanggalKetersediaan = []" class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500">
-                            <span class="ml-2 text-sm text-gray-600 font-medium">{{ __('Tersedia Setiap Hari') }}</span>
-                        </label>
-                    </div>
+                        <div x-show="!isEveryday" x-transition class="space-y-3">
+                            <template x-for="(tgl, index) in tanggalKetersediaan" :key="index">
+                                <div class="flex gap-3 items-center">
+                                    <x-text-input 
+                                        type="date" 
+                                        x-model="tanggalKetersediaan[index]" 
+                                        class="block w-full" 
+                                        x-bind:required="!isEveryday"
+                                    />
+                                    <button type="button" @click="removeTanggal(index)" class="text-red-500 hover:text-red-700 hover:bg-red-50 p-2 rounded-lg transition-colors">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </template>
 
-                    <div x-show="!isEveryday" x-transition class="space-y-2">
-                        <template x-for="(tgl, index) in tanggalKetersediaan" :key="index">
-                            <div class="flex gap-2">
-                                <x-text-input 
-                                    type="date" 
-                                    x-model="tanggalKetersediaan[index]" 
-                                    class="block w-full text-sm" 
-                                    x-bind:required="!isEveryday"
-                                />
-                                <button type="button" @click="removeTanggal(index)" class="text-red-500 hover:text-red-700 p-2">
-                                    <i class="bi bi-trash"></i>
-                                </button>
-                            </div>
-                        </template>
-
-                        <button type="button" @click="addTanggal()" class="inline-flex items-center text-sm font-medium text-indigo-600 hover:text-indigo-800">
-                            <i class="bi bi-plus-lg mr-1"></i> Tambah Tanggal
-                        </button>
-                        
-                        <p x-show="tanggalKetersediaan.length === 0" class="text-xs text-amber-600 italic">
-                            *Pilih minimal satu tanggal atau centang 'Setiap Hari'.
-                        </p>
-                    </div>
-
-                    <div x-show="isEveryday" class="p-3 bg-blue-50 border border-blue-100 rounded-xl text-blue-700 text-xs">
-                        <i class="bi bi-info-circle-fill mr-1"></i> Jasa Anda akan tampil tersedia setiap hari.
-                    </div>
-                </div>
-
-                <hr class="border-gray-100">
-
-                {{-- Jam Ketersediaan --}}
-                <div>
-                    <x-input-label :value="__('Jam Ketersediaan')" />
-                    <div class="space-y-2 mt-2">
-                        <template x-for="(jam, index) in jamKetersediaan" :key="index">
-                            <div class="flex gap-2">
-                                <x-text-input type="time" x-model="jamKetersediaan[index]" class="block w-full text-sm" />
-                                <button type="button" @click="removeJam(index)" class="text-red-500 hover:text-red-700 p-2">
-                                    <i class="bi bi-trash"></i>
-                                </button>
-                            </div>
-                        </template>
-                    </div>
-                    <button type="button" @click="addJam()" class="mt-2 inline-flex items-center text-sm font-medium text-indigo-600 hover:text-indigo-800">
-                        <i class="bi bi-plus-lg mr-1"></i> Tambah Jam
-                    </button>
-                </div>
-
-                <hr class="border-gray-100">
-
-                {{-- Layanan Tambahan --}}
-                <div class="space-y-4">
-                    <div class="flex justify-between items-center">
-                        <x-input-label :value="__('Daftar Layanan / Sparepart Tambahan')" />
-                        <button type="button" @click="addLayanan()" class="bg-indigo-50 text-indigo-600 px-3 py-1 rounded-lg text-xs font-bold hover:bg-indigo-100">
-                            + Tambah Grup
-                        </button>
-                    </div>
-
-                    <template x-for="(grup, gIndex) in layanan" :key="gIndex">
-                        <div class="p-4 bg-gray-50 rounded-xl border border-gray-200 relative">
-                            <button type="button" @click="removeLayanan(gIndex)" class="absolute top-2 right-2 text-gray-400 hover:text-red-500">
-                                <i class="bi bi-x-circle-fill"></i>
+                            <button type="button" @click="addTanggal()" class="inline-flex items-center gap-2 text-sm font-medium text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 px-4 py-2 rounded-lg transition-colors">
+                                <i class="bi bi-plus-lg"></i>
+                                <span>Tambah Tanggal</span>
                             </button>
                             
-                            <div class="mb-4">
-                                <x-input-label :value="__('Kategori / Judul Layanan')" class="text-xs text-gray-500" />
-                                <x-text-input x-model="grup.judul" type="text" class="mt-1 block w-full text-sm font-bold" placeholder="Contoh: Cuci AC" />
-                            </div>
-
-                            <div class="space-y-3 bg-white p-3 rounded-lg border border-gray-100">
-                                <template x-for="(item, iIndex) in grup.items" :key="iIndex">
-                                    <div class="grid grid-cols-12 gap-2 items-center">
-                                        <div class="col-span-6">
-                                            <x-text-input x-model="item.nama" placeholder="Nama Sparepart/Jasa" class="w-full text-xs" />
-                                        </div>
-                                        <div class="col-span-5 relative">
-                                            <span class="absolute inset-y-0 left-0 pl-2 flex items-center text-gray-400 text-[10px]">Rp</span>
-                                            <x-text-input 
-                                                type="text" 
-                                                x-model="item.harga"
-                                                @input="item.harga = formatRupiah($event.target.value)"
-                                                class="w-full text-xs pl-7" 
-                                                placeholder="Harga" 
-                                            />
-                                        </div>
-                                        <div class="col-span-1 text-right">
-                                            <button type="button" @click="removeItemLayanan(gIndex, iIndex)" class="text-red-400 hover:text-red-600">
-                                                <i class="bi bi-trash"></i>
-                                            </button>
-                                        </div>
-                                    </div>
-                                </template>
-                                <button type="button" @click="addItemLayanan(gIndex)" class="text-[10px] text-indigo-600 font-bold hover:underline">
-                                    + Tambah Item
-                                </button>
-                            </div>
+                            <p x-show="tanggalKetersediaan.length === 0" class="text-sm text-amber-600 flex items-center gap-1">
+                                <i class="bi bi-exclamation-circle"></i>
+                                <span>Pilih minimal satu tanggal atau centang 'Setiap Hari'</span>
+                            </p>
                         </div>
-                    </template>
+
+                        <div x-show="isEveryday" class="p-4 bg-indigo-50 border border-indigo-100 rounded-xl text-indigo-700 flex items-center gap-2">
+                            <i class="bi bi-info-circle-fill text-lg"></i>
+                            <span class="text-sm font-medium">Jasa Anda akan tampil tersedia setiap hari</span>
+                        </div>
+                    </div>
+
+                    {{-- Jam --}}
+                    <div class="space-y-3 pt-4 border-t border-gray-100">
+                        <x-input-label :value="__('Jam Ketersediaan')" />
+                        <div class="space-y-3">
+                            <template x-for="(jam, index) in jamKetersediaan" :key="index">
+                                <div class="flex gap-3 items-center">
+                                    <x-text-input type="time" x-model="jamKetersediaan[index]" class="block w-full" />
+                                    <button type="button" @click="removeJam(index)" class="text-red-500 hover:text-red-700 hover:bg-red-50 p-2 rounded-lg transition-colors">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </template>
+                        </div>
+                        <button type="button" @click="addJam()" class="inline-flex items-center gap-2 text-sm font-medium text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 px-4 py-2 rounded-lg transition-colors">
+                            <i class="bi bi-plus-lg"></i>
+                            <span>Tambah Jam</span>
+                        </button>
+                    </div>
+                </div>
+
+                {{-- Section 5: Layanan Tambahan --}}
+                <div class="space-y-2 pt-4">
+                    <div class="flex justify-between items-center border-b border-gray-100 pb-2 gap-2">
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-900">Layanan Tambahan</h3>
+                            <p class="text-sm text-gray-500 mt-1">Tambahkan layanan atau sparepart tambahan</p>
+                        </div>
+                        <button type="button" @click="addLayanan()" class="bg-indigo-600 text-white px-2 py-1.5 rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors flex items-center gap-2">
+                            <i class="bi bi-plus-lg"></i>
+                            <span>Tambah</span>
+                        </button>
+                    </div>
+
+                    <div class="space-y-2">
+                        <template x-for="(grup, gIndex) in layanan" :key="gIndex">
+                            <div class="bg-gray-50 rounded-xl border border-gray-200 p-5">
+                                <div class="flex justify-between items-start mb-4">
+                                    <div class="flex-1 mr-4">
+                                        <x-input-label :value="__('Kategori / Judul Layanan')" class="text-xs text-gray-500 mb-1" />
+                                        <x-text-input x-model="grup.judul" type="text" class="w-full font-semibold" placeholder="Contoh: Cuci AC" />
+                                    </div>
+                                    <button type="button" @click="removeLayanan(gIndex)" class="text-gray-400 hover:text-red-500 hover:bg-red-50 p-2 rounded-lg transition-colors">
+                                        <i class="bi bi-x-lg"></i>
+                                    </button>
+                                </div>
+
+                                <div class="bg-white rounded-lg border border-gray-200 p-2 space-y-3">
+                                    <template x-for="(item, iIndex) in grup.items" :key="iIndex">
+                                        <div class="grid grid-cols-12 gap-2 items-center">
+                                            <div class="col-span-5">
+                                                <x-text-input x-model="item.nama" placeholder="Nama Sparepart/Jasa" class="w-full text-sm" />
+                                            </div>
+                                            <div class="col-span-5 relative">
+                                                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400 text-xs font-medium">Rp</span>
+                                                <x-text-input 
+                                                    type="text" 
+                                                    x-model="item.harga"
+                                                    @input="item.harga = formatRupiah($event.target.value)"
+                                                    class="w-full text-sm pl-8" 
+                                                    placeholder="Harga" 
+                                                />
+                                            </div>
+                                            <div class="col-span-2 flex justify-center items-center">
+                                                <button type="button" @click="removeItemLayanan(gIndex, iIndex)" class="text-red-400 hover:text-red-500 hover:bg-red-50 p-2 rounded-lg transition-colors">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </template>
+                                    <button type="button" @click="addItemLayanan(gIndex)" class="text-sm text-indigo-600 font-medium hover:text-indigo-800 flex items-center gap-1 mt-2">
+                                        <i class="bi bi-plus-lg"></i>
+                                        <span>Tambah Item</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
                 </div>
 
                 {{-- Submit Button --}}
-                <div class="pt-4">
+                <div class="pt-6 border-t border-gray-100">
                     <x-primary-button 
-                        class="w-full justify-center py-3 flex items-center gap-2" 
+                        class="w-full justify-center py-3.5 text-base font-semibold flex items-center gap-2" 
                         wire:loading.attr="disabled"
                         wire:target="save"
                     >
                         <span wire:loading.remove wire:target="save">
+                            <i class="bi bi-check-lg"></i>
                             {{ $jasa ? __('Simpan Perubahan') : __('Posting Jasa Sekarang') }}
                         </span>
 

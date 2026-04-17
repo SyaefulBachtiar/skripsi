@@ -6,6 +6,7 @@ use App\Models\Role_users\Technician;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
 
 class Jasa extends Model
@@ -73,5 +74,10 @@ class Jasa extends Model
     public function technician (): BelongsTo
     {
         return $this->belongsTo(Technician::class, 'id_technician', 'id');
+    }
+
+    public function order (): HasMany
+    {
+        return $this->hasMany(Order::class, 'id_jasa', 'id');
     }
 }

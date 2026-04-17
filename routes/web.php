@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\Auth\GoogleController;
+use App\Models\Order;
+use App\Models\Role_users\Customer;
 use App\Models\Role_users\Technician;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -117,6 +119,17 @@ Route::middleware(['auth'])->group(function () {
                     'id_technician' => $id
                 ]);
             })->name('technician.profile');
+
+            // Route To Rincian Pesanan
+            Route::get('rincian-pesanan/{id}', function ($id) {
+                return view('pages.customer.rincian-pesanan', [
+                    'id_order' => $id
+                ]);
+            })->name('rincian.pesanan');
+
+            // Route TO Keranjang Pesanan
+            Route::view('keranjang-pesanan', 'pages.customer.keranjang')
+                ->name('keranjang.pesanan');
             
         });
 

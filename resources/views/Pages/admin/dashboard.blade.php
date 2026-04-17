@@ -1,13 +1,17 @@
 <x-app-layout>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-            {{ __('Dashboard Admin') }}
-        </h2>
+     <x-slot name="title">
+        {{ 'Beranda' }}
     </x-slot>
 
-    <div class="py-10">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            {{ __("You're logged in! Admin") }}
+    <x-slot name="header">
+        <livewire:layout.header-mobile/>
+    </x-slot>
+
+    <div class="pt-10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
+            <livewire:services.admin.quick-access/>
+
+            <livewire:services.admin.daftar-acc-teknisi/>
         </div>
     </div>
 </x-app-layout>

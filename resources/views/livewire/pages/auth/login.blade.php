@@ -21,8 +21,16 @@ new #[Layout('layouts.guest')] class extends Component
 
         Session::regenerate();
 
-        // $this->redirect(route('beranda', absolute: false), navigate: true);
-        $this->redirectIntended(default: route('beranda', absolute: false), navigate: true);
+        // Ambil user yang baru saja login
+        $user = Auth::user();
+
+        // Logika pengalihan berdasarkan Role
+        if ($user->role === 'admin') {
+            $this->redirectIntended(default: route('dashboard_admin', absolute: false), navigate: true);
+        } else {
+            // Default untuk Customer atau role lainnya
+            $this->redirectIntended(default: route('beranda', absolute: false), navigate: true);
+        }
     }
 }; ?>
 

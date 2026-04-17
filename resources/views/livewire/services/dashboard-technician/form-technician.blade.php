@@ -73,19 +73,6 @@ new class extends Component
         </div>
     </div>
 
-    {{-- Flash Messages --}}
-    @if (session()->has('success'))
-        <div class="mb-4 p-4 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-lg">
-            {{ session('success') }}
-        </div>
-    @endif
-
-    @if (session()->has('error'))
-        <div class="mb-4 p-4 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded-lg">
-            {{ session('error') }}
-        </div>
-    @endif
-
     <form wire:submit.prevent="save" class="space-y-5">
 
         {{-- Deskripsi --}}

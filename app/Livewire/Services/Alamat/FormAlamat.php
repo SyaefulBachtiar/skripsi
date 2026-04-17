@@ -118,6 +118,15 @@ class FormAlamat extends Component
             'kelurahan' => 'required',
         ]);
 
+        $customer_verif = Technician::where('user_id', Auth::id())->value('verifikasi');
+
+        if($customer_verif === 'ditolak') {
+            Technician::where('user_id', Auth::id())
+            ->update([
+                'verifikasi' => 'diproses'
+            ]);
+        }
+
         try {
             $data = [
                 'detail_alamat' => $this->detail_alamat,

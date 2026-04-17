@@ -1,5 +1,5 @@
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-
+    {{-- Kolom Kiri: Gallery Foto --}}
     <div class="space-y-4">
         <div x-data="{ 
             activeSlide: 0, 
@@ -24,7 +24,7 @@
                 this.lightbox = true;
             }
         }" 
-        class="relative w-full overflow-hidden group rounded-3xl bg-gray-50 border border-gray-100 shadow-sm"
+        class="relative w-full overflow-hidden rounded-2xl bg-gray-50 border border-gray-200 shadow-sm"
         @touchstart="onDragStart($event)"
         @touchend="onDragEnd($event)"
         @mousedown="onDragStart($event)"
@@ -32,7 +32,7 @@
         @mouseleave="isDragging = false">
 
             {{-- Wrapper Images --}}
-            <div class="relative h-72 md:h-[460px] select-none">
+            <div class="relative h-72 md:h-[460px] select-none cursor-pointer" @click="openLightbox()">
                 @forelse($jasa->thumbnails as $index => $img)
                     <div 
                         x-show="activeSlide === {{ $index }}" 
@@ -40,30 +40,29 @@
                         x-transition:enter-start="opacity-0 scale-95"
                         x-transition:enter-end="opacity-100 scale-100"
                         class="absolute inset-0"
-                        @click="openLightbox()"
                     >
                         <img src="{{ asset('storage/' . $img) }}" 
                             alt="Thumbnail {{ $index + 1 }}" 
                             class="w-full h-full object-contain pointer-events-none">
                     </div>
                 @empty
-                    <div class="flex flex-col items-center justify-center h-full bg-gray-50">
+                    <div class="flex flex-col items-center justify-center h-full">
                         <img src="{{ asset('assets/icons/empty_image.webp') }}" 
                             alt="empty" 
                             class="w-24 h-24 object-contain opacity-20 grayscale">
-                        <p class="text-gray-400 text-xs mt-3 font-medium">Belum ada foto</p>
+                        <p class="text-gray-400 text-sm mt-3 font-medium">Belum ada foto</p>
                     </div>
                 @endforelse
             </div>
 
-            {{-- Dots --}}
+            {{-- Dots Navigation --}}
             @if(count($jasa->thumbnails ?? []) > 1)
                 <div class="absolute bottom-5 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
                     @foreach($jasa->thumbnails as $index => $img)
                         <button 
                             @click="activeSlide = {{ $index }}" 
                             class="h-1.5 transition-all duration-300 rounded-full"
-                            :class="activeSlide === {{ $index }} ? 'w-6 bg-indigo-600' : 'w-1.5 bg-white/70 hover:bg-white'"
+                            :class="activeSlide === {{ $index }} ? 'w-6 bg-indigo-600' : 'w-1.5 bg-gray-400/70 hover:bg-gray-500'"
                         ></button>
                     @endforeach
                 </div>
@@ -78,7 +77,7 @@
                 </div>
             @endif
 
-            {{-- Lightbox --}}
+            {{-- Lightbox Modal --}}
             @if(count($jasa->thumbnails ?? []) > 0)
                 <div 
                     x-show="lightbox"
@@ -113,12 +112,12 @@
         </div>
     </div>
 
-    <div class="space-y-5">
-
-        {{-- ── Header: Nama & Rating ── --}}
+    {{-- Kolom Kanan: Informasi & Form --}}
+    <div class="space-y-6">
+        {{-- Header: Nama & Rating --}}
         <div class="flex items-start justify-between gap-4">
             <div class="space-y-2 flex-1">
-                <h1 class="text-2xl md:text-3xl font-extrabold text-gray-900 leading-tight tracking-tight">
+                <h1 class="text-2xl md:text-3xl font-bold text-gray-900 leading-tight">
                     {{ $jasa->nama_jasa }}
                 </h1>
                 <div class="flex items-center gap-2">
@@ -132,46 +131,46 @@
             </div>
 
             @if(auth()->user()->id !== $jasa->technician->user_id)
-                <button class="p-2.5 rounded-2xl bg-gray-50 text-gray-400 hover:text-rose-500 hover:bg-rose-50 transition border border-gray-100 shrink-0">
+                <button class="p-2.5 rounded-xl bg-gray-50 text-gray-400 hover:text-rose-500 hover:bg-rose-50 transition border border-gray-200 shrink-0">
                     <i class="bi bi-bookmark-fill text-lg"></i>
                 </button>
             @else
-                <a href="{{ route('edit.jasa', ['id_jasa' => $jasa->id]) }}" class="flex items-center gap-1 p-1 border border-green-300 bg-green-400/40 rounded">
-                    <i class="bi bi-pencil-square text-green-500"></i>
-                    <span class="text-md text-green-500">Edit</span>
+                <a href="{{ route('edit.jasa', ['id_jasa' => $jasa->id]) }}" class="flex items-center gap-1.5 px-3 py-2 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 transition">
+                    <i class="bi bi-pencil-square text-green-600"></i>
+                    <span class="text-sm font-medium text-green-700">Edit</span>
                 </a>
             @endif
         </div>
 
-        {{-- ── Harga ── --}}
+        {{-- Harga --}}
         <div class="flex items-baseline gap-2">
-            <span class="text-3xl font-black text-indigo-600 tracking-tight">
+            <span class="text-3xl font-bold text-indigo-600 tracking-tight">
                 Rp {{ number_format($jasa->harga_jasa, 0, ',', '.') }}
             </span>
-            <span class="text-xs text-gray-400 font-medium">/ kunjungan</span>
+            {{-- <span class="text-sm text-gray-500 font-medium">/ kunjungan</span> --}}
         </div>
 
-        <hr class="border-gray-100">
+        <hr class="border-gray-200">
 
-        {{-- ── Card Teknisi ── --}}
+        {{-- Card Teknisi --}}
         @if(auth()->user()->id !== $jasa->technician->user_id)
             @if($jasa->technician?->user)
-                <div class="flex items-center justify-between gap-4 p-4 bg-indigo-50 rounded-2xl border border-indigo-100">
+                <div class="flex items-center justify-between gap-4 p-4 bg-indigo-50 rounded-xl border border-indigo-100">
                     <div class="flex items-center gap-3">
                         <div class="relative shrink-0">
                             <img 
                                 src="{{ $jasa->technician->user->profile_photo_url }}" 
                                 alt="{{ $jasa->technician->user->name }}"
-                                class="w-11 h-11 rounded-full object-cover border-2 border-white shadow-sm"
+                                class="w-12 h-12 rounded-full object-cover border-2 border-white shadow-sm"
                             >
                             <div class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
                         </div>
                         <div>
                             <p class="font-bold text-gray-900 text-sm">{{ $jasa->technician->user->name }}</p>
-                            <p class="text-[10px] text-indigo-500 font-bold uppercase tracking-widest">Teknisi Elektronik</p>
+                            <p class="text-xs text-indigo-600 font-semibold uppercase tracking-wide">Teknisi Elektronik</p>
                         </div>
                     </div>
-                    <a href="{{ route('technician.profile', ['id' => $jasa->id_technician]) }}" class="flex items-center gap-1.5 px-3 py-2 bg-white text-indigo-600 rounded-xl text-xs font-bold border border-indigo-100 hover:bg-indigo-600 hover:text-white hover:border-indigo-600 transition-all shadow-sm">
+                    <a href="{{ route('technician.profile', ['id' => $jasa->id_technician]) }}" class="flex items-center gap-1.5 px-3 py-2 bg-white text-indigo-600 rounded-lg text-xs font-bold border border-indigo-200 hover:bg-indigo-600 hover:text-white hover:border-indigo-600 transition-all shadow-sm">
                         <i class="bi bi-shop text-sm"></i>
                         <span>Profile</span>
                     </a>
@@ -179,70 +178,66 @@
             @endif
         @endif
 
-        {{-- ── Deskripsi ── --}}
-        <div x-data="{ open: true }" class="rounded-2xl border border-gray-100 overflow-hidden bg-white">
+        {{-- Deskripsi --}}
+        <div x-data="{ open: true }" class="rounded-xl border border-gray-200 overflow-hidden bg-white">
             <button @click="open = !open" class="w-full flex justify-between items-center px-4 py-3.5 hover:bg-gray-50 transition">
-                <span class="font-bold text-gray-700 text-xs uppercase tracking-widest">Deskripsi Layanan</span>
-                <i class="bi bi-chevron-up text-gray-400 text-sm transition-transform duration-300" :class="open ? '' : 'rotate-180'"></i>
+                <span class="font-bold text-gray-800 text-sm uppercase tracking-wide">Deskripsi Layanan</span>
+                <i class="bi bi-chevron-up text-gray-400 transition-transform duration-300" :class="open ? '' : 'rotate-180'"></i>
             </button>
             <div x-show="open" x-collapse>
-                <div class="px-4 pb-4 text-gray-500 leading-relaxed text-sm whitespace-pre-line border-t border-gray-50">
+                <div class="px-4 pb-4 text-gray-600 leading-relaxed text-sm whitespace-pre-line border-t border-gray-100 pt-3">
                     {{ $jasa->deskripsi }}
                 </div>
             </div>
         </div>
 
-        {{-- ── Ulasan ── --}}
+        {{-- Ulasan --}}
         <div class="space-y-3">
             <div class="flex items-center justify-between">
-                <h3 class="font-bold text-gray-800 text-xs uppercase tracking-widest">Ulasan Terakhir</h3>
-                <span class="text-[10px] bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full font-bold">2 ulasan</span>
+                <h3 class="font-bold text-gray-800 text-sm uppercase tracking-wide">Ulasan Terakhir</h3>
+                <span class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full font-semibold">2 ulasan</span>
             </div>
-            <div class="p-3.5 bg-amber-50 border border-amber-100 rounded-xl text-xs text-gray-600 italic leading-relaxed">
+            <div class="p-4 bg-amber-50 border border-amber-100 rounded-xl text-sm text-gray-700 italic leading-relaxed">
                 "Sangat puas dengan pelayanannya, teknisi ramah dan tepat waktu."
             </div>
         </div>
 
-        <hr class="border-gray-100">
+        <hr class="border-gray-200">
 
-        <div class="space-y-4">
-
-            {{-- ── Pilih Tanggal ── --}}
-            <div x-data="{ selectedDate: '' }">
+        {{-- Form Pemesanan --}}
+        <div class="space-y-6">
+            {{-- Pilih Tanggal --}}
+            <div>
                 <div class="flex items-center justify-between mb-3">
-                    <h3 class="text-xs font-bold text-gray-700 uppercase tracking-widest">Tanggal Tersedia</h3>
-                    {{-- @if($jasa->is_setiap_hari)
-                        <span class="text-[10px] bg-green-50 text-green-600 border border-green-200 px-2 py-0.5 rounded-full font-bold">Setiap Hari</span>
-                    @endif --}}
+                    <h3 class="text-sm font-bold text-gray-800 uppercase tracking-wide">Tanggal Tersedia <span class="text-red-500">*</span></h3>
                 </div>
 
                 <div class="flex flex-wrap gap-2">
                     @if($jasa->is_setiap_hari)
                         @foreach(range(0, 6) as $day)
                             @php $date = now()->addDays($day); @endphp
-                            <label class="cursor-pointer">
+                            <label class="cursor-pointer" wire:key="date-{{ $date->format('Y-m-d') }}">
                                 <input 
                                     type="radio" 
                                     name="order_date" 
                                     value="{{ $date->format('Y-m-d') }}" 
                                     class="peer sr-only" 
-                                    x-model="selectedDate"
                                     wire:model.live="order_date"
                                 >
-                                <div class="flex flex-col items-center justify-center w-14 h-[72px] bg-white border border-gray-200 rounded-2xl transition-all
+                                <div class="flex flex-col items-center justify-center w-16 h-20 bg-white border border-gray-200 rounded-xl transition-all
                                             peer-checked:bg-indigo-600 peer-checked:text-white peer-checked:border-indigo-600 peer-checked:shadow-md
-                                            hover:border-indigo-300 hover:shadow-sm">
-                                    <span class="text-[9px] uppercase font-bold opacity-50 peer-checked:opacity-80 leading-none">{{ $date->translatedFormat('D') }}</span>
-                                    <span class="text-xl font-black leading-tight">{{ $date->format('d') }}</span>
-                                    <span class="text-[9px] font-medium opacity-60">{{ $date->translatedFormat('M') }}</span>
+                                            hover:border-indigo-300">
+                                    <span class="text-[10px] uppercase font-bold opacity-60 peer-checked:opacity-80">{{ $date->translatedFormat('D') }}</span>
+                                    <span class="text-xl font-bold">{{ $date->format('d') }}</span>
+                                    <span class="text-[10px] font-medium opacity-70">{{ $date->translatedFormat('M') }}</span>
                                 </div>
                             </label>
                         @endforeach
                     @else
                         @forelse($jasa->ketersediaan_tanggal as $index => $tgl)
                             @if($jasa->ketersediaan_status === 'Ketersediaan perlu diperbarui')
-                                <div class="w-full p-4 bg-red-50 rounded-2xl border border-red-100 text-center">
-                                    <p class="text-red-500 text-xs font-bold">Jadwal teknisi tidak tersedia</p>
+                                <div class="w-full p-4 bg-red-50 rounded-xl border border-red-200 text-center">
+                                    <p class="text-red-600 text-sm font-medium">Jadwal teknisi tidak tersedia</p>
                                 </div>
                             @else
                                 @php $carbonTgl = \Carbon\Carbon::parse($tgl); @endphp
@@ -250,31 +245,39 @@
                                     <input 
                                         type="radio" 
                                         name="order_date" 
-                                        value="{{ $tgl }}" 
+                                        value="{{ $carbonTgl->format('Y-m-d') }}" 
                                         class="peer sr-only" 
-                                        wire:model.live="order_time"
+                                        wire:model.live="order_date"
                                     >
-                                    <div class="flex flex-col items-center justify-center w-14 h-[72px] bg-white border border-gray-200 rounded-2xl transition-all
+                                    <div class="flex flex-col items-center justify-center w-16 h-20 bg-white border border-gray-200 rounded-xl transition-all
                                                 peer-checked:bg-indigo-600 peer-checked:text-white peer-checked:border-indigo-600 peer-checked:shadow-md
-                                                {{ $carbonTgl->isPast() && !$carbonTgl->isToday() ? 'opacity-35 pointer-events-none' : 'hover:border-indigo-300 hover:shadow-sm' }}">
-                                        <span class="text-[9px] uppercase font-bold opacity-50 leading-none">{{ $carbonTgl->translatedFormat('D') }}</span>
-                                        <span class="text-xl font-black leading-tight">{{ $carbonTgl->format('d') }}</span>
-                                        <span class="text-[9px] font-medium opacity-60">{{ $carbonTgl->translatedFormat('M') }}</span>
+                                                {{ $carbonTgl->isPast() && !$carbonTgl->isToday() ? 'opacity-40 pointer-events-none' : 'hover:border-indigo-300' }}">
+                                        <span class="text-[10px] uppercase font-bold opacity-60">{{ $carbonTgl->translatedFormat('D') }}</span>
+                                        <span class="text-xl font-bold">{{ $carbonTgl->format('d') }}</span>
+                                        <span class="text-[10px] font-medium opacity-70">{{ $carbonTgl->translatedFormat('M') }}</span>
                                     </div>
                                 </label>
                             @endif
                         @empty
-                            <div class="w-full p-4 bg-red-50 rounded-2xl border border-red-100 text-center">
-                                <p class="text-red-500 text-xs font-bold">Jadwal belum diatur teknisi</p>
+                            <div class="w-full p-4 bg-red-50 rounded-xl border border-red-200 text-center">
+                                <p class="text-red-600 text-sm font-medium">Jadwal belum diatur teknisi</p>
                             </div>
                         @endforelse
                     @endif
                 </div>
+
+                {{-- Error Tanggal --}}
+                @error('order_date')
+                    <p class="mt-2 text-sm text-red-600 flex items-center gap-1">
+                        <i class="bi bi-exclamation-circle-fill text-xs"></i>
+                        <span>{{ $message }}</span>
+                    </p>
+                @enderror
             </div>
 
-            {{-- ── Pilih Jam ── --}}
-            <div x-data="{ selectedTime: '' }">
-                <h3 class="text-xs font-bold text-gray-700 uppercase tracking-widest mb-3">Jam Tersedia</h3>
+            {{-- Pilih Jam --}}
+            <div>
+                <h3 class="text-sm font-bold text-gray-800 uppercase tracking-wide mb-3">Jam Tersedia <span class="text-red-500">*</span></h3>
                 <div class="grid grid-cols-3 sm:grid-cols-4 gap-2">
                     @forelse($jasa->ketersediaan_jam as $jam)
                         <label class="cursor-pointer">
@@ -285,49 +288,58 @@
                                 class="peer sr-only" 
                                 wire:model.live="order_time"
                             >
-                            <div class="py-2.5 text-center bg-white border border-gray-200 rounded-xl text-xs font-bold text-gray-600 transition-all
+                            <div class="py-3 text-center bg-white border border-gray-200 rounded-xl text-sm font-semibold text-gray-700 transition-all
                                         peer-checked:bg-indigo-600 peer-checked:text-white peer-checked:border-indigo-600 peer-checked:shadow-md
                                         hover:border-indigo-300">
                                 {{ $jam }}
                             </div>
                         </label>
                     @empty
-                        <div class="col-span-full p-3 bg-gray-50 rounded-xl border border-gray-100 text-center">
-                            <p class="text-gray-400 text-xs italic">Jam tidak tersedia</p>
+                        <div class="col-span-full p-4 bg-gray-50 rounded-xl border border-gray-200 text-center">
+                            <p class="text-gray-500 text-sm italic">Jam tidak tersedia</p>
                         </div>
                     @endforelse
                 </div>
+
+                {{-- Error Jam --}}
+                @error('order_time')
+                    <p class="mt-2 text-sm text-red-600 flex items-center gap-1">
+                        <i class="bi bi-exclamation-circle-fill text-xs"></i>
+                        <span>{{ $message }}</span>
+                    </p>
+                @enderror
             </div>
 
-            {{-- ── Jenis Kerusakan / Keluhan ── --}}
-            <div class="pt-5 border-t border-gray-100">
-                <h3 class="text-xs font-bold text-gray-700 uppercase tracking-widest mb-3">Jenis Keluhan</h3>
+            {{-- Jenis Keluhan --}}
+            <div class="pt-4 border-t border-gray-200">
+                <h3 class="text-sm font-bold text-gray-800 uppercase tracking-wide mb-3">Jenis Keluhan <span class="text-red-500">*</span></h3>
 
-                <div x-data="{ showLainnya: false, keluhanLainnya: '' }" class="space-y-3">
+                <div x-data="{ showLainnya: {{ !empty($keluhan_manual) ? 'true' : 'false' }} }" class="space-y-3">
                     <div class="flex flex-wrap gap-2">
                         @forelse($jasa->keluhan as $index => $item)
-                            <label class="relative">
+                            <label class="relative" wire:key="keluhan-{{ $index }}">
                                 <input 
                                     type="checkbox" 
                                     name="keluhan[]" 
                                     value="{{ $item }}" 
                                     class="peer sr-only"
-                                    wire:model.live="keluhan"
+                                    wire:model="keluhan"
+                                    @change="$wire.set('keluhan', [...$wire.keluhan])"
                                 >
-                                <div class="px-3.5 py-2 bg-white border border-gray-200 rounded-xl text-xs font-semibold text-gray-600 cursor-pointer transition-all
+                                <div class="px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-medium text-gray-700 cursor-pointer transition-all
                                             peer-checked:bg-indigo-600 peer-checked:text-white peer-checked:border-indigo-600 peer-checked:shadow-sm
                                             hover:border-indigo-300 hover:bg-gray-50">
                                     {{ $item }}
                                 </div>
                             </label>
                         @empty
-                            <p class="text-gray-400 italic text-xs">Data keluhan tidak tersedia</p>
+                            <p class="text-gray-500 italic text-sm">Data keluhan tidak tersedia</p>
                         @endforelse
 
                         <button type="button" @click="showLainnya = !showLainnya"
-                            class="px-3.5 py-2 border border-dashed border-gray-300 rounded-xl text-xs font-semibold text-gray-500 hover:border-indigo-400 hover:text-indigo-600 transition-all flex items-center gap-1.5"
+                            class="px-4 py-2.5 border border-dashed border-gray-300 rounded-xl text-sm font-medium text-gray-600 hover:border-indigo-400 hover:text-indigo-600 transition-all flex items-center gap-1.5"
                             :class="showLainnya ? 'bg-indigo-50 border-indigo-400 text-indigo-600' : 'bg-white'">
-                            <i class="bi text-[10px]" :class="showLainnya ? 'bi-dash-lg' : 'bi-plus-lg'"></i>
+                            <i class="bi text-xs" :class="showLainnya ? 'bi-dash-lg' : 'bi-plus-lg'"></i>
                             Lainnya
                         </button>
                     </div>
@@ -336,32 +348,69 @@
                         <textarea 
                             name="keluhan_manual" 
                             placeholder="Sebutkan keluhan lainnya..."
-                            class="w-full mt-1 rounded-2xl border border-gray-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-sm p-3.5 bg-gray-50 placeholder-gray-300 resize-none outline-none transition"
+                            class="w-full rounded-xl border border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 text-sm p-3 bg-gray-50 placeholder-gray-400 resize-none transition"
                             rows="3"
                             wire:model.defer="keluhan_manual"
                         ></textarea>
                     </div>
                 </div>
+
+                {{-- Error Keluhan --}}
+                @error('keluhan')
+                    <p class="mt-2 text-sm text-red-600 flex items-center gap-1">
+                        <i class="bi bi-exclamation-circle-fill text-xs"></i>
+                        <span>{{ $message }}</span>
+                    </p>
+                @enderror
             </div>
 
-            {{-- ── Layanan Tambahan ── --}}
-            <div class="pt-5 border-t border-gray-100" x-data="{ openModal: null }">
-                <h3 class="text-xs font-bold text-gray-700 uppercase tracking-widest mb-3">Layanan Tambahan <span class="normal-case font-normal text-gray-400">(Opsional)</span></h3>
+            {{-- Layanan Tambahan --}}
+            <div class="pt-4 border-t border-gray-200" x-data="{ openModal: null }">
+                <h3 class="text-sm font-bold text-gray-800 uppercase tracking-wide mb-3">Layanan Tambahan <span class="text-gray-400 font-normal normal-case">(Opsional)</span></h3>
 
                 <div class="space-y-2">
                     @forelse($jasa->layanan_tambahan as $indexGrup => $grup)
-
                         {{-- Trigger Button --}}
-                        <div class="flex items-center justify-between px-4 py-3.5 bg-white border border-gray-200 rounded-2xl hover:border-indigo-300 hover:bg-indigo-50/30 transition cursor-pointer shadow-sm"
+                        <div class="flex items-center justify-between px-4 py-3.5 bg-white border rounded-xl hover:border-indigo-300 hover:bg-indigo-50/30 transition cursor-pointer shadow-sm"
+                            :class="(layanan_tambahan_count_{{ $indexGrup }} ?? 0) > 0 ? 'border-indigo-400' : 'border-gray-200'"
                             @click="openModal = {{ $indexGrup }}">
-                            <div class="flex items-center gap-3">
-                                <div class="w-8 h-8 bg-indigo-50 border border-indigo-100 rounded-xl flex items-center justify-center text-indigo-500 shrink-0">
-                                    <i class="bi bi-tools text-sm"></i>
+                            <div class="flex items-center gap-3 flex-1 min-w-0">
+                                <div class="w-10 h-10 bg-indigo-50 border border-indigo-100 rounded-lg flex items-center justify-center text-indigo-600 shrink-0">
+                                    <i class="bi bi-tools"></i>
                                 </div>
-                                <span class="font-bold text-gray-800 text-sm">{{ $grup['judul'] }}</span>
+                                <div class="min-w-0">
+                                    <span class="font-semibold text-gray-800 text-sm block">{{ $grup['judul'] }}</span>
+
+                                    {{-- Ringkasan item terpilih --}}
+                                    @php
+                                        $selectedCount = count($layanan_tambahan[$indexGrup] ?? []);
+                                        $selectedNames = collect($layanan_tambahan[$indexGrup] ?? [])
+                                            ->map(fn($json) => json_decode($json, true)['nama'] ?? '')
+                                            ->filter()
+                                            ->implode(', ');
+                                        $selectedTotal = collect($layanan_tambahan[$indexGrup] ?? [])
+                                            ->sum(fn($json) => (int) str_replace(['.', ','], '', json_decode($json, true)['harga'] ?? 0));
+                                    @endphp
+
+                                    @if($selectedCount > 0)
+                                        <span class="text-xs text-indigo-500 truncate block">
+                                            {{ $selectedNames }} · Rp {{ number_format($selectedTotal, 0, ',', '.') }}
+                                        </span>
+                                    @endif
+                                </div>
                             </div>
-                            <div class="w-7 h-7 flex items-center justify-center bg-indigo-600 text-white rounded-full shadow-sm hover:scale-110 transition shrink-0">
-                                <i class="bi bi-plus-lg text-xs"></i>
+
+                            <div class="flex items-center gap-2 shrink-0">
+                                {{-- Badge counter --}}
+                                @if($selectedCount > 0)
+                                    <span class="text-xs font-semibold bg-indigo-600 text-white px-2.5 py-0.5 rounded-full">
+                                        {{ $selectedCount }} dipilih
+                                    </span>
+                                @endif
+
+                                <div class="w-8 h-8 flex items-center justify-center bg-indigo-600 text-white rounded-full shadow-sm shrink-0">
+                                    <i class="bi bi-plus-lg text-sm"></i>
+                                </div>
                             </div>
                         </div>
 
@@ -372,7 +421,8 @@
                             x-transition:enter-end="opacity-100"
                             x-transition:leave="transition ease-in duration-200"
                             class="fixed inset-0 z-[99999] flex items-end justify-center bg-black/50 backdrop-blur-sm"
-                            style="display: none;">
+                            style="display: none;"
+                            >
                             
                             <div class="absolute inset-0" @click="openModal = null"></div>
 
@@ -385,59 +435,80 @@
                                 x-transition:leave-end="translate-y-full"
                                 class="relative w-full max-w-lg bg-white rounded-t-[28px] p-6 shadow-2xl">
                                 
-                                <div class="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-6"></div>
+                                <div class="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-6"></div>
 
                                 <div class="flex justify-between items-center mb-5">
-                                    <h4 class="text-lg font-black text-gray-900">{{ $grup['judul'] }}</h4>
+                                    <h4 class="text-lg font-bold text-gray-900">{{ $grup['judul'] }}</h4>
                                     <button @click="openModal = null" class="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition">
                                         <i class="bi bi-x-lg text-sm"></i>
                                     </button>
                                 </div>
 
-                                <div class="grid grid-cols-1 gap-2.5 max-h-[60vh] overflow-y-auto pb-2">
+                                <div class="space-y-2 max-h-[60vh] overflow-y-auto pb-2">
                                     @foreach($grup['items'] as $indexItem => $item)
-                                        @php $uniqueId = 'layanan-' . $indexGrup . '-' . $indexItem; @endphp
+
+                                        @php 
+                                            $uniqueId = 'layanan-' . $indexGrup . '-' . $indexItem;
+                                            // Pastikan harga adalah angka bersih agar tidak error/terpotong di number_format
+                                            $cleanHarga = (int) str_replace(['.', ','], '', $item['harga']); 
+                                        @endphp
+
                                         <label for="{{ $uniqueId }}" 
-                                            class="flex items-center justify-between p-4 bg-gray-50 border border-gray-100 rounded-2xl cursor-pointer hover:border-indigo-300 hover:bg-indigo-50/40 transition has-[:checked]:border-indigo-500 has-[:checked]:bg-indigo-50"
-                                            >
+                                            class="flex items-center justify-between p-4 bg-gray-50 border border-gray-200 rounded-xl cursor-pointer hover:border-indigo-300 hover:bg-indigo-50/40 transition has-[:checked]:border-indigo-500 has-[:checked]:bg-indigo-50"
+                                        >
                                             <div class="flex items-center gap-3">
                                                 <input 
                                                     type="checkbox" 
                                                     id="{{ $uniqueId }}" 
                                                     name="layanan_tambahan[{{ $indexGrup }}]" 
-                                                    value="{{ json_encode(['nama' => $item['nama'], 'harga' => $item['harga']]) }}"
+                                                    value="{{ json_encode(['nama' => $item['nama'], 'harga' => $cleanHarga]) }}"
                                                     wire:model.live="layanan_tambahan.{{ $indexGrup }}"
-                                                    class="w-4 h-4 text-indigo-600 border-gray-300 focus:ring-indigo-500">
-                                                <span class="text-sm font-semibold text-gray-700">{{ $item['nama'] }}</span>
+                                                    class="w-4 h-4 text-indigo-600 border-gray-300 focus:ring-indigo-500 rounded">
+                                                <span class="text-sm font-medium text-gray-700">{{ $item['nama'] }}</span>
                                             </div>
-                                            <span class="text-sm font-black text-indigo-600 shrink-0 ml-3">Rp {{ $item['harga'] }}</span>
+                                            <span class="text-sm font-bold text-indigo-600 shrink-0">Rp {{ number_format($cleanHarga, 0, ',', '.') }}</span>
                                         </label>
                                     @endforeach
                                 </div>
                             </div>
                         </div>
-
                     @empty
-                        <p class="text-gray-400 italic text-xs text-center py-4">Tidak ada layanan tambahan</p>
+                        <p class="text-gray-500 italic text-sm text-center py-4 bg-gray-50 rounded-xl border border-dashed border-gray-200">Tidak ada layanan tambahan</p>
                     @endforelse
                 </div>
             </div>
 
+            {{-- Submit Button --}}
             @if(auth()->user()->id !== $jasa->technician->user_id)
-                <div class="border-t border-gray-100 sticky bottom-0">
-                    <button type="button" wire:click="submitOrder" wire:loading.attr="disabled" class="w-full py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-2xl shadow-lg transition-all flex items-center justify-center gap-2">
-                        <span wire:loading.remove wire:target="submitOrder">Pesan Jasa Sekarang</span>
-                        <span wire:loading wire:target="submitOrder">Memproses...</span>
+                <div class="pt-6 border-t border-gray-200">
+                    <button type="button" wire:click="submitOrder" wire:loading.attr="disabled" 
+                            class="w-full py-4 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-bold rounded-xl shadow-lg transition-all flex items-center justify-center gap-2">
+                        <span wire:loading.remove wire:target="submitOrder">
+                            <i class="bi bi-cart-check text-lg"></i>
+                            @if($pesanan_di_keranjang)
+                                Lanjutkan Pesanan
+                            @else
+                                Pesan Jasa Sekarang
+                            @endif
+                        </span>
+                        <span wire:loading wire:target="submitOrder" class="flex items-center gap-2">
+                            <svg class="animate-spin h-5 w-5 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Memproses...
+                        </span>
                     </button>
+                    
+                    {{-- Global Error --}}
+                    {{-- @if(session()->has('order_error'))
+                        <p class="mt-3 text-sm text-red-600 text-center flex items-center justify-center gap-1">
+                            <i class="bi bi-exclamation-circle-fill"></i>
+                            <span>{{ session('order_error') }}</span>
+                        </p>
+                    @endif --}}
                 </div>
             @endif
-
         </div>
     </div>
-
-</div>
-
-        </div>
-    </div>
-
 </div>

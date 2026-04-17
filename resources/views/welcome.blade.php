@@ -103,8 +103,12 @@
                     <a href="{{ route('dashboard_technician') }}" class="inline-flex items-center justify-center px-4 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-lg shadow-blue-600/25 hover:shadow-blue-600/35 hover:-translate-y-0.5 transition-all no-underline">
                         Dashboard
                     </a>
-                @elseif(auth()->user->role === 'customer')
+                @elseif(auth()->user()->role === 'customer')
                     <a href="{{ route('beranda') }}" class="inline-flex items-center justify-center px-4 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-lg shadow-blue-600/25 hover:shadow-blue-600/35 hover:-translate-y-0.5 transition-all no-underline">
+                        Beranda
+                    </a>
+                @elseif(auth()->user()->role === 'admin')
+                    <a href="{{ route('dashboard_admin') }}" class="inline-flex items-center justify-center px-4 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-lg shadow-blue-600/25 hover:shadow-blue-600/35 hover:-translate-y-0.5 transition-all no-underline">
                         Beranda
                     </a>
                 @endauth
@@ -177,7 +181,7 @@
 
                 <!-- Buttons -->
                 <div class="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start mb-12">
-                    <a href="#" class="inline-flex items-center justify-center gap-2 px-7 py-3.5 text-base font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-xl shadow-blue-600/25 hover:shadow-blue-600/35 hover:-translate-y-0.5 transition-all no-underline">
+                    <a href="{{ route('beranda') }}" class="inline-flex items-center justify-center gap-2 px-7 py-3.5 text-base font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-xl shadow-blue-600/25 hover:shadow-blue-600/35 hover:-translate-y-0.5 transition-all no-underline">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                         </svg>

@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 
 class User extends Authenticatable
@@ -97,5 +98,10 @@ class User extends Authenticatable
     public function admin (): HasOne
     {
         return $this->hasOne(Admin::class);
+    }
+
+    public function chat_message (): HasMany
+    {
+        return $this->hasMany(ChatMessages::class, 'sender_id', 'id');
     }
 }

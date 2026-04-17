@@ -2,10 +2,12 @@
 
 namespace App\Models\Role_users;
 
+use App\Models\ChatRooms;
 use App\Models\Jasa;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Technician extends Model
@@ -14,6 +16,7 @@ class Technician extends Model
     protected $table = 'technician';
 
     protected $fillable = [
+        'verifikasi',
         'user_id',
         'spesialisasi',
         'pengalaman',
@@ -25,13 +28,18 @@ class Technician extends Model
         'kecamatan',
         'kelurahan',
         'latitude',
-        'longitude'
+        'longitude',
+        'nama_asli',
+        'foto_wajah',
+        'foto_kegiatan',
+        'alasa_ditolak'
     ];
 
     protected $casts = [
         'spesialisasi' => 'array',
         'sertifikat' => 'array',
-        'pengalaman' => 'array'
+        'pengalaman' => 'array',
+        'foto_kegiatan' => 'array'
     ];
 
     public function user (): BelongsTo
@@ -42,5 +50,10 @@ class Technician extends Model
     public function jasa (): HasOne
     {
         return $this->hasOne(Jasa::class, 'id_technician', 'id');
+    }
+
+    public function chat_room (): HasMany
+    {
+        return $this->hasMany(ChatRooms::class, 'technician_id', 'id');
     }
 }

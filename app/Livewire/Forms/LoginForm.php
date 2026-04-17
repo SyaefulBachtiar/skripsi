@@ -40,7 +40,7 @@ class LoginForm extends Form
 
         $user = Auth::user();
     
-        if ($user->role !== 'customer') {
+        if ($user->role !== 'customer' && $user->role !== 'admin') {
             // Logout kembali karena dia bukan customer (mungkin teknisi/admin)
             Auth::logout();
             
