@@ -48,7 +48,7 @@ class DaftarAccTeknisi extends Component
         } catch (Exception $e) {
             session()->flash('error', 'Data gagal diperbarui ' . $e);
             
-            $this->redirect(request()->header('Referer'), navigate: true);
+            return $this->redirect(request()->header('Referer'), navigate: true);
         }
     }
 

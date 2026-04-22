@@ -23,9 +23,11 @@ class KontenKeranjang extends Component
             $customerId = Customer::where('user_id', Auth::id())->value('id');
 
             // Pastikan pesanan milik customer yang sedang login dan statusnya keranjang
-            $order = Order::where('id', $orderId)
+            $order = Order::whereHas('lacak_pesanan', function ($query) {
+                    $query->where('status_order', 'keranjang');
+                })
+                ->where('id', $orderId)
                 ->where('id_customer', $customerId)
-                ->where('status', 'keranjang')
                 ->latest()
                 ->first();
 
@@ -51,9 +53,11 @@ class KontenKeranjang extends Component
     {
         $customerId = Customer::where('user_id', Auth::id())->value('id');
 
-        $data =  Order::where('id_customer', $customerId)
+        $data =  Order::whereHas('lacak_pesanan', function ($query) {
+                $query->where('status_order', 'keranjang');
+            })
+            ->where('id_customer', $customerId)
             ->with(['jasa:id,nama_jasa,thumbnails'])
-            ->where('status', 'keranjang')
             ->paginate(10);
 
         // dd($data);

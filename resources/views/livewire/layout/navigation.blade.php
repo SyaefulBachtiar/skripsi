@@ -2,12 +2,45 @@
 
 use App\Livewire\Actions\Logout;
 use Livewire\Volt\Component;
+use App\Models\ChatMessages;
+use App\Models\Order;
 
 new class extends Component
 {
     /**
      * Log the current user out of the application.
      */
+
+     public $unreadCount = 0;
+     public $pesanan = 0;
+
+     public function mount () 
+     {
+        if(Auth::user()->role === 'technician'){
+            $this->unreadCount = ChatMessages::where('sender_id', '!=', Auth::id())
+                ->where('is_read', false)
+                ->whereHas('chat_room', function ($q) {
+                    $q->where('technician_id', Auth::user()->technician->id); 
+                })
+                ->count();
+            
+            $this->pesanan = Order::whereHas('latestStatus', function ($query) {
+                $query->where('status_order', 'menunggu_konfirmasi');
+            })
+            ->count();
+            
+        } elseif(Auth::user()->role === 'customer') {
+            $this->unreadCount = ChatMessages::where('sender_id', '!=', Auth::id())
+                ->where('is_read', false)
+                ->whereHas('chat_room', function ($q) {
+                    $q->where('customer_id', Auth::user()->customer->id); 
+                })
+                ->count();
+        }
+
+        // dd($this->unreadCount);
+     }
+
     public function logout(Logout $logout): void
     {
         $logout();
@@ -36,6 +69,10 @@ new class extends Component
                             @if (auth()->user()->role === 'technician')
                                 <x-nav-link :href="route('dashboard_technician')" :active="request()->routeIs('dashboard_technician')" wire:navigate>
                                     {{ __('Dashboard') }}
+                                </x-nav-link>
+
+                                <x-nav-link :href="route('dashboard_technician')" :active="request()->routeIs('dashboard_technician')" wire:navigate>
+                                    {{ __('Pesanan') }}
                                 </x-nav-link>
 
                                 <x-nav-link :href="route('pesan_technician')" :active="request()->routeIs('pesan_technician')" wire:navigate>
@@ -129,7 +166,7 @@ new class extends Component
      {{-- Bottom bar --}}
     @auth
         @if(auth()->user()->role !== 'admin')
-            <nav class="{{ request()->routeIs('rincian.pesanan') ? 'hidden' : '' }} flex sm:hidden fixed bottom-0 w-full bg-white/80 dark:bg-slate-900/80 backdrop-blur-lg border-t border-slate-200 dark:border-slate-800 z-[9999] pb-safe">
+            <nav class="{{ request()->routeIs('rincian.pesanan') || request()->routeIs('chat.room') ? 'hidden' : '' }} flex sm:hidden fixed bottom-0 w-full bg-white/80 dark:bg-slate-900/80 backdrop-blur-lg border-t border-slate-200 dark:border-slate-800 z-[9999] pb-safe">
                 <div class="flex justify-around items-center w-full h-16 px-2">
                     @php
                         // Helper untuk styling link aktif
@@ -141,15 +178,31 @@ new class extends Component
                     @if(auth()->user()->role === 'technician')
                         
                         {{-- Dashboard --}}
-                        <a href="{{ route('dashboard_technician') }}" class="flex-1 flex flex-col items-center justify-center transition-all duration-300 {{ request()->routeIs('dashboard_technician') ? $activeClass : $inactiveClass }}">
+                        <a href="{{ route('dashboard_technician') }}" class="relative flex-1 flex flex-col items-center justify-center transition-all duration-300 {{ request()->routeIs('dashboard_technician') ? $activeClass : $inactiveClass }}">
+
+                            @if($pesanan > 0)
+                                <span class="absolute -top-2 right-1/2 translate-x-4 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white ring-2 ring-white dark:ring-gray-900">
+                                    {{ $pesanan > 99 ? '99+' : $pesanan }}
+                                </span>
+                            @endif
+
                             <i class="bi {{ request()->routeIs('dashboard_technician') ? 'bi-columns-gap' : 'bi-columns-gap' }} text-xl"></i>
                             <span class="text-[10px] font-medium mt-1">Dashboard</span>
                             @if(request()->routeIs('dashboard_technician'))
                                 <div class="absolute -top-[17px] w-8 h-1 bg-blue-600 rounded-b-full"></div>
                             @endif
                         </a>
+                        
                         {{-- Pesan --}}
-                        <a href="{{ route('pesan_technician') }}" class="flex-1 flex flex-col items-center justify-center transition-all duration-300 {{ request()->routeIs('pesan_technician') ? $activeClass : $inactiveClass }}">
+                        <a href="{{ route('pesan_technician') }}" class="relative flex-1 flex flex-col items-center justify-center transition-all duration-300 {{ request()->routeIs('pesan_technician') ? $activeClass : $inactiveClass }}">
+
+                            {{-- Notifikasi Badge --}}
+                            @if($unreadCount > 0)
+                                <span class="absolute -top-2 right-1/2 translate-x-4 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white ring-2 ring-white dark:ring-gray-900">
+                                    {{ $unreadCount > 99 ? '99+' : $unreadCount }}
+                                </span>
+                            @endif
+
                             <i class="bi {{ request()->routeIs('pesan_technician') ? 'bi-chat-dots-fill' : 'bi-chat-dots' }} text-xl"></i>
                             <span class="text-[10px] font-medium mt-1">Pesan</span>
                             @if(request()->routeIs('pesan_technician'))
@@ -191,9 +244,20 @@ new class extends Component
                             @endif
                         </a>
                         {{-- Pesan --}}
-                        <a href="{{ route('pesan') }}" class="flex-1 flex flex-col items-center justify-center transition-all duration-300 {{ request()->routeIs('pesan') ? $activeClass : $inactiveClass }}">
+                        <a href="{{ route('pesan') }}" class="relative flex-1 flex flex-col items-center justify-center transition-all duration-300 {{ request()->routeIs('pesan') ? $activeClass : $inactiveClass }}">
+    
+                            {{-- Notifikasi Badge --}}
+                            @if($unreadCount > 0)
+                                <span class="absolute -top-2 right-1/2 translate-x-4 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white ring-2 ring-white dark:ring-gray-900">
+                                    {{ $unreadCount > 99 ? '99+' : $unreadCount }}
+                                </span>
+                            @endif
+
+                            {{-- Ikon Chat --}}
                             <i class="bi {{ request()->routeIs('pesan') ? 'bi-chat-dots-fill' : 'bi-chat-dots' }} text-xl"></i>
+                            
                             <span class="text-[10px] font-medium mt-1">Pesan</span>
+
                             @if(request()->routeIs('pesan'))
                                 <div class="absolute -top-[17px] w-8 h-1 bg-blue-600 rounded-b-full"></div>
                             @endif

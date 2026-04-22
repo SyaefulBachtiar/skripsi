@@ -60,16 +60,26 @@
 
                 {{-- Konten Teks --}}
                 <div class="p-3 space-y-2">
-                    <h3 class="font-bold text-xs sm:text-sm text-gray-800 dark:text-white line-clamp-2 leading-snug h-9 sm:h-10 group-hover:text-blue-700 transition-colors uppercase">
+                    {{-- Rating Section --}}
+                    <div class="flex items-center gap-1">
+                        {{-- Icon Bintang dari Bootstrap Icons --}}
+                        <i class="bi bi-star-fill text-amber-400 text-xs sm:text-sm"></i>
+                        
+                        {{-- Menampilkan Rata-rata Rating, Default 0 jika null --}}
+                        <span class="font-bold text-xs sm:text-sm text-gray-700 dark:text-gray-200">
+                            {{ number_format($item->rata_rata_rating ?? 0, 1) }}
+                        </span>
+
+                        {{-- Opsional: Menampilkan Total Ulasan --}}
+                        <span class="text-[10px] sm:text-xs text-gray-400 font-medium">
+                            ({{ $item->review_count ?? 0 }} Pelanggan)
+                        </span>
+                    </div>
+
+                    {{-- Nama Jasa --}}
+                    <h3 class="font-bold text-xs sm:text-sm text-gray-800 dark:text-white line-clamp-2 leading-snug group-hover:text-blue-700 transition-colors uppercase">
                         {{ $item->nama_jasa }}
                     </h3>
-                    
-                    <div class="flex flex-col">
-                        <p class="text-[10px] text-gray-400 uppercase font-semibold">Mulai dari</p>
-                        <p class="text-blue-700 dark:text-blue-400 font-extrabold text-sm sm:text-base">
-                            Rp {{ number_format($item->harga_jasa, 0, ',', '.') }}
-                        </p>
-                    </div>
                 </div>
             </a>
         @empty

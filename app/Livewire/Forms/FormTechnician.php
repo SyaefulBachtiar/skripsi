@@ -18,15 +18,17 @@ class FormTechnician extends Form
     ])]
     public array $spesialisasi = [];
 
-    #[Validate('nullable|array')]
+    #[Validate([
+        'experience_list' => 'nullable|array',
+        'experience_list.*' => 'nullable|string|max:255'
+    ])]
     public array $experience_list = [];
 
     #[Validate([
-        'bio' => 'required|string|min:5|max:1000'
+        'bio' => 'required|string|min:5'
     ], message: [
         'bio.required' => 'Deskripsi wajib diisi.',
         'bio.min' => 'Deskripsi minimal 5 karakter.',
-        'bio.max' => 'Deskripsi maksimal 1000 karakter.'
     ])]
     public string $bio = '';
 
@@ -46,7 +48,7 @@ class FormTechnician extends Form
     public function setValues(Technician $technician): void
     {
         $this->spesialisasi = $technician->spesialisasi ?? [];
-        $this->experience_list = $technician->pengalaman ?? [''];
+        $this->experience_list = $technician->pengalaman ?? [];
         $this->bio = $technician->deskripsi ?? '';
         $this->existing_certificates = $technician->sertifikat ?? [];
     }
@@ -109,11 +111,18 @@ class FormTechnician extends Form
             $paths[] = $file->store('technician-certificates', 'public');
         }
 
+        $cleanExperience = [];
+        if (!empty($this->experience_list)) {
+            $cleanExperience = array_values(array_filter($this->experience_list, function($value) {
+                return !empty($value) && trim($value) !== '';
+            }));
+        }
+
         Technician::updateOrCreate(
             ['user_id' => Auth::id()],
             [
                 'spesialisasi' => $this->spesialisasi,
-                'pengalaman' => array_values(array_filter($this->experience_list)),
+                'pengalaman' => $cleanExperience,
                 'sertifikat' => array_values($paths),
                 'deskripsi' => $this->bio,
             ]

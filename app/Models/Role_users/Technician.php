@@ -4,6 +4,7 @@ namespace App\Models\Role_users;
 
 use App\Models\ChatRooms;
 use App\Models\Jasa;
+use App\Models\Review;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -55,5 +56,10 @@ class Technician extends Model
     public function chat_room (): HasMany
     {
         return $this->hasMany(ChatRooms::class, 'technician_id', 'id');
+    }
+
+    public function review (): HasMany
+    {
+        return $this->hasMany(Review::class, 'id_technician', 'id');
     }
 }

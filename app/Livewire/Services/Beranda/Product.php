@@ -68,8 +68,12 @@ class Product extends Component
             ->get();
 
         // 3. Query Utama Produk Jasa
-        $query = Jasa::with('technician')
-            ->select('id', 'id_technician', 'nama_jasa', 'harga_jasa', 'thumbnails', 'deskripsi');
+        $query = Jasa::with(['technician'])
+            ->select('id', 'id_technician', 'nama_jasa', 'thumbnails', 'deskripsi')
+            ->withAvg('review as rata_rata_rating', 'rating')
+            ->withCount('review as review_count');
+
+        // dd($query->get()->toArray());
 
         // Logic Pencarian Pintar (Extended Keywords)
         if ($this->search !== '') {

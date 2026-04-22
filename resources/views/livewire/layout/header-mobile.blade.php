@@ -17,8 +17,10 @@ new class extends Component
 
         // if($customer_id) return 0;
 
-        $this->keranjang = Order::where('id_customer', $customer_id)
-            ->where('status', 'keranjang')
+        $this->keranjang = Order::whereHas('lacak_pesanan', function ($query) {
+                $query->where('status_order', 'keranjang');
+            })
+            ->where('id_customer', $customer_id)
             ->count();
     }
 
@@ -63,11 +65,26 @@ new class extends Component
                                     <button class="inline-flex items-center border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 focus:outline-none transition ease-in-out duration-150">
                                         
                                         {{-- Lingkaran Inisial --}}
-                                        <div 
-                                            x-data="{{ json_encode(['name' => auth()->user()->name]) }}" 
+                                        <div x-data="{{ json_encode(['name' => auth()->user()->name]) }}" 
                                             x-on:profile-updated.window="name = $event.detail.name"
-                                            class="flex items-center justify-center w-8 h-8 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-full uppercase"
-                                            x-text="name.charAt(0)">
+                                            class="flex items-center">
+                                            
+                                            @php
+                                                $user = auth()->user();
+                                                $photoUrl = $user->profile_photo_url;
+                                            @endphp
+
+                                            @if($photoUrl)
+                                                {{-- Tampilkan Foto (Bisa dari Google, Storage, atau Default Teknisi dari Model) --}}
+                                                <img src="{{ $photoUrl }}" 
+                                                    class="w-10 h-10 rounded-full object-cover shadow-sm border border-gray-100"
+                                                    alt="Profile">
+                                            @else
+                                                {{-- Jika null (berarti Customer tanpa foto), tampilkan inisial --}}
+                                                <div class="flex items-center justify-center w-8 h-8 bg-blue-600 text-white rounded-full uppercase text-[10px] font-bold shadow-sm"
+                                                    x-text="name.charAt(0)">
+                                                </div>
+                                            @endif
                                         </div>
 
                                         {{-- <div class="ms-1">

@@ -3,6 +3,7 @@
 namespace App\Livewire\Services\DashboardTechnician;
 
 use App\Models\Jasa;
+use App\Models\LacakPesanan;
 use App\Models\Order;
 use App\Models\Role_users\Customer;
 use Carbon\Carbon;
@@ -24,20 +25,31 @@ class DetailJasa extends Component
     public function mount ($id_jasa) {
 
         $this->jasa = Jasa::select('id', 'id_technician', 'nama_jasa', 'harga_jasa', 'deskripsi', 'thumbnails', 'ketersediaan_tanggal', 'ketersediaan_jam', 'is_setiap_hari', 'layanan_tambahan', 'keluhan')
+            ->withAvg('review as rata_rata_rating', 'rating')
+            ->withCount('review as review_count')
             ->with([
+                'review' => function ($query) {
+                    $query->select('id', 'id_jasa', 'text_comment')
+                        ->latest()
+                        ->limit(1);
+                },
                 'technician' => function ($query) {
                     $query->with(['user:id,name,avatar']);
                 }
             ])
             ->findOrFail($id_jasa);
 
+        // dd($this->jasa->toArray());
+
         foreach ($this->jasa->layanan_tambahan as $index => $grup) {
             $this->layanan_tambahan[$index] = [];
         }
 
-        $keranjang = Order::where('id_jasa', $this->jasa->id)
+        $keranjang = Order::whereHas('lacak_pesanan', function ($query) {
+                $query->where('status_order', 'keranjang');
+            })
+            ->where('id_jasa', $this->jasa->id)
             ->where('id_customer', Customer::where('user_id', Auth::id())->value('id'))
-            ->where('status', 'keranjang')
             ->first();
 
         if($keranjang){
@@ -110,7 +122,6 @@ class DetailJasa extends Component
                 [
                     'id_customer' => $id_customer,
                     'id_jasa'     => $this->jasa->id,
-                    'status'      => 'keranjang'
                 ],
                 [
                     'order_date' => $this->order_date,
@@ -120,6 +131,11 @@ class DetailJasa extends Component
                     'total_harga' => $totalKeseluruhan,
                 ]
             );
+
+            LacakPesanan::updateOrCreate([
+                'id_order' => $order->id,
+                'status_order' => 'keranjang',
+            ]);
 
             // $orderData = [
             //     'id_customer' => $id_customer,

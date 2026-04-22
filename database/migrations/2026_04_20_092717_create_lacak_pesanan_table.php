@@ -11,11 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('chat_rooms', function (Blueprint $table) {
+        Schema::create('lacak_pesanan', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('order_id')->constrained('order')->onDelete('cascade');
-            $table->foreignId('customer_id')->constrained('customer')->onDelete('cascade');
-            $table->foreignId('technician_id')->constrained('technician')->onDelete('cascade');
+            $table->foreignId('id_order')->constrained('order')->onDelete('cascade');
+            $table->string('status_order', 30);
+            $table->string('note', 100)->nullable();
             $table->timestamps();
         });
     }
@@ -25,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('chat_rooms');
+        Schema::dropIfExists('lacak_pesanan');
     }
 };

@@ -32,7 +32,7 @@
             </header>
 
             <!-- Page Content -->
-            <main class="mt-10">
+            <main class="{{ request()->routeIs('pesan') || request()->routeIs('lacak') ? 'mt-20' : 'mt-10' }}">
                 {{ $slot }}
             </main>
 

@@ -123,10 +123,10 @@
                 <div class="flex items-center gap-2">
                     <div class="flex items-center gap-1 px-2.5 py-1 bg-amber-50 border border-amber-200 text-amber-600 rounded-lg text-xs font-bold">
                         <i class="bi bi-star-fill text-[10px]"></i>
-                        <span>4.8</span>
+                        <span>{{ number_format($jasa->rata_rata_rating ?? 0, 1) }}</span>
                     </div>
                     <span class="text-gray-300 text-xs">•</span>
-                    <span class="text-gray-500 text-xs font-medium">12 Pelanggan</span>
+                    <span class="text-gray-500 text-xs font-medium">({{ $jasa->review_count ?? 0 }} Pelanggan)</span>
                 </div>
             </div>
 
@@ -159,7 +159,7 @@
                     <div class="flex items-center gap-3">
                         <div class="relative shrink-0">
                             <img 
-                                src="{{ $jasa->technician->user->profile_photo_url }}" 
+                                src="{{ $jasa->technician->user->profile_photo_url ?? asset('assets/default_profile/default_profile_teknisi.webp') }}" 
                                 alt="{{ $jasa->technician->user->name }}"
                                 class="w-12 h-12 rounded-full object-cover border-2 border-white shadow-sm"
                             >
@@ -195,11 +195,17 @@
         <div class="space-y-3">
             <div class="flex items-center justify-between">
                 <h3 class="font-bold text-gray-800 text-sm uppercase tracking-wide">Ulasan Terakhir</h3>
-                <span class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full font-semibold">2 ulasan</span>
+                <span class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full font-semibold">{{ $jasa->review_count ?? 0 }} ulasan</span>
             </div>
-            <div class="p-4 bg-amber-50 border border-amber-100 rounded-xl text-sm text-gray-700 italic leading-relaxed">
-                "Sangat puas dengan pelayanannya, teknisi ramah dan tepat waktu."
-            </div>
+            @if(empty($jasa->review))
+                <div class="p-4 bg-amber-50 border border-amber-100 rounded-xl text-sm text-gray-700 italic leading-relaxed">
+                    "{{ $jasa->review->first()->text_comment }}"
+                </div>
+            @else
+                <div class="p-4 bg-amber-50 border border-amber-100 rounded-xl text-sm text-gray-700 italic leading-relaxed">
+                    Belum Ada Ulasan
+                </div>
+            @endif
         </div>
 
         <hr class="border-gray-200">
@@ -370,9 +376,18 @@
 
                 <div class="space-y-2">
                     @forelse($jasa->layanan_tambahan as $indexGrup => $grup)
+                        @php
+                            $selectedCount = count($layanan_tambahan[$indexGrup] ?? []);
+                            $selectedNames = collect($layanan_tambahan[$indexGrup] ?? [])
+                                ->map(fn($json) => json_decode($json, true)['nama'] ?? '')
+                                ->filter()
+                                ->implode(', ');
+                            $selectedTotal = collect($layanan_tambahan[$indexGrup] ?? [])
+                                ->sum(fn($json) => (int) str_replace(['.', ','], '', json_decode($json, true)['harga'] ?? 0));
+                        @endphp
+
                         {{-- Trigger Button --}}
-                        <div class="flex items-center justify-between px-4 py-3.5 bg-white border rounded-xl hover:border-indigo-300 hover:bg-indigo-50/30 transition cursor-pointer shadow-sm"
-                            :class="(layanan_tambahan_count_{{ $indexGrup }} ?? 0) > 0 ? 'border-indigo-400' : 'border-gray-200'"
+                        <div class="flex items-center justify-between px-4 py-3.5 bg-white border rounded-xl hover:border-indigo-300 hover:bg-indigo-50/30 transition cursor-pointer shadow-sm {{ $selectedCount > 0 ? 'border-indigo-400' : 'border-gray-200' }}"
                             @click="openModal = {{ $indexGrup }}">
                             <div class="flex items-center gap-3 flex-1 min-w-0">
                                 <div class="w-10 h-10 bg-indigo-50 border border-indigo-100 rounded-lg flex items-center justify-center text-indigo-600 shrink-0">
@@ -380,17 +395,6 @@
                                 </div>
                                 <div class="min-w-0">
                                     <span class="font-semibold text-gray-800 text-sm block">{{ $grup['judul'] }}</span>
-
-                                    {{-- Ringkasan item terpilih --}}
-                                    @php
-                                        $selectedCount = count($layanan_tambahan[$indexGrup] ?? []);
-                                        $selectedNames = collect($layanan_tambahan[$indexGrup] ?? [])
-                                            ->map(fn($json) => json_decode($json, true)['nama'] ?? '')
-                                            ->filter()
-                                            ->implode(', ');
-                                        $selectedTotal = collect($layanan_tambahan[$indexGrup] ?? [])
-                                            ->sum(fn($json) => (int) str_replace(['.', ','], '', json_decode($json, true)['harga'] ?? 0));
-                                    @endphp
 
                                     @if($selectedCount > 0)
                                         <span class="text-xs text-indigo-500 truncate block">
@@ -401,7 +405,6 @@
                             </div>
 
                             <div class="flex items-center gap-2 shrink-0">
-                                {{-- Badge counter --}}
                                 @if($selectedCount > 0)
                                     <span class="text-xs font-semibold bg-indigo-600 text-white px-2.5 py-0.5 rounded-full">
                                         {{ $selectedCount }} dipilih
@@ -422,6 +425,7 @@
                             x-transition:leave="transition ease-in duration-200"
                             class="fixed inset-0 z-[99999] flex items-end justify-center bg-black/50 backdrop-blur-sm"
                             style="display: none;"
+                            x-cloak
                             >
                             
                             <div class="absolute inset-0" @click="openModal = null"></div>
@@ -433,23 +437,26 @@
                                 x-transition:leave="transition ease-in duration-200 transform"
                                 x-transition:leave-start="translate-y-0"
                                 x-transition:leave-end="translate-y-full"
-                                class="relative w-full max-w-lg bg-white rounded-t-[28px] p-6 shadow-2xl">
-                                
-                                <div class="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-6"></div>
+                                class="relative w-full max-w-lg bg-white rounded-t-[28px] shadow-2xl flex flex-col max-h-[85vh]"
+                            >
+                                {{-- Drag Handle --}}
+                                <div class="pt-4 pb-2 flex justify-center">
+                                    <div class="w-12 h-1.5 bg-gray-200 rounded-full"></div>
+                                </div>
 
-                                <div class="flex justify-between items-center mb-5">
+                                {{-- Header --}}
+                                <div class="px-6 pb-4 border-b border-gray-100 flex items-center justify-between">
                                     <h4 class="text-lg font-bold text-gray-900">{{ $grup['judul'] }}</h4>
                                     <button @click="openModal = null" class="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition">
                                         <i class="bi bi-x-lg text-sm"></i>
                                     </button>
                                 </div>
 
-                                <div class="space-y-2 max-h-[60vh] overflow-y-auto pb-2">
+                                {{-- Body --}}
+                                <div class="flex-1 overflow-y-auto p-6 space-y-2">
                                     @foreach($grup['items'] as $indexItem => $item)
-
                                         @php 
                                             $uniqueId = 'layanan-' . $indexGrup . '-' . $indexItem;
-                                            // Pastikan harga adalah angka bersih agar tidak error/terpotong di number_format
                                             $cleanHarga = (int) str_replace(['.', ','], '', $item['harga']); 
                                         @endphp
 
@@ -470,6 +477,17 @@
                                         </label>
                                     @endforeach
                                 </div>
+
+                                {{-- Footer dengan Tombol Selesai --}}
+                                <div class="p-6 border-t border-gray-100 bg-gray-50">
+                                    <button 
+                                        @click="openModal = null"
+                                        class="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl transition-colors shadow-lg shadow-indigo-200 flex items-center justify-center gap-2"
+                                    >
+                                        <i class="bi bi-check-lg"></i>
+                                        <span>Selesai</span>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     @empty
@@ -481,8 +499,12 @@
             {{-- Submit Button --}}
             @if(auth()->user()->id !== $jasa->technician->user_id)
                 <div class="pt-6 border-t border-gray-200">
-                    <button type="button" wire:click="submitOrder" wire:loading.attr="disabled" 
-                            class="w-full py-4 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-bold rounded-xl shadow-lg transition-all flex items-center justify-center gap-2">
+                    <button 
+                        type="button" 
+                        wire:click="submitOrder" 
+                        wire:loading.attr="disabled" 
+                        class="w-full py-4 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-bold rounded-xl shadow-lg transition-all flex items-center justify-center gap-2"
+                    >
                         <span wire:loading.remove wire:target="submitOrder">
                             <i class="bi bi-cart-check text-lg"></i>
                             @if($pesanan_di_keranjang)

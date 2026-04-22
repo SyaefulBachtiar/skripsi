@@ -46,11 +46,11 @@
         </a>
 
         {{-- Laporan --}}
-        <a href="{{ route('laporan.technician') }}" class="group flex flex-col items-center justify-center gap-2 p-3 sm:p-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
+        <a href="{{ route('pesanan.technician') }}" class="group flex flex-col items-center justify-center gap-2 p-3 sm:p-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
             <div class="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center bg-rose-50 dark:bg-rose-900/30 rounded-lg group-hover:bg-rose-500 transition-colors">
-                <i class="bi bi-clipboard-data-fill text-lg sm:text-xl text-rose-600 dark:text-rose-400 group-hover:text-white transition-colors"></i>
+                <i class="bi bi-journal-text text-lg sm:text-xl text-rose-600 dark:text-rose-400 group-hover:text-white transition-colors"></i>
             </div>
-            <span class="text-[10px] sm:text-xs font-medium text-slate-600 dark:text-slate-300 text-center leading-tight">Laporan</span>
+            <span class="text-[10px] sm:text-xs font-medium text-slate-600 dark:text-slate-300 text-center leading-tight">Pesanan</span>
         </a>
     </div>
 </div>

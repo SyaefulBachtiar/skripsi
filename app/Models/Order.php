@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Models\Role_users\Customer;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Order extends Model
@@ -14,7 +15,6 @@ class Order extends Model
     protected $fillable = [
         'id_customer',
         'id_jasa',
-        'status',
         'order_date',
         'order_time',
         'keluhan',
@@ -44,4 +44,19 @@ class Order extends Model
         return $this->hasOne(ChatRooms::class, 'order_id', 'id');
     }
 
+    public function lacak_pesanan (): HasMany
+    {
+        return $this->hasMany(LacakPesanan::class, 'id_order', 'id');
+    }
+
+    public function review (): HasMany
+    {
+        return $this->hasMany(Review::class, 'id_order', 'id');
+    }
+
+    public function latestStatus()
+    {
+        // Mengambil satu data terbaru dari tabel lacak_pesanan
+        return $this->hasOne(LacakPesanan::class, 'id_order')->latestOfMany();
+    }
 }

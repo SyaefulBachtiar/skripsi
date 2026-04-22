@@ -38,13 +38,13 @@ new class extends Component
         $this->form->addCertificate();
     }
 
-    public function save(): void
+    public function save()
     {
         try {
             $this->form->store();
             
             session()->flash('success', 'Profil teknisi berhasil disimpan!');
-            $this->redirect(request()->header('Referer') ?? route('dashboard'));
+            return $this->redirect(request()->header('Referer'), navigate: true);
             
         } catch (ValidationException $e) {
             // Biarkan Livewire menangani error validasi otomatis
@@ -75,6 +75,16 @@ new class extends Component
 
     <form wire:submit.prevent="save" class="space-y-5">
 
+        @if ($errors->any())
+        <div class="bg-red-100 text-red-700 p-3 rounded-lg mb-4">
+                <ul>
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
         {{-- Deskripsi --}}
         <div>
             <x-input-label for="bio" :value="__('Deskripsi Singkat')" class="mb-2" />
@@ -92,7 +102,7 @@ new class extends Component
         
         {{-- Spesialisasi (Multi-select) --}}
         <div x-data="{ 
-            selected: @entangle('form.spesialisasi'),
+            selected: @entangle('form.spesialisasi').live,
             options: ['AC', 'Kulkas', 'Kelistrikan', 'Mesin Cuci', 'Water Heater', 'Pompa Air'],
             showManual: false,
             manualInput: '',
@@ -183,37 +193,39 @@ new class extends Component
         <hr class="border-slate-200 dark:border-slate-700">
 
         {{-- Pengalaman (Dynamic Input) --}}
-        <div x-data="{ items: @entangle('form.experience_list') }">
+        <div x-data="{ items: @entangle('form.experience_list').live }">
             <x-input-label :value="__('Riwayat Pengalaman Kerja (Opsional)')" class="mb-2" />
             <div class="space-y-3">
+                {{-- Gunakan data asli dari Alpine --}}
                 <template x-for="(item, index) in items" :key="index">
                     <div class="flex gap-2">
                         <x-text-input 
                             type="text" 
                             x-model="items[index]" 
-                            placeholder="PT. Maju Jaya (2019-2021)" 
+                            placeholder="Contoh: PT. Maju Jaya (2019-2021)" 
                             class="flex-1" 
                         />
                         <button 
                             type="button" 
-                            @click="items.length > 1 ? items.splice(index, 1) : items[index] = ''" 
-                            class="text-red-500 hover:text-red-700 dark:hover:text-red-400 p-2 transition-colors"
+                            @click="items.splice(index, 1)" 
+                            class="text-red-500 p-2"
                         >
                             <i class="bi bi-trash-fill"></i>
                         </button>
                     </div>
                 </template>
+                
                 <button 
                     type="button" 
                     @click="items.push('')" 
-                    class="inline-flex items-center text-sm font-semibold text-indigo-600 dark:text-indigo-400 hover:underline"
+                    class="inline-flex items-center text-sm font-semibold text-indigo-600"
                 >
                     <i class="bi bi-plus-lg mr-1"></i> Tambah Pengalaman
                 </button>
             </div>
             <x-input-error :messages="$errors->get('form.experience_list')" class="mt-2" />
         </div>
-
+        
         <hr class="border-slate-200 dark:border-slate-700">
 
         {{-- Sertifikasi (Upload & Preview) --}}
@@ -347,6 +359,7 @@ new class extends Component
         {{-- Submit Button --}}
         <div class="flex items-center justify-end border-t border-slate-100 dark:border-slate-700 pt-6">
             <x-primary-button 
+                type="submit"
                 wire:loading.attr="disabled" 
                 wire:target="save"
                 class="w-full flex justify-center items-center space-x-2 !bg-blue-700 hover:!bg-blue-800 transition-colors"

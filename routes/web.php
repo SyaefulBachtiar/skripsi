@@ -1,8 +1,7 @@
 <?php
 
 use App\Http\Controllers\Auth\GoogleController;
-use App\Models\Order;
-use App\Models\Role_users\Customer;
+use App\Models\ChatRooms;
 use App\Models\Role_users\Technician;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -75,8 +74,8 @@ Route::middleware(['auth'])->group(function () {
                     })->name('detail_jasa.technician');
 
                     // Route To Page Laporan
-                    Route::view('laporan', 'pages.technician.laporan')
-                        ->name('laporan.technician');
+                    Route::view('pesanan', 'pages.technician.pesanan')
+                        ->name('pesanan.technician');
 
                     // Route To Page Edit Jasa
                     Route::get('edit-jasa/{id_jasa}', function ($id_jasa) {
@@ -133,6 +132,8 @@ Route::middleware(['auth'])->group(function () {
             
         });
 
+    
+
     // Route Admin
     Route::middleware(['role:admin'])
         ->prefix('admin')
@@ -140,6 +141,18 @@ Route::middleware(['auth'])->group(function () {
             Route::view('dashboard-admin', 'pages.admin.dashboard')
                 ->name('dashboard_admin');
         });
+
+    // Route To Room Chat
+    Route::get('chat-room/{id}', function ($id) {
+        $order = ChatRooms::select('id', 'technician_id')
+            ->with(['technician:id,nama_asli,foto_wajah'])
+            ->findOrFail($id);
+            // dd($order->technician);
+        return view('pages.chat-room', [
+            'data' => $order
+        ]);
+    })
+    ->name('chat.room');
 });
 
 // Route To Page Set Address

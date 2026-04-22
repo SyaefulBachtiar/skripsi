@@ -13,6 +13,7 @@ class ChatMessages extends Model
         'chat_room_id',
         'sender_id',
         'message',
+        'type',
         'is_read'
     ];
 

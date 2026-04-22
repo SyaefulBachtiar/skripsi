@@ -1,21 +1,14 @@
 <x-app-layout>
-    <div class="py-10">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
-            {{-- Info Technician --}}
-            <div>
+    <x-slot name="title">
+        {{ 'Lacak' }}
+    </x-slot>
 
-            </div>
+    <x-slot name="header">
+        <livewire:layout.header-mobile/>
+    </x-slot>
 
-            {{-- Detail Tracking --}}
-            <div>
-
-            </div>
-
-            {{-- History Update --}}
-            <div>
-                
-            </div>
-        </div>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <livewire:services.lacak-pesanan/>
     </div>
 </x-app-layout>

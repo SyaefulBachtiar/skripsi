@@ -80,4 +80,9 @@ class Jasa extends Model
     {
         return $this->hasMany(Order::class, 'id_jasa', 'id');
     }
+
+    public function review (): HasMany
+    {
+        return $this->hasMany(Review::class, 'id_jasa', 'id');
+    }
 }

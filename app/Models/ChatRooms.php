@@ -36,7 +36,12 @@ class ChatRooms extends Model
 
     public function chat_message (): HasMany
     {
-        return $this->hasMany(ChatRooms::class, 'chat_room_id', 'id'); 
+        return $this->hasMany(ChatMessages::class, 'chat_room_id', 'id'); 
+    }
+
+    public function last_message()
+    {
+        return $this->hasOne(ChatMessages::class, 'chat_room_id', 'id')->latestOfMany();
     }
 
 }

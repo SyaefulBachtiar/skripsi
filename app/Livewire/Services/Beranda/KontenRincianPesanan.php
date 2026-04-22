@@ -2,7 +2,11 @@
 
 namespace App\Livewire\Services\Beranda;
 
+use App\Models\ChatMessages;
+use App\Models\ChatRooms;
+use App\Models\LacakPesanan;
 use App\Models\Order;
+use Exception;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 
@@ -14,12 +18,16 @@ class KontenRincianPesanan extends Component
 
     public function mount () 
     {
-        $this->order = Order::with(['jasa.technician.user', 'customer.user'])
-            ->where('id', $this->id_order)
+        $this->order = Order::with(['jasa.technician.user', 'customer.user', 'lacak_pesanan' => function ($query) {
+                $query->latest();
+            }])
             ->whereHas('customer', function ($query) {
                 $query->where('user_id', Auth::id());
             })
+            ->where('id', $this->id_order)
             ->first();
+
+        // dd($this->order->lacak_pesanan);
 
         if (!$this->order) {
             abort(404, 'Pesanan tidak ditemukan');
@@ -28,13 +36,57 @@ class KontenRincianPesanan extends Component
         $this->layanan_tambahan = $this->order->layanan_tambahan ?? [];
     }
 
+    public function checkout()
+    {
+        try {
+            $this->order->update([
+                    'layanan_tambahan' => $this->layanan_tambahan,
+                    'status' => 'menunggu_konfirmasi'
+                ]);
+
+            $chatRoom = ChatRooms::updateOrCreate(
+                [
+                    'order_id' => $this->order->id,
+                ],
+                [
+                    'customer_id'   => $this->order->id_customer,
+                    'technician_id' => $this->order->jasa->technician->id,
+                ]
+            );
+
+            if ($chatRoom->wasRecentlyCreated) {
+                ChatMessages::create([
+                    'chat_room_id' => $chatRoom->id,
+                    'sender_id'    => $this->order->jasa->technician->user_id,
+                    'message'      => 'Terima kasih telah memesan jasa kami. Pesanan Anda sudah kami terima dan akan segera kami konfirmasi. Mohon menunggu ya.',
+                    'is_read'      => false
+                ]);
+            }
+
+            LacakPesanan::updateOrCreate(
+                [
+                    'id_order' => $this->order->id
+                ],
+                [
+                    'status_order' => 'menunggu_konfirmasi'
+                ]
+            );
+
+            return $this->redirect(route('chat.room', ['id' => $chatRoom->id]), navigate: true);
+
+        } catch (Exception $e) {
+            session()->flash('error', 'Checkout gagal ' . $e);
+            return $this->redirect(request()->header('Referer'), navigate: true);
+        }
+    }
+
     public function updatedLayananTambahan()
     {
         // Hitung total harga baru
         $hargaDasar = $this->order->jasa->harga_jasa ?? 0;
         $totalTambahan = 0;
 
-        foreach ($this->layanan_tambahan as $grup) {
+        foreach ($this->layanan_tambahan as $grup) { 
             if (is_array($grup)) {
                 foreach ($grup as $itemJson) {
                     $item = json_decode($itemJson, true);

@@ -33,7 +33,7 @@
             {{-- Thumbnail --}}
             <div class="flex-shrink-0 w-24 h-24">
                 <img 
-                    src="{{ asset('storage/' . ($order->jasa->thumbnails[0] ?? 'default.jpg')) }}" 
+                    src="{{ asset('storage/' . ($order->jasa->first_thumbnail?? 'default.jpg')) }}" 
                     alt="{{ $order->jasa->nama_jasa }}"
                     class="w-full h-full object-cover rounded-lg border border-gray-200"
                 >
@@ -45,7 +45,7 @@
                     {{ $order->jasa->nama_jasa }}
                 </h4>
                 <p class="text-sm text-gray-500 mt-1">
-                    {{ $order->jasa->technician->user->name ?? 'Teknisi' }}
+                    {{ $order->jasa->technician->nama_asli ?? 'Teknisi' }}
                 </p>
                 <div class="flex items-center gap-2 mt-3">
                     <span class="px-2.5 py-1 bg-blue-100 text-blue-700 text-xs font-semibold rounded-md">
@@ -318,65 +318,77 @@
                     Rp {{ number_format(($order->jasa->harga_jasa ?? 0) + $totalTambahan, 0, ',', '.') }}
                 </span>
             </div>
+
+            <div class="mt-4 p-3 bg-blue-50 border-l-4 border-blue-500 rounded-r-lg">
+                <div class="flex gap-2">
+                    <i class="bi bi-info-circle-fill text-blue-500"></i>
+                    <p class="text-xs text-blue-800 leading-relaxed">
+                        <span class="font-bold">Informasi Biaya:</span> 
+                        Nilai transaksi yang tercantum adalah harga prakiraan. Biaya final akan dikonfirmasi kembali oleh teknisi setelah proses diagnosa kerusakan selesai dilakukan.
+                    </p>
+                </div>
+            </div>
         </div>
     </div>
 
     {{-- Tombol Aksi --}}
-    <div class="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-200 z-40">
-        <div class="max-w-7xl mx-auto flex gap-3">
+    @if($order->lacak_pesanan->first()->status_order === 'keranjang')
+        <div class="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-200 z-40">
+            <div class="max-w-7xl mx-auto flex gap-3">
 
-            @if($isExpired)
-                <a 
-                    href="{{ route('detail-product', $order->id) }}" 
-                    wire:navigate
-                    class="flex-1 py-3.5 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2 shadow-lg shadow-red-200"
+                @if($isExpired)
+                    <a 
+                        href="{{ route('detail-product', $order->id_jasa) }}" 
+                        wire:navigate
+                        class="flex-1 py-3.5 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2 shadow-lg shadow-red-200"
+                    >
+                        <i class="bi bi-pencil-square"></i>
+                        <span>Pesan Ulang</span>
+                    </a>
+                @else
+                    <button 
+                        wire:click="checkout"
+                        class="flex-1 py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2 shadow-lg shadow-blue-200"
+                    >
+                        <i class="bi bi-credit-card"></i>
+                        <span>Pesan Sekarang</span>
+                    </button>
+                @endif
+                {{-- @if($order->status === 'keranjang')
+                    <button 
+                        wire:click="checkout"
+                        class="flex-1 py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2 shadow-lg shadow-blue-200"
+                    >
+                        <i class="bi bi-credit-card"></i>
+                        <span>Checkout Sekarang</span>
+                    </button>
+                @elseif($order->status === 'menunggu_pembayaran')
+                    <button 
+                        wire:click="bayar"
+                        class="flex-1 py-3.5 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2 shadow-lg shadow-green-200"
+                    >
+                        <i class="bi bi-wallet2"></i>
+                        <span>Bayar Sekarang</span>
+                    </button>
+                @elseif($order->status === 'diproses' || $order->status === 'selesai')
+                    <a 
+                        href="{{ route('chat', $order->chat_room?->id) }}"
+                        class="flex-1 py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2 shadow-lg shadow-indigo-200"
+                    >
+                        <i class="bi bi-chat-dots"></i>
+                        <span>Chat Teknisi</span>
+                    </a>
+                @endif --}}
+                
+                {{-- <button 
+                    wire:click="batalkanPesanan"
+                    wire:confirm="Apakah Anda yakin ingin membatalkan pesanan ini?"
+                    class="px-5 py-3.5 border border-gray-300 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 transition-colors"
                 >
-                    <i class="bi bi-pencil-square"></i>
-                    <span>Pesan Ulang</span>
-                </a>
-            @else
-                <button 
-                    wire:click="checkout"
-                    class="flex-1 py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2 shadow-lg shadow-blue-200"
-                >
-                    <i class="bi bi-credit-card"></i>
-                    <span>Pesan Sekarang</span>
-                </button>
-            @endif
-            {{-- @if($order->status === 'keranjang')
-                <button 
-                    wire:click="checkout"
-                    class="flex-1 py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2 shadow-lg shadow-blue-200"
-                >
-                    <i class="bi bi-credit-card"></i>
-                    <span>Checkout Sekarang</span>
-                </button>
-            @elseif($order->status === 'menunggu_pembayaran')
-                <button 
-                    wire:click="bayar"
-                    class="flex-1 py-3.5 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2 shadow-lg shadow-green-200"
-                >
-                    <i class="bi bi-wallet2"></i>
-                    <span>Bayar Sekarang</span>
-                </button>
-            @elseif($order->status === 'diproses' || $order->status === 'selesai')
-                <a 
-                    href="{{ route('chat', $order->chat_room?->id) }}"
-                    class="flex-1 py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2 shadow-lg shadow-indigo-200"
-                >
-                    <i class="bi bi-chat-dots"></i>
-                    <span>Chat Teknisi</span>
-                </a>
-            @endif --}}
-            
-            {{-- <button 
-                wire:click="batalkanPesanan"
-                wire:confirm="Apakah Anda yakin ingin membatalkan pesanan ini?"
-                class="px-5 py-3.5 border border-gray-300 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 transition-colors"
-            >
-                <i class="bi bi-x-lg"></i>
-            </button> --}}
+                    <i class="bi bi-x-lg"></i>
+                </button> --}}
+            </div>
         </div>
-    </div>
+    @endif
 
 </div>

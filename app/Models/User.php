@@ -64,21 +64,32 @@ class User extends Authenticatable
         ];
     }
 
+
     protected function profilePhotoUrl(): Attribute
     {
         return Attribute::get(function () {
-            // 1. Jika avatar kosong, kembalikan gambar default
-            if (!$this->avatar) {
-                return asset('assets/images/default-avatar.webp');
+            // Cek data role dan avatar
+            $avatar = $this->avatar;
+            $role = $this->role;
+
+            // 1. Jika avatar KOSONG
+            if (!$avatar) {
+                return $role === 'technician' 
+                    ? asset('assets/default_profile/default_profile_teknisi.webp') 
+                    : null;
             }
 
-            // 2. Jika avatar adalah URL (Mulai dengan http/https, biasanya dari Google)
-            if (Str::startsWith($this->avatar, ['http://', 'https://'])) {
-                return $this->avatar;
+            // 2. Jika avatar adalah URL (Google)
+            if (Str::startsWith($avatar, ['http://', 'https://'])) {
+                if ($role === 'technician') {
+                    // PAKSA teknisi pakai gambar default walaupun login Google
+                    return asset('assets/default_profile/default_profile_teknisi.webp');
+                }
+                return $avatar;
             }
 
-            // 3. Jika avatar adalah file lokal (tersimpan di storage)
-            return asset('storage/' . $this->avatar);
+            // 3. Jika file lokal (Hasil upload manual)
+            return asset('storage/' . $avatar);
         });
     }
 

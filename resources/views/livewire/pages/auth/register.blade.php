@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
 use Livewire\Attributes\Layout;
 use Livewire\Volt\Component;
+use App\Models\Role_users\Customer;
 
 new #[Layout('layouts.guest')] class extends Component
 {
@@ -30,7 +31,13 @@ new #[Layout('layouts.guest')] class extends Component
 
         $validated['role'] = 'customer';
 
-        event(new Registered($user = User::create($validated)));
+        $user = User::create($validated);
+
+        Customer::create([
+            'user_id' => $user->id
+        ]);
+
+        event(new Registered($user));
 
         // Auth::login($user);
 

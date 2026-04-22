@@ -1,4 +1,4 @@
-<div class="p-4 bg-white shadow-sm rounded-xl border border-gray-100" 
+<div class="p-4 bg-white shadow-sm rounded-xl border border-gray-100 pb-20" 
      x-data="{ 
         showModal: false, 
         modalImage: '',
