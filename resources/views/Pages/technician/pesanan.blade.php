@@ -1,7 +1,10 @@
 <x-app-layout>
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-10 sm:pb-0">
-            {{ __("Page Laporan! Technician") }}
-        </div>
+
+    <x-slot name="title">
+        {{ 'Pesanan' }}
+    </x-slot>
+
+    <div class="max-w-7xl mx-auto px-6 sm:px-6 lg:px-8 pb-20">
+        <livewire:services.dashboard-technician.data-pesanan/>
     </div>
 </x-app-layout>

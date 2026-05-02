@@ -4,7 +4,7 @@
     <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-gray-700">
         <div>
             <h1 class="text-sm font-bold text-gray-800 dark:text-white">Pesanan Masuk</h1>
-            <p class="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{{ count($data) }} jasa memiliki Pesanan</p>
+            {{-- <p class="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{{ count($data->order) }} jasa memiliki Pesanan</p> --}}
         </div>
         <div class="w-9 h-9 flex items-center justify-center rounded-xl bg-green-500 flex-shrink-0">
             <i class="bi bi-list-ol text-white text-base leading-none"></i>

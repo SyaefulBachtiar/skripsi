@@ -45,9 +45,16 @@
             <span class="text-[10px] sm:text-xs font-medium text-slate-600 dark:text-slate-300 text-center leading-tight">Jasa</span>
         </a>
 
-        {{-- Laporan --}}
+        {{-- Pesanan --}}
         <a href="{{ route('pesanan.technician') }}" class="group flex flex-col items-center justify-center gap-2 p-3 sm:p-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
-            <div class="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center bg-rose-50 dark:bg-rose-900/30 rounded-lg group-hover:bg-rose-500 transition-colors">
+            <div class="relative w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center bg-rose-50 dark:bg-rose-900/30 rounded-lg group-hover:bg-rose-500 transition-colors">
+                
+                @if($count_pesan > 0)
+                    <span class="absolute -top-1 -right-1 bg-rose-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                        {{ $count_pesan }}
+                    </span>
+                @endif
+
                 <i class="bi bi-journal-text text-lg sm:text-xl text-rose-600 dark:text-rose-400 group-hover:text-white transition-colors"></i>
             </div>
             <span class="text-[10px] sm:text-xs font-medium text-slate-600 dark:text-slate-300 text-center leading-tight">Pesanan</span>

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\Role_users\Customer;
 use App\Models\User;
 use Exception;
 use Illuminate\Http\Request;
@@ -34,8 +35,6 @@ class GoogleController extends Controller
             $user = User::where('email', $googleUser->getEmail())->first();
 
             if ($user) {
-                // LOGIKA LOGIN (User sudah terdaftar)
-                // Update data google_id atau avatar jika perlu, tapi JANGAN update role-nya
                 $user->update([
                     'google_id' => $googleUser->getId(),
                     'avatar'    => $googleUser->getAvatar(),
@@ -51,6 +50,10 @@ class GoogleController extends Controller
                         'password'          => bcrypt(str()->random(24)),
                         'role'              => $role,
                     ]);
+                
+                Customer::create([
+                    'user_id' => $user->id,
+                ]);
             }
 
             Auth::login($user, remember: true);
