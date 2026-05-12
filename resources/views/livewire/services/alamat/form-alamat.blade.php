@@ -4,38 +4,50 @@
         marker: null,
         modalMap: null,
         modalMarker: null,
-        // Gunakan default value (Contoh: Jakarta) jika latitude/longitude kosong
         latitude: @entangle('latitude'), 
         longitude: @entangle('longitude'),
         showModal: false,
         searchQuery: '',
         searchResults: [],
 
+        getCustomIcon() {
+            return L.divIcon({
+                className: '',
+                html: `<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32' fill='#dc3545' viewBox='0 0 16 16'>
+                    <path d='M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10zm0-7a3 3 0 1 1 0-6 3 3 0 0 1 0 6z'/>
+                </svg>`,
+                iconSize: [32, 32],
+                iconAnchor: [16, 32],
+                popupAnchor: [0, -32]
+            });
+        },
+
         initMap() {
             if (this.map) return;
-
             this.$nextTick(() => {
-            let lat = this.latitude || -6.200000;
-            let lng = this.longitude || 106.816666;
+                let lat = this.latitude || -6.200000;
+                let lng = this.longitude || 106.816666;
 
-            this.map = L.map(this.$refs.mapContainer).setView([lat, lng], 15);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '© OpenStreetMap'
-            }).addTo(this.map);
-            
-            this.marker = L.marker([lat, lng], { draggable: false }).addTo(this.map);
+                this.map = L.map(this.$refs.mapContainer).setView([lat, lng], 15);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '© OpenStreetMap'
+                }).addTo(this.map);
+                
+                this.marker = L.marker([lat, lng], { 
+                    draggable: false,
+                    icon: this.getCustomIcon()
+                }).addTo(this.map);
 
-            let count = 0;
-            let interval = setInterval(() => {
-                this.map.invalidateSize();
-                count++;
-                if (count > 5) clearInterval(interval); // Berhenti setelah 5 kali usaha
-            }, 300);
-        });
+                let count = 0;
+                let interval = setInterval(() => {
+                    this.map.invalidateSize();
+                    count++;
+                    if (count > 5) clearInterval(interval);
+                }, 300);
+            });
         },
 
         updateCoords(latlng) {
-            // Leaflet menggunakan .lat dan .lng (bukan latitude/longitude)
             this.latitude = latlng.lat;
             this.longitude = latlng.lng;
             
@@ -52,12 +64,14 @@
                 if (!this.modalMap) {
                     this.modalMap = L.map(this.$refs.modalMapContainer).setView([lat, lng], 15);
                     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(this.modalMap);
-                    this.modalMarker = L.marker([lat, lng], { draggable: true }).addTo(this.modalMap);
+                    this.modalMarker = L.marker([lat, lng], { 
+                        draggable: true,
+                        icon: this.getCustomIcon()
+                    }).addTo(this.modalMap);
 
                     this.modalMarker.on('dragend', (e) => { this.updateCoords(e.target.getLatLng()); });
                     this.modalMap.on('click', (e) => { this.updateCoords(e.latlng); });
 
-                    // ✅ Fix: sama seperti initMap, modal container baru saja muncul
                     setTimeout(() => { this.modalMap.invalidateSize(); }, 150);
                 } else {
                     this.modalMap.setView([lat, lng], 15);
@@ -66,6 +80,7 @@
                 }
             });
         },
+
         async searchAddress() {
             if (this.searchQuery.length < 3) return;
             const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${this.searchQuery}`);
