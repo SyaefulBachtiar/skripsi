@@ -17,17 +17,18 @@ new class extends Component
      public function mount () 
      {
         if(Auth::user()->role === 'technician'){
+            $technician = Auth::user()->technician;
+
+        if ($technician) {
             $this->unreadCount = ChatMessages::where('sender_id', '!=', Auth::id())
                 ->where('is_read', false)
-                ->whereHas('chat_room', function ($q) {
-                    $q->where('technician_id', Auth::user()->technician->id); 
+                ->whereHas('chat_room', function ($q) use ($technician) {
+                    $q->where('technician_id', $technician->id); 
                 })
                 ->count();
-            
-            $this->pesanan = Order::whereHas('latestStatus', function ($query) {
-                $query->where('status_order', 'menunggu_konfirmasi');
-            })
-            ->count();
+        } else {
+            $this->unreadCount = 0;
+        }
             
         } elseif(Auth::user()->role === 'customer') {
             $this->unreadCount = ChatMessages::where('sender_id', '!=', Auth::id())
