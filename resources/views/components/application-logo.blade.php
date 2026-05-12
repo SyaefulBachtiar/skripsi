@@ -1,5 +1,5 @@
 <img 
-    src="{{ asset('assets/icons/logo.webp') }}" 
+    src="{{ asset('assets/logo.png') }}" 
     alt="Logo"
     {{ $attributes }}
 >
