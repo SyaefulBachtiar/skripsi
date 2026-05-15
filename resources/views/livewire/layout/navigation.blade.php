@@ -14,7 +14,7 @@ new class extends Component
      public $unreadCount = 0;
      public $pesanan = 0;
 
-     public function mount () 
+    public function mount () 
      {
         if(Auth::user()->role === 'technician'){
             $technician = Auth::user()->technician;
@@ -31,12 +31,17 @@ new class extends Component
         }
             
         } elseif(Auth::user()->role === 'customer') {
-            $this->unreadCount = ChatMessages::where('sender_id', '!=', Auth::id())
-                ->where('is_read', false)
-                ->whereHas('chat_room', function ($q) {
-                    $q->where('customer_id', Auth::user()->customer->id); 
-                })
-                ->count();
+           $customer = Auth::user()->customer;
+            if ($customer) {                  
+                $this->unreadCount = ChatMessages::where('sender_id', '!=', Auth::id())
+                    ->where('is_read', false)
+                    ->whereHas('chat_room', function ($q) use ($customer) {
+                        $q->where('customer_id', $customer->id); 
+                    })
+                    ->count();
+            } else {
+                $this->unreadCount = 0;
+            }
         }
 
         // dd($this->unreadCount);
