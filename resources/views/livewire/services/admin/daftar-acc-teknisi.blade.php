@@ -188,7 +188,7 @@
     {{-- ==================== MODAL IMAGE PREVIEW ==================== --}}
     <template x-teleport="body">
         <div x-show="showImageModal" 
-             class="fixed inset-0 z-[999] flex items-center justify-center bg-slate-900/95 p-4" 
+             class="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-900/95 p-4" 
              style="display: none;" 
              @keydown.escape.window="showImageModal = false">
             
@@ -211,10 +211,13 @@
         <div x-show="showDetailModal" 
              class="fixed inset-0 z-[1000] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4"
              style="display: none;"
-             @keydown.escape.window="showDetailModal = false">
+             @keydown.escape.window="showDetailModal = false"
+             @click.self="showDetailModal = false"
+        >
             
-            <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col"
-                 @click.away="showDetailModal = false">
+            <div 
+                class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col"
+            >
                 
                 {{-- Header Modal --}}
                 <div class="flex justify-between items-center px-6 py-4 border-b border-gray-200 bg-gray-50">
@@ -395,10 +398,13 @@
         <div x-show="showRejectModal" 
              class="fixed inset-0 z-[1000] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4"
              style="display: none;"
-             @keydown.escape.window="showRejectModal = false">
+             @keydown.escape.window="showRejectModal = false"
+             @click.self="showRejectModal = false"
+        >
             
-            <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden"
-                 @click.away="showRejectModal = false">
+            <div 
+                class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden"
+            >
                 
                 {{-- Header --}}
                 <div class="flex items-center gap-3 px-6 py-4 border-b border-gray-200 bg-red-50">
