@@ -20,11 +20,17 @@
             const lng = parseFloat(this.selectedItem?.longitude);
             if (lat && lng && !isNaN(lat) && !isNaN(lng)) {
                 setTimeout(() => {
+                    delete L.Icon.Default.prototype._getIconUrl;
+                    L.Icon.Default.mergeOptions({
+                        iconUrl: 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7',
+                        shadowUrl: '',
+                        iconRetinaUrl: '',
+                    });
+
                     this.map = L.map('map-detail').setView([lat, lng], 15);
                     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                         attribution: '&copy; OpenStreetMap contributors'
                     }).addTo(this.map);
-                    L.marker([lat, lng]).addTo(this.map);
 
                     const customIcon = L.divIcon({
                 html: `<div style='
