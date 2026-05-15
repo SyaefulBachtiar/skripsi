@@ -54,7 +54,8 @@
                 popupAnchor: [0, -36]
             });
 
-                    this.map.invalidateSize();
+            L.marker([lat, lng], { icon: customIcon }).addTo(this.map);
+            this.map.invalidateSize();
                 }, 300);
             }
         },
