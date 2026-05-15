@@ -25,6 +25,35 @@
                         attribution: '&copy; OpenStreetMap contributors'
                     }).addTo(this.map);
                     L.marker([lat, lng]).addTo(this.map);
+
+                    const customIcon = L.divIcon({
+                html: `<div style='
+                    width: 36px; 
+                    height: 36px; 
+                    background: #4f46e5; 
+                    border: 3px solid white; 
+                    border-radius: 50% 50% 50% 0; 
+                    transform: rotate(-45deg);
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+                    display: flex; 
+                    align-items: center; 
+                    justify-content: center;
+                '>
+                    <i class='bi bi-person-fill' style='
+                        transform: rotate(45deg); 
+                        color: white; 
+                        font-size: 16px;
+                        display: block;
+                        line-height: 30px;
+                        text-align: center;
+                    ''></i>
+                </div>`,
+                className: '',
+                iconSize: [36, 36],
+                iconAnchor: [18, 36],
+                popupAnchor: [0, -36]
+            });
+
                     this.map.invalidateSize();
                 }, 300);
             }
