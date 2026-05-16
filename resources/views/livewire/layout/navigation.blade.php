@@ -4,6 +4,7 @@ use App\Livewire\Actions\Logout;
 use Livewire\Volt\Component;
 use App\Models\ChatMessages;
 use App\Models\Order;
+use Illuminate\Support\Facades\Auth;
 
 new class extends Component
 {
@@ -16,22 +17,26 @@ new class extends Component
 
     public function mount () 
      {
-        if(Auth::user()->role === 'technician'){
-            $technician = Auth::user()->technician;
+        $this->unreadCount = 0;
 
-        if ($technician) {
-            $this->unreadCount = ChatMessages::where('sender_id', '!=', Auth::id())
-                ->where('is_read', false)
-                ->whereHas('chat_room', function ($q) use ($technician) {
-                    $q->where('technician_id', $technician->id); 
-                })
-                ->count();
-        } else {
-            $this->unreadCount = 0;
-        }
+        if (Auth::check()) {
+        $user = Auth::user();
+
+        if ($user->role === 'technician') {
+            $technician = $user->technician;
+
+            if ($technician) {
+                $this->unreadCount = ChatMessages::where('sender_id', '!=', Auth::id())
+                    ->where('is_read', false)
+                    ->whereHas('chat_room', function ($q) use ($technician) {
+                        $q->where('technician_id', $technician->id); 
+                    })
+                    ->count();
+            }
             
-        } elseif(Auth::user()->role === 'customer') {
-           $customer = Auth::user()->customer;
+        } elseif ($user->role === 'customer') {
+            $customer = $user->customer;
+
             if ($customer) {                  
                 $this->unreadCount = ChatMessages::where('sender_id', '!=', Auth::id())
                     ->where('is_read', false)
@@ -39,10 +44,9 @@ new class extends Component
                         $q->where('customer_id', $customer->id); 
                     })
                     ->count();
-            } else {
-                $this->unreadCount = 0;
             }
         }
+    }
 
         // dd($this->unreadCount);
      }
@@ -128,10 +132,22 @@ new class extends Component
                                     
                                     {{-- Lingkaran Inisial --}}
                                     <div 
-                                        x-data="{{ json_encode(['name' => auth()->user()->name]) }}" 
-                                        x-on:profile-updated.window="name = $event.detail.name"
-                                        class="flex items-center justify-center w-8 h-8 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-full uppercase"
-                                        x-text="name.charAt(0)">
+                                        x-data="{ 
+                                            name: '{{ auth()->user()->name }}', 
+                                            avatar: '{{ auth()->user()->profile_photo_url }}' 
+                                        }" 
+                                        x-on:profile-updated.window="name = $event.detail.name; avatar = $event.detail.avatar || avatar"
+                                        class="flex items-center justify-center w-8 h-8 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-full uppercase overflow-hidden"
+                                    >
+                                        {{-- Tampilkan Foto jika ada --}}
+                                        <template x-if="avatar">
+                                            <img :src="avatar" :alt="name" class="w-full h-full object-cover">
+                                        </template>
+
+                                        {{-- Tampilkan Inisial jika avatar kosong (Fallback) --}}
+                                        <template x-if="!avatar">
+                                            <span x-text="name.charAt(0)"></span>
+                                        </template>
                                     </div>
 
                                     {{-- <div class="ms-1">
@@ -143,13 +159,23 @@ new class extends Component
                             </x-slot>
 
                             <x-slot name="content">
-                                <x-dropdown-link :href="route('profile')" wire:navigate>
-                                    {{-- {{ __('Saya') }} --}}
-                                    <div class="flex items-center gap-1">
-                                        <i class="bi bi-person-fill"></i>
-                                        <span>Saya</span>
-                                    </div>
-                                </x-dropdown-link>
+                                @if(auth()->user()->role === 'technician')
+                                    <x-dropdown-link :href="route('profile.technician')" wire:navigate>
+                                        {{-- {{ __('Saya') }} --}}
+                                        <div class="flex items-center gap-1">
+                                            <i class="bi bi-person-fill"></i>
+                                            <span>Saya</span>
+                                        </div>
+                                    </x-dropdown-link>
+                                @else
+                                    <x-dropdown-link :href="route('profile')" wire:navigate>
+                                        {{-- {{ __('Saya') }} --}}
+                                        <div class="flex items-center gap-1">
+                                            <i class="bi bi-person-fill"></i>
+                                            <span>Saya</span>
+                                        </div>
+                                    </x-dropdown-link>
+                                @endif
 
                                 <!-- Authentication -->
                                 <button wire:click="logout" class="w-full text-start">

@@ -44,7 +44,8 @@ class DataPesanan extends Component
 
         $this->reset(['status_update', 'bukti_pengerjaan', 'catatan_progres']);
         
-        return redirect()->back()->with('success', 'Progres pesanan berhasil diupdate!');
+        session()->flash('success', 'Progres berhasil di perbarui!');
+        $this->redirect(request()->header('Referer') ?? route('dashboard'));
     }
 
     public function render()
