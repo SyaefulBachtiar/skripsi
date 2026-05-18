@@ -17,6 +17,10 @@ class Customer extends Model
         'user_id',
         'saldo',
         'detail_alamat',
+        'provinsi',
+        'kabupaten',
+        'kecamatan',
+        'kelurahan',
         'latitude',
         'longitude',
     ];
