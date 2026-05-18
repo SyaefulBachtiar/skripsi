@@ -120,6 +120,13 @@
                 <h1 class="text-2xl md:text-3xl font-bold text-gray-900 leading-tight">
                     {{ $jasa->nama_jasa }}
                 </h1>
+
+                <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wide border 
+                    {{ $jasa->tipe_layanan === 'panggilan' ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-purple-50 text-purple-700 border-purple-200' }}">
+                    <i class="bi {{ $jasa->tipe_layanan === 'panggilan' ? 'bi-house-door-fill' : 'bi-shop' }} text-sm"></i>
+                    <span>{{ $jasa->tipe_layanan === 'panggilan' ? 'Panggilan ke Rumah' : 'Bawa ke Bengkel' }}</span>
+                </div>
+
                 <div class="flex items-center gap-2">
                     <div class="flex items-center gap-1 px-2.5 py-1 bg-amber-50 border border-amber-200 text-amber-600 rounded-lg text-xs font-bold">
                         <i class="bi bi-star-fill text-[10px]"></i>

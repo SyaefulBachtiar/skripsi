@@ -23,7 +23,9 @@ class Jasa extends Model
         'ketersediaan_jam',
         'is_setiap_hari',
         'layanan_tambahan',
-        'keluhan'
+        'keluhan',
+        'active',
+        'tipe_layanan',
     ];
 
     protected $casts = [
@@ -33,6 +35,7 @@ class Jasa extends Model
         'layanan_tambahan' => 'array',
         'keluhan' => 'array',
         'is_setiap_hari' => 'boolean',
+        'active' => 'boolean',
     ];
 
     protected function firstThumbnail (): Attribute

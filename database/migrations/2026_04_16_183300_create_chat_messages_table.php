@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('chat_room_id')->constrained('chat_rooms')->onDelete('cascade');
             $table->foreignUuid('sender_id')->constrained('users')->onDelete('cascade');
-            $table->string('message');
+            $table->string('message')->nullable();
             $table->string('type')->default('text');
             $table->boolean('is_read');
             $table->string('attachment')->nullable();

@@ -2,9 +2,11 @@
 
 namespace App\Livewire\Services\DashboardTechnician;
 
+use App\Events\OrderMasuk;
 use App\Models\ChatMessages;
 use App\Models\Jasa;
 use App\Models\LacakPesanan;
+use App\Models\Order;
 use Exception;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
@@ -13,6 +15,15 @@ use Livewire\WithPagination;
 class ListAntrian extends Component
 {
     use WithPagination;
+
+    protected function getListeners()
+    {
+        return [
+            "echo-private:App.Models.User." . Auth::id() . ",.OrderMasuk" => '$refresh',
+            "echo-private:App.Models.User." . Auth::id() . ",.PesananMasuk" => '$refresh',
+            'refreshMessages' => '$refresh'
+        ];
+    }
 
     public function navigateChatMsg ($id) {
         try {
@@ -35,6 +46,14 @@ class ListAntrian extends Component
             'id_order' => $id_order,
             'status_order' => 'dikonfirmasi',
         ]);
+
+        $order = Order::find($id_order);
+
+        // Ambil ID User Customer dari Order
+        if ($order) {
+            $customerUserId = $order->customer->user_id;
+            broadcast(new OrderMasuk($customerUserId, 'Status pesanan Anda telah diperbarui.'))->toOthers();
+        }
 
         session()->flash('success', 'Pesanan berhasil dikonfirmasi!');
 

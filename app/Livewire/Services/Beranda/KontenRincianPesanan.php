@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Services\Beranda;
 
+use App\Events\OrderMasuk;
 use App\Models\ChatMessages;
 use App\Models\ChatRooms;
 use App\Models\LacakPesanan;
@@ -58,7 +59,6 @@ class KontenRincianPesanan extends Component
                 ChatMessages::create([
                     'chat_room_id' => $chatRoom->id,
                     'sender_id'    => $this->order->jasa->technician->user_id,
-                    'message'      => 'Terima kasih telah memesan jasa kami. Pesanan Anda sudah kami terima dan akan segera kami konfirmasi. Mohon menunggu ya.',
                     'is_read'      => false
                 ]);
             }
@@ -71,6 +71,10 @@ class KontenRincianPesanan extends Component
                     'status_order' => 'menunggu_konfirmasi'
                 ]
             );
+            
+            // Ambil ID User Teknisi dari Jasa
+            $technicianUserId = $this->order->jasa->technician->user_id;
+            broadcast(new OrderMasuk($technicianUserId, 'Ada pesanan baru masuk!'))->toOthers();
 
             return $this->redirect(route('chat.room', ['id' => $chatRoom->id]), navigate: true);
 

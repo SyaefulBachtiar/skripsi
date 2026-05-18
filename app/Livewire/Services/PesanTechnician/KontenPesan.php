@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Services\PesanTechnician;
 
+use App\Events\PesananMasuk;
 use App\Models\ChatMessages;
 use App\Models\ChatRooms;
 use Exception;
@@ -15,6 +16,14 @@ class KontenPesan extends Component
 
     public $search = '';
 
+    protected function getListeners()
+    {
+        return [
+            "echo-private:App.Models.User." . Auth::id() . ",.PesananMasuk" => '$refresh',
+            'refreshMessages' => '$refresh'
+        ];
+    }
+
     public function navigateChatMsg ($id) {
         try {
             ChatMessages::where('chat_room_id', $id)
@@ -23,6 +32,9 @@ class KontenPesan extends Component
                 ->update([
                     'is_read' => true
                 ]);
+
+            broadcast(new PesananMasuk($id))->toOthers();
+            
             return $this->redirect(route('chat.room', ['id' => $id]), navigate: true);
         } catch (Exception $e) {
             session()->flash('error', 'gagal', $e);

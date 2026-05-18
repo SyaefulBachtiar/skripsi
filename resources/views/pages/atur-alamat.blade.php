@@ -7,7 +7,8 @@
     <x-slot name="header">
         <div class=" flex items-center gap-2 py-4 px-4 bg-gray-100 fixed top-0 w-full z-50 shadow-sm">
             <a 
-                href="{{ route('dashboard_technician') }}"
+                href="{{ url()->previous() }}"
+                onclick="if(document.referrer.indexOf(window.location.host) !== -1) { history.back(); return false; }"
                 class="leading-none"
             >
                 <i class="bi bi-chevron-left font-bold"></i>

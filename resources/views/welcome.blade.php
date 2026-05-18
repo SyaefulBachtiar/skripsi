@@ -140,7 +140,7 @@
     <a href="#how-it-works" onclick="toggleMenu()" class="block py-3 text-sm font-medium text-slate-700 border-b border-slate-100 no-underline">Cara Kerja</a>
     <a href="{{ route('register.technician') }}" onclick="toggleMenu()" class="block py-3 text-sm font-medium text-slate-700 border-b border-slate-100 no-underline">Teknisi</a>
     <a href="{{ route('login') }}" onclick="toggleMenu()" class="block py-3 text-sm font-medium text-slate-700 border-b border-slate-100 no-underline">Masuk</a>
-    <a href="#" class="mt-3 w-full flex items-center justify-center px-4 py-2.5 text-sm font-semibold text-white bg-blue-600 rounded-lg no-underline">
+    <a href="{{ route('register') }}" class="mt-3 w-full flex items-center justify-center px-4 py-2.5 text-sm font-semibold text-white bg-blue-600 rounded-lg no-underline">
         Daftar Sekarang
     </a>
 </div>
@@ -197,7 +197,7 @@
                 </div>
 
                 <!-- Stats -->
-                <div class="grid grid-cols-3 gap-0 border-t border-slate-200 pt-8 max-w-sm mx-auto lg:mx-0 lg:max-w-none">
+                {{-- <div class="grid grid-cols-3 gap-0 border-t border-slate-200 pt-8 max-w-sm mx-auto lg:mx-0 lg:max-w-none">
                     <div class="pr-6">
                         <div class="text-2xl sm:text-3xl font-extrabold text-slate-900">10K+</div>
                         <div class="text-xs text-slate-500 mt-1 font-medium">Service Selesai</div>
@@ -210,12 +210,12 @@
                         <div class="text-2xl sm:text-3xl font-extrabold text-slate-900">30min</div>
                         <div class="text-xs text-slate-500 mt-1 font-medium">Respon Cepat</div>
                     </div>
-                </div>
+                </div> --}}
             </div>
 
             <!-- Visual card -->
             <div class="relative order-first lg:order-last">
-                <div class="relative bg-gradient-to-br from-blue-600 to-indigo-700 rounded-3xl p-7 shadow-2xl shadow-blue-600/30 overflow-hidden max-w-md mx-auto lg:max-w-none">
+                <div class="relative bg-gradient-to-br from-blue-600 to-indigo-700 rounded-3xl p-7 shadow-2xl shadow-blue-600/30 max-w-md mx-auto lg:max-w-none">
                     <!-- Decorative circles -->
                     <div class="absolute -top-16 -right-16 w-56 h-56 bg-white/10 rounded-full pointer-events-none"></div>
                     <div class="absolute -bottom-12 -left-12 w-44 h-44 bg-white/8 rounded-full pointer-events-none"></div>
@@ -475,46 +475,6 @@
      ============================================================ -->
 <footer class="bg-slate-50 border-t border-slate-200 pt-14 pb-8">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-10 mb-12">
-
-            <!-- Brand -->
-            <div class="sm:col-span-2">
-                <a href="#" class="flex items-center gap-2.5 no-underline mb-4">
-                    <div class="w-9 h-9 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-600/20">
-                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                        </svg>
-                    </div>
-                    <span class="text-lg font-extrabold text-slate-900">Servisio</span>
-                </a>
-                <p class="text-sm text-slate-500 leading-relaxed max-w-xs">
-                    Platform terpercaya untuk layanan perbaikan elektronik dengan teknisi profesional dan tracking real-time di seluruh Indonesia.
-                </p>
-            </div>
-
-            <!-- Platform links -->
-            <div>
-                <h4 class="text-xs font-bold tracking-widest uppercase text-slate-700 mb-4">Platform</h4>
-                <ul class="space-y-2.5">
-                    <li><a href="#" class="text-sm text-slate-500 hover:text-blue-600 transition-colors no-underline">Cari Teknisi</a></li>
-                    <li><a href="#" class="text-sm text-slate-500 hover:text-blue-600 transition-colors no-underline">Jadi Teknisi</a></li>
-                    <li><a href="#" class="text-sm text-slate-500 hover:text-blue-600 transition-colors no-underline">Cara Kerja</a></li>
-                    <li><a href="#" class="text-sm text-slate-500 hover:text-blue-600 transition-colors no-underline">Harga</a></li>
-                </ul>
-            </div>
-
-            <!-- Help links -->
-            <div>
-                <h4 class="text-xs font-bold tracking-widest uppercase text-slate-700 mb-4">Bantuan</h4>
-                <ul class="space-y-2.5">
-                    <li><a href="#" class="text-sm text-slate-500 hover:text-blue-600 transition-colors no-underline">Pusat Bantuan</a></li>
-                    <li><a href="#" class="text-sm text-slate-500 hover:text-blue-600 transition-colors no-underline">Syarat & Ketentuan</a></li>
-                    <li><a href="#" class="text-sm text-slate-500 hover:text-blue-600 transition-colors no-underline">Kebijakan Privasi</a></li>
-                    <li><a href="#" class="text-sm text-slate-500 hover:text-blue-600 transition-colors no-underline">Kontak</a></li>
-                </ul>
-            </div>
-        </div>
 
         <!-- Bottom bar -->
         <div class="border-t border-slate-200 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4">

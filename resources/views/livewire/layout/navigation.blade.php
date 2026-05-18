@@ -15,7 +15,16 @@ new class extends Component
      public $unreadCount = 0;
      public $pesanan = 0;
 
-    public function mount () 
+    protected function getListeners()
+    {
+        return [
+            "echo-private:App.Models.User." . Auth::id() . ",.PesananMasuk" => '$refresh',
+            "echo-private:App.Models.User." . Auth::id() . ",.OrderMasuk" => '$refresh',
+            'refreshMessages' => '$refresh'
+        ];
+    }
+
+    public function getUnreadCount () 
      {
         $this->unreadCount = 0;
 
@@ -49,7 +58,14 @@ new class extends Component
     }
 
         // dd($this->unreadCount);
-     }
+    }
+
+    public function with()
+    {
+        return [
+            'unreadCount' => $this->getUnreadCount(),
+        ];
+    }
 
     public function logout(Logout $logout): void
     {

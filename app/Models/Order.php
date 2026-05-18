@@ -59,4 +59,9 @@ class Order extends Model
         // Mengambil satu data terbaru dari tabel lacak_pesanan
         return $this->hasOne(LacakPesanan::class, 'id_order')->latestOfMany();
     }
+
+    public function detail_order (): HasMany
+    {
+        return $this->hasMany(DetailOrder::class, 'id_order');
+    }
 }

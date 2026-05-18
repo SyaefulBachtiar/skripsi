@@ -18,16 +18,16 @@ class RiwayatPesanan extends Component
             })
             ->whereHas('review') // Hanya yang sudah di-review
             ->with([
-                'jasa:id,id_technician,nama_jasa,thumbnails',
+                'jasa:id,id_technician,nama_jasa,thumbnails,harga_jasa', 
                 'jasa.technician:id,nama_asli,foto_wajah',
                 'review:id,id_order,rating,text_comment,foto_review,created_at',
                 'customer:id,user_id',
-                'customer.user:id,avatar'
+                'customer.user:id,avatar',
+                'detail_order',  
+                'lacak_pesanan'  
             ])
             ->latest()
             ->get();
-
-        // dd($this->riwayat->toArray());
     }
 
     public function render()

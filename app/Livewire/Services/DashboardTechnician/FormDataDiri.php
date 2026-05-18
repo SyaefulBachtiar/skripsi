@@ -76,7 +76,7 @@ class FormDataDiri extends Component
     {
         $this->validate([
             'nama_asli' => 'required|string|max:255',
-            'foto_asli' => 'nullable|image|max:2048',
+            'foto_asli' => 'nullable|image|max:10240',
         ]);
 
         try {

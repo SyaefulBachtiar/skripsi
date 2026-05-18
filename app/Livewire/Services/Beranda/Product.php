@@ -69,7 +69,7 @@ class Product extends Component
 
         // 3. Query Utama Produk Jasa
         $query = Jasa::with(['technician'])
-            ->select('id', 'id_technician', 'nama_jasa', 'thumbnails', 'deskripsi')
+            ->select('id', 'id_technician', 'nama_jasa', 'thumbnails', 'deskripsi', 'tipe_layanan')
             ->withAvg('review as rata_rata_rating', 'rating')
             ->withCount('review as review_count');
 

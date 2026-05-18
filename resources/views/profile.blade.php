@@ -23,7 +23,7 @@
                    class="flex-1 py-2 text-center text-xs font-medium rounded-lg text-gray-500 dark:text-gray-400 hover:bg-white dark:hover:bg-gray-900 transition-colors">
                     Password
                 </a>
-                <a href="#delete-section"
+                <a href="#alamat"
                    class="flex-1 py-2 text-center text-xs font-medium rounded-lg text-gray-500 dark:text-gray-400 hover:bg-white dark:hover:bg-gray-900 transition-colors">
                     Alamat
                 </a>

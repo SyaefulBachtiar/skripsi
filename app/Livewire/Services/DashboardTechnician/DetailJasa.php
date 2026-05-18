@@ -24,7 +24,7 @@ class DetailJasa extends Component
 
     public function mount ($id_jasa) {
 
-        $this->jasa = Jasa::select('id', 'id_technician', 'nama_jasa', 'harga_jasa', 'deskripsi', 'thumbnails', 'ketersediaan_tanggal', 'ketersediaan_jam', 'is_setiap_hari', 'layanan_tambahan', 'keluhan')
+        $this->jasa = Jasa::select('id', 'id_technician', 'nama_jasa', 'harga_jasa', 'deskripsi', 'thumbnails', 'ketersediaan_tanggal', 'ketersediaan_jam', 'tipe_layanan', 'is_setiap_hari', 'layanan_tambahan', 'keluhan')
             ->withAvg('review as rata_rata_rating', 'rating')
             ->withCount('review as review_count')
             ->with([
@@ -37,6 +37,7 @@ class DetailJasa extends Component
                     $query->with(['user:id,name,avatar']);
                 }
             ])
+            ->where('active', true)
             ->findOrFail($id_jasa);
 
         // dd($this->jasa->toArray());
@@ -117,18 +118,27 @@ class DetailJasa extends Component
             }
 
             $id_customer = Customer::where('user_id', Auth::id())->value('id');
+
+            $orderId = Order::where('id_customer', $id_customer)
+            ->where('id_jasa', $this->jasa->id)
+            ->whereHas('latestStatus', function($q) {
+                $q->where('status_order', 'keranjang');
+            })
+            ->value('id');
             
             $order = Order::updateOrCreate(
                 [
-                    'id_customer' => $id_customer,
-                    'id_jasa'     => $this->jasa->id,
+                    'id' => $orderId,
                 ],
                 [
+                    'id_customer' => $id_customer,
+                    'id_jasa'     => $this->jasa->id,
                     'order_date' => $this->order_date,
                     'order_time' => $this->order_time,
                     'keluhan' => $allKeluhan,
                     'layanan_tambahan' => $this->layanan_tambahan,
                     'total_harga' => $totalKeseluruhan,
+                    'tipe_layanan' => $this->jasa->tipe_layanan,
                 ]
             );
 

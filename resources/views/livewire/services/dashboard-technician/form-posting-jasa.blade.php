@@ -47,6 +47,8 @@ new class extends Component
             $this->form->nama_jasa = $payload['nama_jasa'];
             $this->form->harga_jasa = $payload['harga_jasa'];
             $this->form->deskripsi_jasa = $payload['deskripsi_jasa'];
+            $this->form->tipe_layanan = $payload['tipe_layanan'];
+            $this->form->active = filter_var($payload['active'], FILTER_VALIDATE_BOOLEAN);
             $this->form->is_setiap_hari = $payload['isEveryday'];
             $this->form->ketersediaan_tanggal = $payload['tanggalKetersediaan'] ?? [];
             $this->form->ketersediaan_jam = $payload['jamKetersediaan'] ?? [];
@@ -78,6 +80,8 @@ new class extends Component
         function postingJasa($wire) {
             return {
                 nama_jasa: @js($jasa?->nama_jasa ?? ''),
+                tipe_layanan: @js($jasa?->tipe_layanan ?? 'panggilan'),
+                active: Boolean(@js($jasa?->active ?? true)),
                 deskripsi_jasa: @js($jasa?->deskripsi ?? ''),
                 hargaUtama: @js($jasa ? number_format($jasa->harga_jasa, 0, ',', '.') : ''),
                 jamKetersediaan: @js($jasa?->ketersediaan_jam ?? ['']),
@@ -168,6 +172,8 @@ new class extends Component
                 async submitForm() {
                     const payload = {
                         nama_jasa: this.nama_jasa,
+                        tipe_layanan: this.tipe_layanan,
+                        active: this.active,
                         harga_jasa: this.unformatRupiah(this.hargaUtama),
                         deskripsi_jasa: this.deskripsi_jasa,
                         isEveryday: this.isEveryday,
@@ -234,6 +240,65 @@ new class extends Component
                             </div>
                             <x-input-error :messages="$errors->get('form.harga_jasa')" class="mt-2" />
                         </div>
+                    </div>
+
+                    {{-- Tipe Layanan (Tambahkan blok ini) --}}
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-2">
+                        <div class="col-span-1 md:col-span-2 mt-2">
+                            <x-input-label :value="__('Tipe Layanan')" />
+                            <div class="flex flex-wrap gap-4 mt-2">
+                                <label 
+                                    class="flex items-center gap-3 p-3 border rounded-xl cursor-pointer transition-all duration-200" 
+                                    :class="tipe_layanan === 'panggilan' ? 'border-indigo-500 bg-indigo-50 shadow-sm' : 'border-gray-200 hover:bg-gray-50'"
+                                >
+                                    <input type="radio" x-model="tipe_layanan" value="panggilan" class="w-5 h-5 text-indigo-600 focus:ring-indigo-500 border-gray-300">
+                                    <div class="flex flex-col">
+                                        <span class="text-sm font-semibold text-gray-900">Panggilan ke Rumah</span>
+                                        <span class="text-xs text-gray-500">Teknisi datang ke lokasi pelanggan</span>
+                                    </div>
+                                </label>
+
+                                <label 
+                                    class="flex items-center gap-3 p-3 border rounded-xl cursor-pointer transition-all duration-200" 
+                                    :class="tipe_layanan === 'bengkel' ? 'border-indigo-500 bg-indigo-50 shadow-sm' : 'border-gray-200 hover:bg-gray-50'"
+                                >
+                                    <input type="radio" x-model="tipe_layanan" value="bengkel" class="w-5 h-5 text-indigo-600 focus:ring-indigo-500 border-gray-300">
+                                    <div class="flex flex-col">
+                                        <span class="text-sm font-semibold text-gray-900">Bawa ke Bengkel</span>
+                                        <span class="text-xs text-gray-500">Pelanggan datang ke tempat teknisi</span>
+                                    </div>
+                                </label>
+                            </div>
+                            <x-input-error :messages="$errors->get('form.tipe_layanan')" class="mt-2" />
+                        </div>
+
+                        {{-- Status Jasa --}}
+                        <div>
+                            <x-input-label :value="__('Status Jasa')" />
+                            <div class="flex flex-col sm:flex-row gap-4 mt-2">
+                                <label 
+                                    class="flex-1 flex items-center gap-3 p-3 border rounded-xl cursor-pointer transition-all duration-200" 
+                                    :class="active === true ? 'border-green-500 bg-green-50 shadow-sm' : 'border-gray-200 hover:bg-gray-50'"
+                                >
+                                    <input type="radio" x-model="active" :value="true" class="w-5 h-5 text-green-600 focus:ring-green-500 border-gray-300">
+                                    <div class="flex flex-col">
+                                        <span class="text-sm font-semibold text-gray-900">Aktif</span>
+                                    </div>
+                                </label>
+
+                                <label 
+                                    class="flex-1 flex items-center gap-3 p-3 border rounded-xl cursor-pointer transition-all duration-200" 
+                                    :class="active === false ? 'border-red-500 bg-red-50 shadow-sm' : 'border-gray-200 hover:bg-gray-50'"
+                                >
+                                    <input type="radio" x-model="active" :value="false" class="w-5 h-5 text-red-600 focus:ring-red-500 border-gray-300">
+                                    <div class="flex flex-col">
+                                        <span class="text-sm font-semibold text-gray-900">Tidak Aktif</span>
+                                    </div>
+                                </label>
+                            </div>
+                            <x-input-error :messages="$errors->get('form.active')" class="mt-2" />
+                        </div>
+
                     </div>
 
                     {{-- Deskripsi --}}

@@ -23,6 +23,8 @@ return new class extends Migration
             $table->boolean('is_setiap_hari')->default(false);
             $table->json('layanan_tambahan')->nullable();
             $table->json('keluhan');
+            $table->boolean('active')->default(true);
+            $table->enum('tipe_layanan', ['panggilan', 'bengkel'])->default('panggilan');
             $table->timestamps();
         });
     }

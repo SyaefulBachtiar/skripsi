@@ -44,6 +44,20 @@
                 <h4 class="text-base font-semibold text-gray-900 truncate">
                     {{ $order->jasa->nama_jasa }}
                 </h4>
+
+                <div class="mt-1.5">
+                    @php
+                        // Mengambil tipe layanan dari tabel order (jika ada) atau fallback ke tabel jasa
+                        $tipeLayanan = $order->tipe_layanan ?? $order->jasa->tipe_layanan ?? 'panggilan';
+                    @endphp
+                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide border 
+                        {{ $tipeLayanan === 'panggilan' ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-purple-50 text-purple-700 border-purple-200' }}">
+                        <i class="bi {{ $tipeLayanan === 'panggilan' ? 'bi-house-door-fill' : 'bi-shop' }}"></i>
+                        {{ $tipeLayanan === 'panggilan' ? 'Panggilan ke Rumah' : 'Bawa ke Bengkel' }}
+                    </span>
+                </div>
+
+                
                 <p class="text-sm text-gray-500 mt-1">
                     {{ $order->jasa->technician->nama_asli ?? 'Teknisi' }}
                 </p>

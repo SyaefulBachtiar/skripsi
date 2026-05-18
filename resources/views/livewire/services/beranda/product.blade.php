@@ -60,6 +60,12 @@
 
                 {{-- Konten Teks --}}
                 <div class="p-3 space-y-2">
+
+                    <span class="w-max px-2 py-0.5 rounded text-[9px] sm:text-[10px] font-bold uppercase tracking-wider 
+                        {{ $item->tipe_layanan === 'panggilan' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700' }}">
+                        {{ $item->tipe_layanan === 'panggilan' ? 'Panggilan' : 'Bengkel' }}
+                    </span>
+                    
                     {{-- Rating Section --}}
                     <div class="flex items-center gap-1">
                         {{-- Icon Bintang dari Bootstrap Icons --}}

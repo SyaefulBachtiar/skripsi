@@ -19,7 +19,15 @@ class LacakPesanan extends Component
     public $rating = 0;
     public $comment = '';
     public $foto_review = [];
-    
+
+    protected function getListeners()
+    {
+        return [
+            "echo-private:App.Models.User." . Auth::id() . ",.OrderMasuk" => '$refresh',
+            "echo-private:App.Models.User." . Auth::id() . ",.PesananMasuk" => '$refresh',
+            'refreshMessages' => '$refresh'
+        ];
+    }
 
     public function mount ()
     {
@@ -33,7 +41,8 @@ class LacakPesanan extends Component
             ->whereDoesntHave('review')
             ->whereHas('chat_room')
             ->with([
-                    'jasa:id,id_technician,nama_jasa',
+                    'detail_order',
+                    'jasa:id,id_technician,nama_jasa,harga_jasa',
                     'jasa.technician:id,foto_wajah,nama_asli',
                     'chat_room' => function ($query) {
                         $query->select('id', 'order_id')
@@ -49,7 +58,48 @@ class LacakPesanan extends Component
             ->where('id_customer', Auth::user()->customer->id)
             ->get();
 
+
         // dd($this->data->toArray());
+    }
+
+    public function bayarPesanan($orderId)
+    {
+        try {
+            $order = Order::with('chat_room')->findOrFail($orderId);
+
+            // Validasi keamanan: Pastikan ini milik customer yang sedang login
+            if ($order->id_customer !== Auth::user()->customer->id) {
+                session()->flash('error', 'Akses ditolak.');
+                return;
+            }
+
+            // Simulasi Pembayaran: Tambahkan Lacak Pesanan baru
+            \App\Models\LacakPesanan::create([
+                'id_order'     => $order->id,
+                'status_order' => 'sudah_dibayar',
+                'note'         => 'Pembayaran telah berhasil dilakukan oleh pelanggan.',
+                'foto_bukti'   => null,
+            ]);
+
+            // Kirim notifikasi sistem ke Chat Room
+            if ($order->chat_room) {
+                ChatMessages::create([
+                    'chat_room_id' => $order->chat_room->id,
+                    'sender_id'    => Auth::id(), // ID Pelanggan
+                    'message'      => 'Pelanggan telah menyelesaikan pembayaran sebesar Rp ' . number_format($order->total_harga, 0, ',', '.'),
+                    'type'         => 'system',
+                    'is_read'      => false
+                ]);
+            }
+
+            session()->flash('success', 'Pembayaran berhasil diselesaikan!');
+            
+            // Redirect ulang agar tampilan update ke mode Review
+            return $this->redirect(request()->header('Referer'), navigate: true);
+
+        } catch (Exception $e) {
+            session()->flash('error', 'Terjadi kesalahan sistem: ' . $e->getMessage());
+        }
     }
 
     public function submitReview($orderId, $technicianId, $jasaId)

@@ -39,13 +39,22 @@ class FormPostingJasa extends Form
     ])]
     public string $deskripsi_jasa = '';
 
+    #[Validate([
+        'tipe_layanan' => 'required|in:panggilan,bengkel'
+    ], message: [
+        'tipe_layanan.required' => 'Tipe layanan wajib dipilih.',
+        'tipe_layanan.in' => 'Pilihan tipe layanan tidak valid.'
+    ])]
+    public string $tipe_layanan = 'panggilan';
+
+    public bool $active = true;
+
     public bool $is_setiap_hari = false;
     public array $ketersediaan_tanggal = [];
     public array $ketersediaan_jam = [];
     public array $keluhan = [];
     public array $layanan_tambahan = [];
 
-    // Nonaktifkan validasi otomatis saat update untuk file upload
     #[Validate([
         'new_images' => 'nullable|array|max:5',
         'new_images.*' => 'image|mimes:jpg,jpeg,png|max:2048'
@@ -68,6 +77,8 @@ class FormPostingJasa extends Form
         $this->nama_jasa = $jasa->nama_jasa;
         $this->harga_jasa = $jasa->harga_jasa;
         $this->deskripsi_jasa = $jasa->deskripsi;
+        $this->tipe_layanan = $jasa->tipe_layanan ?? 'panggilan';
+        $this->active = $jasa->active;
         $this->is_setiap_hari = $jasa->is_setiap_hari;
         $this->ketersediaan_tanggal = $jasa->ketersediaan_tanggal ?? [];
         $this->ketersediaan_jam = $jasa->ketersediaan_jam ?? [];
@@ -154,6 +165,8 @@ class FormPostingJasa extends Form
             'nama_jasa' => $this->nama_jasa,
             'harga_jasa' => $this->harga_jasa,
             'deskripsi' => $this->deskripsi_jasa,
+            'tipe_layanan' => $this->tipe_layanan,
+            'active' => $this->active,
             'is_setiap_hari' => $this->is_setiap_hari,
             'ketersediaan_tanggal' => $this->is_setiap_hari ? [] : array_values(array_filter($this->ketersediaan_tanggal)),
             'ketersediaan_jam' => array_values(array_filter($this->ketersediaan_jam)),

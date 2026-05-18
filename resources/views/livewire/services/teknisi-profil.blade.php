@@ -14,7 +14,7 @@
             <div class="flex flex-col justify-center">
                 <div class="flex items-center justify-center sm:justify-start gap-1 group cursor-pointer">
                     <h1 class="text-xl font-bold text-gray-800 dark:text-white">{{ $data_technician->user->name }}</h1>
-                    <i class="bi bi-chevron-right text-gray-400 group-hover:text-indigo-600 transition-colors"></i>
+                    {{-- <i class="bi bi-chevron-right text-gray-400 group-hover:text-indigo-600 transition-colors"></i> --}}
                 </div>
                 
                 <div class="flex items-center justify-center sm:justify-start gap-3 mt-1 text-sm text-gray-500 dark:text-slate-400">
@@ -45,8 +45,8 @@
         >
             {{-- Deskripsi --}}
             <div class="bg-gray-50 dark:bg-slate-900/50 rounded-2xl p-4 border border-gray-100 dark:border-slate-700">
-                <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Tentang</p>
-                <p class="text-sm text-gray-700 dark:text-slate-300 leading-relaxed">{{ $data_technician->deskripsi }}</p>
+                <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Deskripsi</p>
+                <p class="text-sm text-gray-700 dark:text-slate-300 leading-relaxed whitespace-pre-wrap">{{ $data_technician->deskripsi }}</p>
             </div>
 
             <div class="space-y-4">
