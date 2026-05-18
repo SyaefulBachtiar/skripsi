@@ -42,9 +42,12 @@ class DataPesanan extends Component
             $pathFoto = $this->bukti_pengerjaan->store('bukti-progres', 'public');
         }
 
-        Order::update([
-            'status' => $this->status_update,
-        ]);
+        $order = Order::find($orderId);
+        if ($order) {
+            $order->update([
+                'status' => $this->status_update,
+            ]);
+        }
 
         LacakPesanan::create([
             'id_order'     => $orderId,
