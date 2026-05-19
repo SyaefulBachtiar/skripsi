@@ -125,7 +125,8 @@
                 >
             </div>
 
-            <x-input-error :messages="$errors->get('temp_foto_kegiatan.*')" class="mt-2" />
+            {{-- <x-input-error :messages="$errors->get('temp_foto_kegiatan.*')" class="mt-2" /> --}}
+            <x-input-error :messages="$errors->get('temp_foto_kegiatan')" class="mt-2" />
 
             {{-- Preview Grid --}}
             <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 mt-4">
