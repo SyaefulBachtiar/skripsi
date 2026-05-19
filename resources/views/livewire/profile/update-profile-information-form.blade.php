@@ -101,9 +101,22 @@ new class extends Component
 
         {{-- Avatar --}}
         <div class="flex flex-col sm:flex-row sm:items-center gap-4 pb-5 border-b border-gray-100 dark:border-gray-800">
-            <img class="h-16 w-16 rounded-full object-cover ring-2 ring-gray-200 dark:ring-gray-700 flex-shrink-0"
-                 src="{{ $avatar ? $avatar->temporaryUrl() : $current_avatar }}"
-                 alt="Avatar Preview">
+            @if ($avatar)
+                {{-- Jika ada file baru yang sedang di-upload (Temporary Preview) --}}
+                <img class="h-16 w-16 rounded-full object-cover ring-2 ring-gray-200 dark:ring-gray-700 flex-shrink-0"
+                    src="{{ $avatar->temporaryUrl() }}"
+                    alt="Avatar Preview">
+            @elseif ($current_avatar)
+                {{-- Jika tidak ada upload baru, tapi ada avatar lama di database --}}
+                <img class="h-16 w-16 rounded-full object-cover ring-2 ring-gray-200 dark:ring-gray-700 flex-shrink-0"
+                    src="{{ asset('storage/' . $current_avatar) }}"
+                    alt="Avatar Current">
+            @else
+                {{-- KUNCI FIX: Jika semuanya kosong, tampilkan Icon Person Bootstrap --}}
+                <div class="h-16 w-16 rounded-full ring-2 ring-gray-200 dark:ring-gray-700 bg-gray-50 dark:bg-slate-800 flex items-center justify-center flex-shrink-0">
+                    <i class="bi bi-person text-3xl text-gray-400 dark:text-gray-500"></i>
+                </div>
+            @endif
             <div class="flex-1 min-w-0">
                 <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">JPG, PNG, or GIF — max 1 MB</p>
                 <label for="avatar"

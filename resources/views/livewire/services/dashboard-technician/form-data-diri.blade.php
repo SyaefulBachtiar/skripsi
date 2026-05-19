@@ -78,12 +78,19 @@
             </div>
 
             {{-- Upload Area --}}
-            <div 
+            {{-- <div 
                 class="relative border-2 border-dashed border-gray-300 rounded-2xl p-8 bg-gray-50 flex flex-col items-center justify-center transition-all"
                 :class="(@js(count($existing_foto_kegiatan ?? [])) + @js(count($foto_kegiatan ?? []))) >= 5
                         ? 'opacity-50 cursor-not-allowed bg-gray-100' 
                         : 'hover:border-indigo-400 hover:bg-indigo-50/30 cursor-pointer'"
                 @click="if((@js(count($existing_foto_kegiatan ?? [])) + @js(count($foto_kegiatan ?? []))) < 5) $refs.fileKegiatan.click()"
+            > --}}
+            <div 
+                class="relative border-2 border-dashed border-gray-300 rounded-2xl p-8 bg-gray-50 flex flex-col items-center justify-center transition-all"
+                :class="{{ (count($existing_foto_kegiatan ?? []) + count($foto_kegiatan ?? [])) }} >= 5
+                        ? 'opacity-50 cursor-not-allowed bg-gray-100' 
+                        : 'hover:border-indigo-400 hover:bg-indigo-50/30 cursor-pointer'"
+                @click="if({{ (count($existing_foto_kegiatan ?? []) + count($foto_kegiatan ?? [])) }} < 5) $refs.fileKegiatan.click()"
             >
                 {{-- Loading Overlay --}}
                 <div 
@@ -99,6 +106,15 @@
                 <p class="text-sm text-gray-600 mt-2 font-semibold">Tambah foto kegiatan</p>
                 <p class="text-xs text-gray-400">Klik di sini (PNG, JPG maks 2MB)</p>
                 
+                {{-- <input 
+                    type="file" 
+                    wire:model="temp_foto_kegiatan" 
+                    x-ref="fileKegiatan" 
+                    class="hidden" 
+                    multiple 
+                    accept="image/*"
+                > --}}
+                {{-- Ganti baris input file --}}
                 <input 
                     type="file" 
                     wire:model="temp_foto_kegiatan" 

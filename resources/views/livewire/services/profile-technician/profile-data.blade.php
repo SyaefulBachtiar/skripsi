@@ -71,9 +71,7 @@
                     <h1 class="text-md sm:text-base font-bold text-gray-800 flex items-center gap-2 mb-2">
                         <i class="bi bi-card-text text-indigo-500 leading-none"></i> Deskripsi
                     </h1>
-                    <p class="text-sm sm:text-base text-gray-600 leading-relaxed bg-gray-50 p-3 rounded-xl border border-gray-100">
-                        {{ $data->deskripsi ?? 'Belum ada deskripsi.' }}
-                    </p>
+                    <pre class="text-sm text-gray-700 dark:text-slate-300 leading-relaxed font-sans whitespace-pre-wrap break-words">{{ $data->deskripsi }}</pre>
                 </section>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
