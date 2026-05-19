@@ -66,7 +66,14 @@
                         {{-- Row 2: ID + Nama Jasa + Jadwal --}}
                         <div class="flex items-end justify-between mt-2.5 pl-[52px]">
                             <div class="min-w-0">
-                                <span class="text-[9px] font-bold text-blue-500 uppercase tracking-wider">#{{ $order['id'] }}</span>
+                                <div class="flex items-center gap-2 mb-1">
+                                    <span class="text-[9px] font-bold text-blue-500 uppercase tracking-wider">#{{ $order->id }}</span>
+                                    {{-- Badge Tipe Layanan --}}
+                                    <span class="px-1.5 py-0.5 rounded text-[8px] font-bold uppercase {{ $jasa->tipe_layanan === 'panggilan' ? 'bg-orange-100 text-orange-600' : 'bg-purple-100 text-purple-600' }}">
+                                        <i class="bi {{ $jasa->tipe_layanan === 'panggilan' ? 'bi-house-door' : 'bi-shop' }} mr-0.5"></i>
+                                        {{ $jasa->tipe_layanan }}
+                                    </span>
+                                </div>
                                 <p class="text-xs font-semibold text-gray-700 dark:text-gray-300 truncate leading-tight">
                                     {{ $jasa->nama_jasa ?? 'Jasa Servis' }}
                                 </p>
@@ -92,6 +99,53 @@
                          class="border-t border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/40">
 
                         <div class="px-4 py-4 space-y-4">
+
+                            @if($jasa->tipe_layanan === 'panggilan')
+                                <div class="mt-4 space-y-4">
+                                    {{-- Detail Alamat Teks --}}
+                                    <div class="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-xl">
+                                        <p class="text-[10px] font-bold text-blue-500 uppercase tracking-widest mb-1.5">
+                                            <i class="bi bi-geo-alt-fill mr-1"></i> Alamat Lengkap
+                                        </p>
+                                        <p class="text-xs text-gray-700 dark:text-gray-300 leading-relaxed font-medium">
+                                            {{ $order->customer->detail_alamat }}
+                                        </p>
+                                        <p class="text-[11px] text-gray-500 dark:text-gray-400 mt-1 italic">
+                                            {{ $order->customer->kelurahan }}, {{ $order->customer->kecamatan }}, {{ $order->customer->kabupaten }}
+                                        </p>
+                                    </div>
+
+                                    {{-- Peta Lokasi --}}
+                                    <div>
+                                        <p class="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-2">Peta Lokasi</p>
+                                        
+                                        <div class="rounded-xl overflow-hidden border border-gray-100 h-[300px]">
+                                            @livewire('services.map', [
+                                                'lat' => $order->customer->latitude, 
+                                                'lng' => $order->customer->longitude,
+                                                'customerName' => $order->customer->user->name
+                                            ], key('map-'.$order->id))
+                                        </div>
+                                        
+                                        {{-- Tombol Buka di Google Maps --}}
+                                        <div class="flex justify-between items-center mt-3">
+                                            <a 
+                                                href="https://www.google.com/maps/search/?api=1&query={{ $order->customer->latitude }},{{ $order->customer->longitude }}" 
+                                                target="_blank"
+                                                class="inline-flex items-center gap-2 text-xs font-bold text-blue-600 hover:text-blue-700 transition-colors"
+                                            >
+                                                <i class="bi bi-cursor-fill"></i>
+                                                Buka di Google Maps
+                                            </a>
+                                            
+                                            {{-- Info Koordinat Kecil --}}
+                                            <span class="text-[9px] text-gray-400 font-mono">
+                                                {{ $order->customer->latitude }}, {{ $order->customer->longitude }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endif
 
                             {{-- Keluhan --}}
                             @if(!empty($order->keluhan))

@@ -57,9 +57,10 @@ class KontenRincianPesanan extends Component
 
             if ($chatRoom->wasRecentlyCreated) {
                 ChatMessages::create([
-                    'chat_room_id' => $chatRoom->id,
-                    'sender_id'    => $this->order->jasa->technician->user_id,
-                    'is_read'      => false
+                    'chat_room_id'  => $chatRoom->id,
+                    'sender_id'     => $this->order->jasa->technician->user_id,
+                    'message'       => 'Terimakasih telah memesan jasa kami. Saat ini Anda sedang menunggu konfirmasi dari teknisi untuk melanjutkan layanan sesuai jadwal yang telah dipilih. Mohon menunggu agar proses penjadwalan dapat segera diproses.',
+                    'is_read'       => false
                 ]);
             }
 

@@ -1,4 +1,247 @@
+
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+
+    {{-- ── Modal Info Tipe Layanan ── --}}
+    <div
+        x-data="{
+            show: true,
+            showAlamatModal: {{ !$alamatLengkap && $jasa->tipe_layanan === 'panggilan' ? 'true' : 'false' }},
+            tipe: '{{ $jasa->tipe_layanan }}'
+        }"
+        x-show="show"
+        x-transition.opacity
+        @keydown.escape.window="show = false"
+        style="display:none"
+        class="fixed inset-0 z-50 flex items-center sm:items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+        role="dialog"
+        aria-modal="true"
+        :aria-labelledby="tipe === 'panggilan' ? 'modal-title-panggilan' : 'modal-title-bengkel'"
+    >
+        {{-- Backdrop klik tutup --}}
+        <div class="absolute inset-0" @click="show = false" aria-hidden="true"></div>
+
+        {{-- Panel --}}
+        <div class="relative w-full max-w-sm bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden"
+            x-transition:enter="transition ease-out duration-300"
+            x-transition:enter-start="opacity-0 translate-y-4 sm:scale-95"
+            x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+            x-transition:leave="transition ease-in duration-200"
+            x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+            x-transition:leave-end="opacity-0 translate-y-4 sm:scale-95">
+
+            {{-- ── PANGGILAN (Home Service) ── --}}
+            <template x-if="tipe === 'panggilan'">
+                <div>
+                    {{-- Icon header --}}
+                    <div class="bg-blue-50 dark:bg-blue-900/20 px-5 pt-6 pb-4 flex flex-col items-center text-center">
+                        <div class="w-14 h-14 rounded-2xl bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center mb-3">
+                            <i class="bi bi-house-door-fill text-2xl text-blue-600 dark:text-blue-400"></i>
+                        </div>
+                        <h3 id="modal-title-panggilan"
+                            class="text-base font-bold text-gray-900 dark:text-white">
+                            Layanan Home Service
+                        </h3>
+                        <span class="mt-1.5 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">
+                            <i class="bi bi-geo-alt-fill text-xs"></i>
+                            Teknisi datang ke lokasi Anda
+                        </span>
+                    </div>
+
+                    {{-- Body --}}
+                    <div class="px-5 py-4">
+                        <p class="text-sm text-gray-600 dark:text-gray-300 leading-relaxed text-center">
+                            Layanan yang dipilih <span class="font-semibold text-gray-800 dark:text-white">hanya tersedia untuk kunjungan ke rumah</span> dan tidak dapat dilakukan di bengkel teknisi.
+                        </p>
+                        <div class="mt-4 flex flex-col gap-2 text-xs text-gray-500 dark:text-gray-400">
+                            <div class="flex items-start gap-2.5">
+                                <i class="bi bi-check-circle-fill text-blue-500 mt-0.5 flex-shrink-0"></i>
+                                <span>Teknisi akan datang sesuai jadwal yang Anda pilih</span>
+                            </div>
+                            <div class="flex items-start gap-2.5">
+                                <i class="bi bi-check-circle-fill text-blue-500 mt-0.5 flex-shrink-0"></i>
+                                <span>Pastikan alamat yang dimasukkan sudah benar</span>
+                            </div>
+                            <div class="flex items-start gap-2.5">
+                                <i class="bi bi-check-circle-fill text-blue-500 mt-0.5 flex-shrink-0"></i>
+                                <span>Harap berada di lokasi saat teknisi tiba</span>
+                            </div>
+                        </div>
+                        <p class="mt-4 text-sm font-medium text-gray-700 dark:text-gray-200 text-center">
+                            Apakah Anda bersedia melanjutkan layanan ini?
+                        </p>
+                    </div>
+
+                    {{-- Actions --}}
+                    <div class="flex gap-2 px-5 pb-5">
+                        <a href="/beranda"
+                        class="flex-1 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700
+                                text-sm font-medium text-gray-600 dark:text-gray-300 text-center
+                                hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                            Kembali
+                        </a>
+                        <button type="button"
+                                @click="show = false"
+                                class="flex-1 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-[0.98]
+                                    text-sm font-semibold text-white text-center transition-all">
+                            Ya, Lanjutkan
+                        </button>
+                    </div>
+                </div>
+            </template>
+
+            {{-- ── BENGKEL ── --}}
+            <template x-if="tipe === 'bengkel'">
+                <div>
+                    {{-- Icon header --}}
+                    <div class="bg-amber-50 dark:bg-amber-900/20 px-5 pt-6 pb-4 flex flex-col items-center text-center">
+                        <div class="w-14 h-14 rounded-2xl bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center mb-3">
+                            <i class="bi bi-tools text-2xl text-amber-600 dark:text-amber-400"></i>
+                        </div>
+                        <h3 id="modal-title-bengkel"
+                            class="text-base font-bold text-gray-900 dark:text-white">
+                            Layanan Bengkel
+                        </h3>
+                        <span class="mt-1.5 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">
+                            <i class="bi bi-shop text-xs"></i>
+                            Kunjungi lokasi bengkel teknisi
+                        </span>
+                    </div>
+
+                    {{-- Body --}}
+                    <div class="px-5 py-4">
+                        <p class="text-sm text-gray-600 dark:text-gray-300 leading-relaxed text-center">
+                            Layanan yang dipilih <span class="font-semibold text-gray-800 dark:text-white">hanya tersedia di bengkel teknisi</span> dan tidak dapat dilakukan dengan kunjungan ke rumah.
+                        </p>
+                        <div class="mt-4 flex flex-col gap-2 text-xs text-gray-500 dark:text-gray-400">
+                            <div class="flex items-start gap-2.5">
+                                <i class="bi bi-check-circle-fill text-amber-500 mt-0.5 flex-shrink-0"></i>
+                                <span>Bawa perangkat Anda ke lokasi bengkel teknisi</span>
+                            </div>
+                            <div class="flex items-start gap-2.5">
+                                <i class="bi bi-check-circle-fill text-amber-500 mt-0.5 flex-shrink-0"></i>
+                                <span>Datang sesuai jadwal yang sudah dipilih</span>
+                            </div>
+                            <div class="flex items-start gap-2.5">
+                                <i class="bi bi-check-circle-fill text-amber-500 mt-0.5 flex-shrink-0"></i>
+                                <span>Alamat bengkel akan ditampilkan setelah pesanan dikonfirmasi</span>
+                            </div>
+                        </div>
+                        <p class="mt-4 text-sm font-medium text-gray-700 dark:text-gray-200 text-center">
+                            Apakah Anda bersedia melanjutkan layanan ini?
+                        </p>
+                    </div>
+
+                    {{-- Actions --}}
+                    <div class="flex gap-2 px-5 pb-5">
+                        <a href="{{ url()->previous() }}"
+                        class="flex-1 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700
+                                text-sm font-medium text-gray-600 dark:text-gray-300 text-center
+                                hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                            Kembali
+                        </a>
+                        <button type="button"
+                                @click="show = false"
+                                class="flex-1 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 active:scale-[0.98]
+                                    text-sm font-semibold text-white text-center transition-all">
+                            Ya, Lanjutkan
+                        </button>
+                    </div>
+                </div>
+            </template>
+
+        </div>
+    </div>
+
+    {{-- ── Modal Alamat Belum Lengkap ── --}}
+    @if($jasa->tipe_layanan === 'panggilan' && !$alamatLengkap)
+        <div x-show="showAlamatModal"
+            x-transition.opacity
+            style="display:none"
+            class="fixed inset-0 z-[60] flex items-end sm:items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="modal-title-alamat">
+
+            {{-- Panel — TIDAK bisa ditutup dengan klik backdrop atau Esc, harus isi alamat dulu --}}
+            <div class="relative w-full max-w-sm bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden"
+                x-transition:enter="transition ease-out duration-300"
+                x-transition:enter-start="opacity-0 translate-y-4 sm:scale-95"
+                x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+                x-transition:leave="transition ease-in duration-200"
+                x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+                x-transition:leave-end="opacity-0 translate-y-4 sm:scale-95">
+
+                {{-- Header --}}
+                <div class="bg-red-50 dark:bg-red-900/20 px-5 pt-6 pb-4 flex flex-col items-center text-center">
+                    <div class="w-14 h-14 rounded-2xl bg-red-100 dark:bg-red-900/40 flex items-center justify-center mb-3">
+                        <i class="bi bi-geo-alt-fill text-2xl text-red-500 dark:text-red-400"></i>
+                    </div>
+                    <h3 id="modal-title-alamat"
+                        class="text-base font-bold text-gray-900 dark:text-white">
+                        Alamat Belum Lengkap
+                    </h3>
+                    <span class="mt-1.5 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300">
+                        <i class="bi bi-exclamation-triangle-fill text-xs"></i>
+                        Diperlukan untuk home service
+                    </span>
+                </div>
+
+                {{-- Body --}}
+                <div class="px-5 py-4 space-y-4">
+                    <p class="text-sm text-gray-600 dark:text-gray-300 leading-relaxed text-center">
+                        Layanan ini adalah <span class="font-semibold text-gray-800 dark:text-white">home service</span> — teknisi akan datang ke lokasi Anda.
+                        Untuk melanjutkan, Anda perlu mengisi alamat lengkap terlebih dahulu.
+                    </p>
+
+                    {{-- Checklist kolom yang kurang --}}
+                    @php
+                        $customer = \App\Models\Role_users\Customer::where('user_id', auth()->id())->first();
+                        $missingFields = collect([
+                            'detail_alamat' => 'Detail alamat (nama jalan, nomor rumah)',
+                            'provinsi'      => 'Provinsi',
+                            'kabupaten'     => 'Kabupaten / Kota',
+                            'kecamatan'     => 'Kecamatan',
+                            'kelurahan'     => 'Kelurahan',
+                            'latitude'      => 'Titik lokasi (GPS)',
+                        ])->filter(fn($label, $field) => empty($customer?->$field));
+                    @endphp
+
+                    @if($missingFields->isNotEmpty())
+                        <div class="bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-800 rounded-xl p-3 space-y-1.5">
+                            <p class="text-[11px] font-semibold text-red-600 dark:text-red-400 uppercase tracking-wide mb-2">
+                                Data yang belum diisi:
+                            </p>
+                            @foreach($missingFields as $label)
+                                <div class="flex items-center gap-2 text-xs text-red-600 dark:text-red-400">
+                                    <i class="bi bi-x-circle-fill flex-shrink-0 text-xs"></i>
+                                    <span>{{ $label }}</span>
+                                </div>
+                            @endforeach
+                        </div>
+                    @endif
+                </div>
+
+                {{-- Actions --}}
+                <div class="flex gap-2 px-5 pb-5">
+                    <a href="/beranda"
+                    class="flex-1 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700
+                            text-sm font-medium text-gray-600 dark:text-gray-300 text-center
+                            hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                        Kembali
+                    </a>
+                    <a href="{{ url('/atur-alamat') }}"
+                    wire:navigate
+                    class="flex-1 py-2.5 rounded-xl bg-red-500 hover:bg-red-600 active:scale-[0.98]
+                            text-sm font-semibold text-white text-center transition-all
+                            flex items-center justify-center gap-1.5">
+                        <i class="bi bi-pencil-square text-sm"></i>
+                        Isi Alamat
+                    </a>
+                </div>
+            </div>
+        </div>
+    @endif
+
     {{-- Kolom Kiri: Gallery Foto --}}
     <div class="space-y-4">
         <div x-data="{ 
@@ -185,6 +428,47 @@
             @endif
         @endif
 
+        @if($jasa->tipe_layanan === 'bengkel')
+            <div class="space-y-4">
+                <div class="flex items-center justify-between">
+                    <h3 class="font-bold text-gray-800 text-sm uppercase tracking-wide">Lokasi Bengkel</h3>
+                    <a 
+                        href="https://www.google.com/maps?q={{ $jasa->technician->latitude }},{{ $jasa->technician->longitude }}" 
+                        target="_blank"
+                        class="text-xs font-bold text-indigo-600 hover:underline"
+                    >
+                        Buka di Maps <i class="bi bi-box-arrow-up-right ml-1"></i>
+                    </a>
+                </div>
+
+                <div class="p-4 bg-white border border-gray-200 rounded-2xl shadow-sm space-y-4">
+                    {{-- Info Alamat Teks --}}
+                    <div class="flex items-start gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600 shrink-0">
+                            <i class="bi bi-geo-alt-fill"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs text-gray-700 leading-relaxed">
+                                {{ $jasa->technician->detail_alamat }}
+                            </p>
+                            <p class="text-[11px] text-gray-500 mt-0.5">
+                                {{ $jasa->technician->kecamatan }}, {{ $jasa->technician->kabupaten }}
+                            </p>
+                        </div>
+                    </div>
+
+                    {{-- Komponen Map --}}
+                    <div class="rounded-xl overflow-hidden border border-gray-100 h-[250px]">
+                        @livewire('services.map', [
+                            'lat' => $jasa->technician->latitude, 
+                            'lng' => $jasa->technician->longitude,
+                            'customerName' => 'Bengkel ' . $jasa->technician->user->name
+                        ], key('map-bengkel-'.$jasa->id))
+                    </div>
+                </div>
+            </div>
+        @endif
+
         {{-- Deskripsi --}}
         <div x-data="{ open: true }" class="rounded-xl border border-gray-200 overflow-hidden bg-white">
             <button @click="open = !open" class="w-full flex justify-between items-center px-4 py-3.5 hover:bg-gray-50 transition">
@@ -204,15 +488,16 @@
                 <h3 class="font-bold text-gray-800 text-sm uppercase tracking-wide">Ulasan Terakhir</h3>
                 <span class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full font-semibold">{{ $jasa->review_count ?? 0 }} ulasan</span>
             </div>
-            @if(empty($jasa->review))
+
+            @forelse ($jasa->review as $review)
                 <div class="p-4 bg-amber-50 border border-amber-100 rounded-xl text-sm text-gray-700 italic leading-relaxed">
-                    "{{ $jasa->review->first()->text_comment }}"
+                    "{{ $review->text_comment }}"
                 </div>
-            @else
+            @empty
                 <div class="p-4 bg-amber-50 border border-amber-100 rounded-xl text-sm text-gray-700 italic leading-relaxed">
                     Belum Ada Ulasan
                 </div>
-            @endif
+            @endforelse
         </div>
 
         <hr class="border-gray-200">
@@ -506,11 +791,35 @@
             {{-- Submit Button --}}
             @if(auth()->user()->id !== $jasa->technician->user_id)
                 <div class="pt-6 border-t border-gray-200">
-                    <button 
-                        type="button" 
-                        wire:click="submitOrder" 
-                        wire:loading.attr="disabled" 
-                        class="w-full py-4 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-bold rounded-xl shadow-lg transition-all flex items-center justify-center gap-2"
+
+                    {{-- Banner peringatan alamat (panggilan & belum lengkap) --}}
+                    @if($jasa->tipe_layanan === 'panggilan' && !$alamatLengkap)
+                        <div class="mb-4 flex items-start gap-3 p-3.5 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl">
+                            <i class="bi bi-geo-alt-fill text-red-500 dark:text-red-400 flex-shrink-0 mt-0.5"></i>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-semibold text-red-700 dark:text-red-300">Alamat belum lengkap</p>
+                                <p class="text-xs text-red-600 dark:text-red-400 mt-0.5 leading-relaxed">
+                                    Layanan home service memerlukan alamat lengkap Anda.
+                                </p>
+                                <a href="{{ url('/atur-alamat') }}"
+                                wire:navigate
+                                class="inline-flex items-center gap-1 mt-2 text-xs font-semibold text-red-600 dark:text-red-400 underline underline-offset-2 hover:no-underline">
+                                    <i class="bi bi-arrow-right text-xs"></i>
+                                    Lengkapi alamat sekarang
+                                </a>
+                            </div>
+                        </div>
+                    @endif
+
+                    <button
+                        type="button"
+                        wire:click="submitOrder"
+                        wire:loading.attr="disabled"
+                        @if(!$alamatLengkap && $jasa->tipe_layanan === 'panggilan') disabled @endif
+                        class="w-full py-4 font-bold rounded-xl shadow-lg transition-all flex items-center justify-center gap-2
+                            {{ (!$alamatLengkap && $jasa->tipe_layanan === 'panggilan')
+                                ? 'bg-gray-300 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed'
+                                : 'bg-indigo-600 hover:bg-indigo-700 text-white' }}"
                     >
                         <span wire:loading.remove wire:target="submitOrder">
                             <i class="bi bi-cart-check text-lg"></i>
@@ -528,14 +837,6 @@
                             Memproses...
                         </span>
                     </button>
-                    
-                    {{-- Global Error --}}
-                    {{-- @if(session()->has('order_error'))
-                        <p class="mt-3 text-sm text-red-600 text-center flex items-center justify-center gap-1">
-                            <i class="bi bi-exclamation-circle-fill"></i>
-                            <span>{{ session('order_error') }}</span>
-                        </p>
-                    @endif --}}
                 </div>
             @endif
         </div>

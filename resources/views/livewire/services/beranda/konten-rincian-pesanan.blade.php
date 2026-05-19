@@ -1,4 +1,9 @@
-<div class="space-y-6 pb-16">
+<div class="space-y-6 pb-16"
+     x-data="{
+         showServiceModal: true,
+         showCheckoutModal: false,
+         tipe: '{{ $tipeLayanan ?? $order->tipe_layanan ?? $order->jasa->tipe_layanan ?? 'panggilan' }}'
+     }">
 
     @php
         $orderDateTime = \Carbon\Carbon::parse($order->order_date->format('Y-m-d') . ' ' . $order->order_time);
@@ -55,6 +60,22 @@
                         <i class="bi {{ $tipeLayanan === 'panggilan' ? 'bi-house-door-fill' : 'bi-shop' }}"></i>
                         {{ $tipeLayanan === 'panggilan' ? 'Panggilan ke Rumah' : 'Bawa ke Bengkel' }}
                     </span>
+
+                    @if($tipeLayanan === 'panggilan')
+                        <div class="mt-2 flex items-start gap-2 px-3 py-2.5 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-lg">
+                            <i class="bi bi-house-door-fill text-blue-500 dark:text-blue-400 text-sm flex-shrink-0 mt-0.5"></i>
+                            <p class="text-xs text-blue-700 dark:text-blue-300 leading-relaxed">
+                                Teknisi akan <span class="font-semibold">datang ke lokasi Anda</span> sesuai jadwal. Pastikan Anda berada di tempat saat teknisi tiba.
+                            </p>
+                        </div>
+                    @else
+                        <div class="mt-2 flex items-start gap-2 px-3 py-2.5 bg-purple-50 dark:bg-purple-900/20 border border-purple-100 dark:border-purple-800 rounded-lg">
+                            <i class="bi bi-shop text-purple-500 dark:text-purple-400 text-sm flex-shrink-0 mt-0.5"></i>
+                            <p class="text-xs text-purple-700 dark:text-purple-300 leading-relaxed">
+                                Layanan ini dilakukan di bengkel teknisi. <span class="font-semibold">Bawa perangkat Anda</span> ke lokasi bengkel sesuai jadwal yang dipilih.
+                            </p>
+                        </div>
+                    @endif
                 </div>
 
                 
@@ -360,10 +381,10 @@
                         <span>Pesan Ulang</span>
                     </a>
                 @else
-                    <button 
-                        wire:click="checkout"
-                        class="flex-1 py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2 shadow-lg shadow-blue-200"
-                    >
+                    <button
+                        type="button"
+                        @click="showCheckoutModal = true"
+                        class="flex-1 py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2 shadow-lg shadow-blue-200">
                         <i class="bi bi-credit-card"></i>
                         <span>Pesan Sekarang</span>
                     </button>
@@ -404,5 +425,219 @@
             </div>
         </div>
     @endif
+
+    {{-- ── Modal Info Tipe Layanan (auto-open) ── --}}
+<div x-show="showServiceModal"
+     x-transition.opacity
+     @keydown.escape.window="showServiceModal = false"
+     style="display:none"
+     class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+     role="dialog"
+     aria-modal="true">
+
+    <div class="absolute inset-0" @click="showServiceModal = false" aria-hidden="true"></div>
+
+    <div class="relative w-full max-w-sm bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden"
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="opacity-0 translate-y-4 sm:scale-95"
+         x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+         x-transition:leave-end="opacity-0 translate-y-4 sm:scale-95">
+
+        {{-- Panggilan --}}
+        <template x-if="tipe === 'panggilan'">
+            <div>
+                <div class="bg-blue-50 dark:bg-blue-900/20 px-5 pt-6 pb-4 flex flex-col items-center text-center">
+                    <div class="w-14 h-14 rounded-2xl bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center mb-3">
+                        <i class="bi bi-house-door-fill text-2xl text-blue-600 dark:text-blue-400"></i>
+                    </div>
+                    <h3 class="text-base font-bold text-gray-900 dark:text-white">Layanan Home Service</h3>
+                    <span class="mt-1.5 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">
+                        <i class="bi bi-geo-alt-fill text-xs"></i>
+                        Teknisi datang ke lokasi Anda
+                    </span>
+                </div>
+                <div class="px-5 py-4 space-y-4">
+                    <p class="text-sm text-gray-600 dark:text-gray-300 leading-relaxed text-center">
+                        Layanan yang dipilih <span class="font-semibold text-gray-800 dark:text-white">hanya tersedia untuk kunjungan ke rumah</span> dan tidak dapat dilakukan di bengkel teknisi.
+                    </p>
+                    <div class="space-y-2 text-xs text-gray-500 dark:text-gray-400">
+                        <div class="flex items-start gap-2.5">
+                            <i class="bi bi-check-circle-fill text-blue-500 mt-0.5 flex-shrink-0"></i>
+                            <span>Teknisi akan datang sesuai jadwal yang Anda pilih</span>
+                        </div>
+                        <div class="flex items-start gap-2.5">
+                            <i class="bi bi-check-circle-fill text-blue-500 mt-0.5 flex-shrink-0"></i>
+                            <span>Pastikan alamat yang dimasukkan sudah benar</span>
+                        </div>
+                        <div class="flex items-start gap-2.5">
+                            <i class="bi bi-check-circle-fill text-blue-500 mt-0.5 flex-shrink-0"></i>
+                            <span>Harap berada di lokasi saat teknisi tiba</span>
+                        </div>
+                    </div>
+                    <p class="text-sm font-medium text-gray-700 dark:text-gray-200 text-center">
+                        Apakah Anda bersedia melanjutkan layanan ini?
+                    </p>
+                </div>
+                <div class="flex gap-2 px-5 pb-5">
+                    <a href="{{ url()->previous() }}"
+                       class="flex-1 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-600 dark:text-gray-300 text-center hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                        Kembali
+                    </a>
+                    <button type="button"
+                            @click="showServiceModal = false"
+                            class="flex-1 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-sm font-semibold text-white transition-all">
+                        Ya, Lanjutkan
+                    </button>
+                </div>
+            </div>
+        </template>
+
+        {{-- Bengkel --}}
+        <template x-if="tipe === 'bengkel'">
+            <div>
+                <div class="bg-purple-50 dark:bg-purple-900/20 px-5 pt-6 pb-4 flex flex-col items-center text-center">
+                    <div class="w-14 h-14 rounded-2xl bg-purple-100 dark:bg-purple-900/40 flex items-center justify-center mb-3">
+                        <i class="bi bi-tools text-2xl text-purple-600 dark:text-purple-400"></i>
+                    </div>
+                    <h3 class="text-base font-bold text-gray-900 dark:text-white">Layanan Bengkel</h3>
+                    <span class="mt-1.5 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300">
+                        <i class="bi bi-shop text-xs"></i>
+                        Kunjungi lokasi bengkel teknisi
+                    </span>
+                </div>
+                <div class="px-5 py-4 space-y-4">
+                    <p class="text-sm text-gray-600 dark:text-gray-300 leading-relaxed text-center">
+                        Layanan yang dipilih <span class="font-semibold text-gray-800 dark:text-white">hanya tersedia di bengkel teknisi</span> dan tidak dapat dilakukan dengan kunjungan ke rumah.
+                    </p>
+                    <div class="space-y-2 text-xs text-gray-500 dark:text-gray-400">
+                        <div class="flex items-start gap-2.5">
+                            <i class="bi bi-check-circle-fill text-purple-500 mt-0.5 flex-shrink-0"></i>
+                            <span>Bawa perangkat Anda ke lokasi bengkel teknisi</span>
+                        </div>
+                        <div class="flex items-start gap-2.5">
+                            <i class="bi bi-check-circle-fill text-purple-500 mt-0.5 flex-shrink-0"></i>
+                            <span>Datang sesuai jadwal yang sudah dipilih</span>
+                        </div>
+                        <div class="flex items-start gap-2.5">
+                            <i class="bi bi-check-circle-fill text-purple-500 mt-0.5 flex-shrink-0"></i>
+                            <span>Alamat bengkel akan ditampilkan setelah pesanan dikonfirmasi</span>
+                        </div>
+                    </div>
+                    <p class="text-sm font-medium text-gray-700 dark:text-gray-200 text-center">
+                        Apakah Anda bersedia melanjutkan layanan ini?
+                    </p>
+                </div>
+                <div class="flex gap-2 px-5 pb-5">
+                    <a href="{{ url()->previous() }}"
+                       class="flex-1 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-600 dark:text-gray-300 text-center hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                        Kembali
+                    </a>
+                    <button type="button"
+                            @click="showServiceModal = false"
+                            class="flex-1 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 active:scale-[0.98] text-sm font-semibold text-white transition-all">
+                        Ya, Lanjutkan
+                    </button>
+                </div>
+            </div>
+        </template>
+    </div>
+</div>
+
+{{-- ── Modal Konfirmasi Checkout ── --}}
+<div x-show="showCheckoutModal"
+     x-transition.opacity
+     @keydown.escape.window="showCheckoutModal = false"
+     style="display:none"
+     class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+     role="dialog"
+     aria-modal="true">
+
+    <div class="absolute inset-0" @click="showCheckoutModal = false" aria-hidden="true"></div>
+
+    <div class="relative w-full max-w-sm bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden"
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="opacity-0 translate-y-4 sm:scale-95"
+         x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+         x-transition:leave-end="opacity-0 translate-y-4 sm:scale-95">
+
+        {{-- Konfirmasi panggilan --}}
+        <template x-if="tipe === 'panggilan'">
+            <div>
+                <div class="bg-blue-50 dark:bg-blue-900/20 px-5 pt-6 pb-4 flex flex-col items-center text-center">
+                    <div class="w-14 h-14 rounded-2xl bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center mb-3">
+                        <i class="bi bi-house-door-fill text-2xl text-blue-600 dark:text-blue-400"></i>
+                    </div>
+                    <h3 class="text-base font-bold text-gray-900 dark:text-white">Konfirmasi Pesanan</h3>
+                </div>
+                <div class="px-5 py-4 space-y-3">
+                    <p class="text-sm text-gray-600 dark:text-gray-300 leading-relaxed text-center">
+                        Dengan memesan, Anda menyetujui bahwa layanan ini adalah <span class="font-semibold text-gray-800 dark:text-white">home service</span> — teknisi akan datang ke lokasi Anda.
+                    </p>
+                    <div class="flex items-start gap-2.5 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-100 dark:border-blue-800">
+                        <i class="bi bi-info-circle-fill text-blue-500 flex-shrink-0 mt-0.5"></i>
+                        <p class="text-xs text-blue-700 dark:text-blue-300 leading-relaxed">
+                            Pastikan lokasi Anda benar dan anda berada di rumah pada <span class="font-semibold">{{ $order->order_date->translatedFormat('d F Y') }}</span> pukul <span class="font-semibold">{{ date('H:i', strtotime($order->order_time)) }}</span>.
+                        </p>
+                    </div>
+                </div>
+                <div class="flex gap-2 px-5 pb-5">
+                    <button type="button"
+                            @click="showCheckoutModal = false"
+                            class="flex-1 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                        Batal
+                    </button>
+                    <button type="button"
+                            @click="showCheckoutModal = false"
+                            wire:click="checkout"
+                            class="flex-1 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-sm font-semibold text-white transition-all flex items-center justify-center gap-1.5">
+                        <i class="bi bi-credit-card text-sm"></i>
+                        Pesan Sekarang
+                    </button>
+                </div>
+            </div>
+        </template>
+
+        {{-- Konfirmasi bengkel --}}
+        <template x-if="tipe === 'bengkel'">
+            <div>
+                <div class="bg-purple-50 dark:bg-purple-900/20 px-5 pt-6 pb-4 flex flex-col items-center text-center">
+                    <div class="w-14 h-14 rounded-2xl bg-purple-100 dark:bg-purple-900/40 flex items-center justify-center mb-3">
+                        <i class="bi bi-tools text-2xl text-purple-600 dark:text-purple-400"></i>
+                    </div>
+                    <h3 class="text-base font-bold text-gray-900 dark:text-white">Konfirmasi Pesanan</h3>
+                </div>
+                <div class="px-5 py-4 space-y-3">
+                    <p class="text-sm text-gray-600 dark:text-gray-300 leading-relaxed text-center">
+                        Dengan memesan, Anda menyetujui bahwa layanan ini dilakukan di <span class="font-semibold text-gray-800 dark:text-white">bengkel teknisi</span> — Anda perlu membawa perangkat ke lokasi.
+                    </p>
+                    <div class="flex items-start gap-2.5 p-3 bg-purple-50 dark:bg-purple-900/20 rounded-xl border border-purple-100 dark:border-purple-800">
+                        <i class="bi bi-info-circle-fill text-purple-500 flex-shrink-0 mt-0.5"></i>
+                        <p class="text-xs text-purple-700 dark:text-purple-300 leading-relaxed">
+                            Harap tiba di bengkel pada <span class="font-semibold">{{ $order->order_date->translatedFormat('d F Y') }}</span> pukul <span class="font-semibold">{{ date('H:i', strtotime($order->order_time)) }}</span>.
+                        </p>
+                    </div>
+                </div>
+                <div class="flex gap-2 px-5 pb-5">
+                    <button type="button"
+                            @click="showCheckoutModal = false"
+                            class="flex-1 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                        Batal
+                    </button>
+                    <button type="button"
+                            @click="showCheckoutModal = false"
+                            wire:click="checkout"
+                            class="flex-1 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 active:scale-[0.98] text-sm font-semibold text-white transition-all flex items-center justify-center gap-1.5">
+                        <i class="bi bi-credit-card text-sm"></i>
+                        Pesan Sekarang
+                    </button>
+                </div>
+            </div>
+        </template>
+    </div>
+</div>
 
 </div>

@@ -21,6 +21,7 @@ class DetailJasa extends Component
     public $keluhan_manual = '';
     public $layanan_tambahan = [];
     public $pesanan_di_keranjang = [];
+    public bool $alamatLengkap = true;
 
     public function mount ($id_jasa) {
 
@@ -31,10 +32,11 @@ class DetailJasa extends Component
                 'review' => function ($query) {
                     $query->select('id', 'id_jasa', 'text_comment')
                         ->latest()
-                        ->limit(1);
+                        ->limit(5);
                 },
                 'technician' => function ($query) {
-                    $query->with(['user:id,name,avatar']);
+                    $query->select('id', 'user_id', 'detail_alamat', 'latitude', 'longitude', 'kecamatan', 'kabupaten')
+                            ->with(['user:id,name,avatar']);
                 }
             ])
             ->where('active', true)
@@ -76,10 +78,27 @@ class DetailJasa extends Component
                 $this->layanan_tambahan[$index] = [];
             }
         }
+
+        if ($this->jasa->tipe_layanan === 'panggilan') {
+            $customer = Customer::where('user_id', Auth::id())->first();
+            $this->alamatLengkap = $customer &&
+                !empty($customer->detail_alamat) &&
+                !empty($customer->provinsi) &&
+                !empty($customer->kabupaten) &&
+                !empty($customer->kecamatan) &&
+                !empty($customer->kelurahan) &&
+                !empty($customer->latitude) &&
+                !empty($customer->longitude);
+        }
     }
 
     public function submitOrder()
     {
+
+        if ($this->jasa->tipe_layanan === 'panggilan' && !$this->alamatLengkap) {
+            session()->flash('error', 'Lengkapi alamat Anda terlebih dahulu sebelum memesan.');
+            return;
+        }
 
         $validated = $this->validate([
             'order_date' => 'required|date',

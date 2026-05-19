@@ -142,7 +142,7 @@ class FormAlamat extends Component
             $model::updateOrCreate(['user_id' => Auth::id()], $data);
 
             session()->flash('success', 'Alamat berhasil diperbarui!');
-            return $this->redirect(request()->header('Referer'), navigate: true);
+            return $this->redirect(url()->previous(), navigate: true);
             
         } catch (\Exception $e) {
             session()->flash('error', 'Terjadi kesalahan: ' . $e->getMessage());

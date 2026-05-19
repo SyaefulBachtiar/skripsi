@@ -1,8 +1,8 @@
 <div class="p-3 sm:p-6 bg-white rounded-2xl shadow-sm border border-slate-200/80">
 
-    {{-- ═══════════════════════════════════════
-         HEADER SECTION
-    ════════════════════════════════════════ --}}
+    {{-- ══════════════════════════════════════
+         HEADER
+    ══════════════════════════════════════ --}}
     <div class="mb-5 flex items-center justify-between pb-4 border-b border-slate-100">
         <div class="flex items-center gap-3">
             <div class="w-9 h-9 sm:w-10 sm:h-10 bg-indigo-50 rounded-xl flex items-center justify-center shrink-0">
@@ -15,30 +15,36 @@
         </div>
     </div>
 
-    {{-- ═══════════════════════════════════════
+    {{-- ══════════════════════════════════════
          LIST PESANAN
-    ════════════════════════════════════════ --}}
+    ══════════════════════════════════════ --}}
     <div class="space-y-3 sm:space-y-4">
         @forelse($data as $order)
             @php
-                $isSelesai = ($order->latestStatus->status_order ?? '') === 'selesai';
+                $statusOrder    = $order->latestStatus->status_order ?? '';
+                $isSelesai      = $statusOrder === 'selesai' || $statusOrder === 'sudah_dibayar';
+                $isSudahDibayar = $statusOrder === 'sudah_dibayar';
+                $isDitolak      = $statusOrder === 'pembayaran_ditolak';
             @endphp
 
-            {{-- ─── CARD PESANAN ─────────────────────── --}}
-            <div x-data="{ openUpdate: false }"
+            {{-- ── CARD ──────────────────────────────── --}}
+            {{--
+                x-data mencakup state modal tolak & konfirmasi sekaligus.
+                orderId dipakai untuk wire:click agar tidak hardcode di dalam modal.
+            --}}
+            <div x-data="{
+                     openUpdate:    false,
+                     showTolak:     false,
+                     showKonfirm:   false,
+                     orderId:       {{ $order['id'] }}
+                 }"
                  class="border border-slate-200 rounded-xl sm:rounded-2xl overflow-hidden bg-white shadow-sm hover:shadow-md transition-shadow duration-200">
 
-                {{-- ── Card Header ──────────────────── --}}
-                {{--
-                    Mobile: identitas + tombol satu baris,
-                            badge status di baris kedua (jika ada)
-                    sm+:    layout lama flex-row
-                --}}
-                <div class="px-3 py-3 sm:px-5 sm:py-3.5 flex flex-col gap-2 bg-slate-50/70 border-b border-slate-200">
+                {{-- ─ Card Header ───────────────────── --}}
+                <div class="px-3 py-3 sm:px-5 sm:py-3.5 flex flex-col gap-2.5 bg-slate-50/70 border-b border-slate-200">
 
                     {{-- Baris 1: Identitas + Tombol --}}
                     <div class="flex items-center justify-between gap-2">
-
                         <div class="flex items-center gap-2.5 sm:gap-3.5 min-w-0">
                             <div class="w-9 h-9 sm:w-11 sm:h-11 bg-white border border-slate-200 rounded-lg sm:rounded-xl flex items-center justify-center shrink-0 shadow-sm">
                                 <i class="bi bi-box-seam text-lg sm:text-xl text-slate-400"></i>
@@ -58,34 +64,70 @@
                                 </h2>
                             </div>
                         </div>
-
-                        {{-- Tombol selalu di kanan atas --}}
                         <button @click="openUpdate = !openUpdate"
                                 class="inline-flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3.5 py-1.5 sm:py-2
-                                       bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800
-                                       text-white text-[10px] sm:text-xs font-bold rounded-lg transition-colors
+                                       bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white
+                                       text-[10px] sm:text-xs font-bold rounded-lg transition-colors
                                        shadow-sm shadow-indigo-200 shrink-0 whitespace-nowrap">
                             <i class="bi bi-pencil-square text-[10px] sm:text-[11px]"></i>
                             <span>Update / Detail</span>
                         </button>
                     </div>
 
-                    {{-- Baris 2: Badge (hanya jika selesai) --}}
-                    @if($isSelesai)
-                        <div>
-                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-amber-50 border border-amber-200 text-amber-600 text-[10px] font-bold uppercase tracking-wider rounded-lg">
-                                <i class="bi bi-hourglass-split text-[10px]"></i>
-                                Menunggu Pembayaran
-                            </span>
+                    {{-- Baris 2: Badge Status + Tombol Aksi (hanya jika selesai) --}}
+                    @if($isSelesai || $statusOrder === 'pembayaran_ditolak')
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-2 border-t border-slate-100">
+                            <div>
+                                @if($isSudahDibayar)
+                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 border border-emerald-200 text-emerald-600 text-[10px] font-bold uppercase tracking-wider rounded-lg">
+                                        <i class="bi bi-cash-coin text-[11px]"></i>
+                                        Pelanggan Sudah Bayar
+                                    </span>
+                                @elseif($isDitolak)
+                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-rose-50 border border-rose-200 text-rose-600 text-[10px] font-bold uppercase tracking-wider rounded-lg shadow-sm animate-pulse">
+                                        <i class="bi bi-exclamation-octagon-fill text-[11px]"></i>
+                                        Konfirmasi Pembayaran Ditolak
+                                    </span>
+                                @else
+                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-amber-50 border border-amber-200 text-amber-600 text-[10px] font-bold uppercase tracking-wider rounded-lg">
+                                        <i class="bi bi-hourglass-split text-[10px]"></i>
+                                        Menunggu Pembayaran
+                                    </span>
+                                @endif
+                            </div>
+
+                            @if($isSudahDibayar || $statusOrder === 'pembayaran_ditolak')
+                                <div class="flex items-center gap-2 self-end sm:self-auto">
+                                    @if ($isSudahDibayar)
+                                        {{-- Tombol Tolak → buka modal tolak --}}
+                                        <button type="button"
+                                                @click="showTolak = true"
+                                                class="inline-flex items-center gap-1 px-2.5 py-1.5
+                                                    bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-600
+                                                    text-[10px] sm:text-xs font-bold uppercase tracking-wider rounded-lg transition-colors">
+                                            <i class="bi bi-x-circle text-xs"></i>
+                                            <span>Tolak</span>
+                                        </button>
+                                    @endif
+                                    {{-- Tombol Konfirmasi → buka modal konfirmasi --}}
+                                    <button type="button"
+                                            @click="showKonfirm = true"
+                                            class="inline-flex items-center gap-1.5 px-3 py-1.5
+                                                bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white
+                                                text-[10px] sm:text-xs font-black uppercase tracking-wider rounded-lg transition-colors
+                                                shadow-sm shadow-emerald-100">
+                                        <i class="bi bi-check2-all text-xs"></i>
+                                        <span>{{ $statusOrder === 'pembayaran_ditolak' ? 'sudah dibayar' : 'konfirmasi' }}</span>
+                                    </button>
+                                </div>
+                            @endif
                         </div>
                     @endif
                 </div>
 
-                {{-- ── Info Singkat (Selalu Muncul) ──── --}}
+                {{-- ─ Info Singkat ───────────────────── --}}
                 <div class="px-3 py-3 sm:px-5 sm:py-4">
                     <div class="flex flex-col gap-3 sm:grid sm:grid-cols-2 sm:gap-4">
-
-                        {{-- Keluhan --}}
                         <div>
                             <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Daftar Keluhan</p>
                             <div class="flex flex-wrap gap-1">
@@ -96,8 +138,6 @@
                                 @endforeach
                             </div>
                         </div>
-
-                        {{-- Total Harga: inline di mobile (label kiri, angka kanan), block di sm+ --}}
                         <div class="flex flex-row sm:flex-col sm:items-end items-center justify-between pt-2.5 sm:pt-0 border-t border-slate-100 sm:border-0 sm:justify-center">
                             <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider sm:mb-1">Total Biaya Saat Ini</p>
                             <p class="text-lg sm:text-xl font-black text-slate-800 tabular-nums">
@@ -107,74 +147,203 @@
                     </div>
                 </div>
 
-                {{-- ── Panel Collapsible ─────────────── --}}
-                <div x-show="openUpdate" x-collapse class="border-t border-slate-200">
+                {{-- ══════════════════════════════════════
+                     MODAL: TOLAK PEMBAYARAN
+                ══════════════════════════════════════ --}}
+                <div x-show="showTolak"
+                     x-transition:enter="transition ease-out duration-200"
+                     x-transition:enter-start="opacity-0"
+                     x-transition:enter-end="opacity-100"
+                     x-transition:leave="transition ease-in duration-150"
+                     x-transition:leave-start="opacity-100"
+                     x-transition:leave-end="opacity-0"
+                     class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
+                     style="display: none;">
 
+                    <div x-show="showTolak"
+                         x-transition:enter="transition ease-out duration-200"
+                         x-transition:enter-start="opacity-0 scale-95 translate-y-2"
+                         x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+                         x-transition:leave="transition ease-in duration-150"
+                         x-transition:leave-start="opacity-100 scale-100 translate-y-0"
+                         x-transition:leave-end="opacity-0 scale-95 translate-y-2"
+                         @click.outside="showTolak = false"
+                         class="w-full max-w-sm bg-white rounded-2xl shadow-xl overflow-hidden">
+
+                        {{-- Modal Header --}}
+                        <div class="px-5 pt-5 pb-4 border-b border-slate-100 flex items-start gap-3">
+                            <div class="w-10 h-10 shrink-0 bg-rose-100 rounded-xl flex items-center justify-center">
+                                <i class="bi bi-x-circle-fill text-rose-500 text-lg"></i>
+                            </div>
+                            <div class="min-w-0">
+                                <h3 class="text-sm font-bold text-slate-800 leading-tight">Tolak Pembayaran</h3>
+                                <p class="text-[11px] text-slate-400 mt-0.5">Order #{{ $order['id'] }}</p>
+                            </div>
+                            <button @click="showTolak = false"
+                                    class="ml-auto shrink-0 w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors">
+                                <i class="bi bi-x-lg text-xs"></i>
+                            </button>
+                        </div>
+
+                        {{-- Modal Body --}}
+                        <div class="px-5 py-4 space-y-3">
+                            <div class="bg-rose-50 border border-rose-100 rounded-xl p-3 flex gap-2.5">
+                                <i class="bi bi-exclamation-triangle-fill text-rose-400 text-sm shrink-0 mt-0.5"></i>
+                                <p class="text-[11px] text-rose-700 leading-relaxed">
+                                    Tindakan ini akan <strong>menolak konfirmasi pembayaran</strong> dan mengembalikan status pesanan. Lakukan hanya jika dana belum masuk ke rekening Anda.
+                                </p>
+                            </div>
+                            <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 flex justify-between items-center">
+                                <span class="text-[11px] text-slate-500 font-medium">Total Tagihan</span>
+                                <span class="text-sm font-black text-slate-800 tabular-nums">
+                                    Rp {{ number_format($order['total_harga'], 0, ',', '.') }}
+                                </span>
+                            </div>
+                        </div>
+
+                        {{-- Modal Footer --}}
+                        <div class="px-5 pb-5 flex gap-2.5">
+                            <button type="button"
+                                    @click="showTolak = false"
+                                    class="flex-1 py-2.5 text-xs font-semibold text-slate-500 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors">
+                                Batal
+                            </button>
+                            <button type="button"
+                                    wire:click="tolakPembayaran({{ $order['id'] }})"
+                                    wire:loading.attr="disabled"
+                                    class="flex-1 inline-flex items-center justify-center gap-1.5 py-2.5
+                                           bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white
+                                           text-xs font-bold rounded-xl transition-colors shadow-sm shadow-rose-100">
+                                <i class="bi bi-x-circle"></i>
+                                Ya, Tolak Pembayaran
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- ══════════════════════════════════════
+                     MODAL: KONFIRMASI PEMBAYARAN
+                ══════════════════════════════════════ --}}
+                <div x-show="showKonfirm"
+                     x-transition:enter="transition ease-out duration-200"
+                     x-transition:enter-start="opacity-0"
+                     x-transition:enter-end="opacity-100"
+                     x-transition:leave="transition ease-in duration-150"
+                     x-transition:leave-start="opacity-100"
+                     x-transition:leave-end="opacity-0"
+                     class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
+                     style="display: none;">
+
+                    <div x-show="showKonfirm"
+                         x-transition:enter="transition ease-out duration-200"
+                         x-transition:enter-start="opacity-0 scale-95 translate-y-2"
+                         x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+                         x-transition:leave="transition ease-in duration-150"
+                         x-transition:leave-start="opacity-100 scale-100 translate-y-0"
+                         x-transition:leave-end="opacity-0 scale-95 translate-y-2"
+                         @click.outside="showKonfirm = false"
+                         class="w-full max-w-sm bg-white rounded-2xl shadow-xl overflow-hidden">
+
+                        {{-- Modal Header --}}
+                        <div class="px-5 pt-5 pb-4 border-b border-slate-100 flex items-start gap-3">
+                            <div class="w-10 h-10 shrink-0 bg-emerald-100 rounded-xl flex items-center justify-center">
+                                <i class="bi bi-check-circle-fill text-emerald-500 text-lg"></i>
+                            </div>
+                            <div class="min-w-0">
+                                <h3 class="text-sm font-bold text-slate-800 leading-tight">Konfirmasi Pembayaran</h3>
+                                <p class="text-[11px] text-slate-400 mt-0.5">Order #{{ $order['id'] }}</p>
+                            </div>
+                            <button @click="showKonfirm = false"
+                                    class="ml-auto shrink-0 w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors">
+                                <i class="bi bi-x-lg text-xs"></i>
+                            </button>
+                        </div>
+
+                        {{-- Modal Body --}}
+                        <div class="px-5 py-4 space-y-3">
+                            <div class="bg-emerald-50 border border-emerald-100 rounded-xl p-3 flex gap-2.5">
+                                <i class="bi bi-info-circle-fill text-emerald-400 text-sm shrink-0 mt-0.5"></i>
+                                <p class="text-[11px] text-emerald-700 leading-relaxed">
+                                    Pastikan dana telah <strong>masuk ke rekening Anda</strong> sebelum mengkonfirmasi. Tindakan ini akan menyelesaikan pesanan secara permanen.
+                                </p>
+                            </div>
+                            <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 flex justify-between items-center">
+                                <span class="text-[11px] text-slate-500 font-medium">Total Tagihan</span>
+                                <span class="text-sm font-black text-emerald-600 tabular-nums">
+                                    Rp {{ number_format($order['total_harga'], 0, ',', '.') }}
+                                </span>
+                            </div>
+                        </div>
+
+                        {{-- Modal Footer --}}
+                        <div class="px-5 pb-5 flex gap-2.5">
+                            <button type="button"
+                                    @click="showKonfirm = false"
+                                    class="flex-1 py-2.5 text-xs font-semibold text-slate-500 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors">
+                                Batal
+                            </button>
+                            <button type="button"
+                                    wire:click="konfirmasiPembayaran({{ $order['id'] }})"
+                                    wire:loading.attr="disabled"
+                                    @click="showKonfirm = false"
+                                    class="flex-1 inline-flex items-center justify-center gap-1.5 py-2.5
+                                           bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white
+                                           text-xs font-bold rounded-xl transition-colors shadow-sm shadow-emerald-100">
+                                <i class="bi bi-check2-all"></i>
+                                Ya, Konfirmasi
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- ─ Panel Collapsible ─────────────── --}}
+                <div x-show="openUpdate" x-collapse class="border-t border-slate-200">
                     <div x-data="{ activeTab: '{{ $isSelesai ? 'rincian' : 'update' }}' }">
 
                         {{-- Tab Navigation --}}
-                        {{--
-                            flex-1 + min-w agar semua tab muat rata,
-                            overflow-x-auto sebagai fallback jika layar sangat sempit
-                        --}}
                         <div class="flex border-b border-slate-200 bg-slate-50/60 overflow-x-auto">
-
                             @if(!$isSelesai)
                                 <button @click="activeTab = 'update'"
                                         :class="activeTab === 'update' ? 'border-indigo-600 text-indigo-700 font-bold bg-white' : 'border-transparent text-slate-400 hover:text-slate-600 hover:bg-white/60'"
-                                        class="flex-1 min-w-[72px] inline-flex items-center justify-center gap-1 py-2.5 sm:py-3 px-1.5 sm:px-4
-                                               text-[10px] sm:text-[11px] uppercase tracking-wide border-b-2 transition-all whitespace-nowrap">
+                                        class="flex-1 min-w-[72px] inline-flex items-center justify-center gap-1 py-2.5 sm:py-3 px-1.5 sm:px-4 text-[10px] sm:text-[11px] uppercase tracking-wide border-b-2 transition-all whitespace-nowrap">
                                     <i class="bi bi-arrow-repeat text-[11px]"></i>
                                     <span class="hidden xs:inline">Update</span> Progres
                                 </button>
-
                                 <button @click="activeTab = 'riwayat'"
                                         :class="activeTab === 'riwayat' ? 'border-indigo-600 text-indigo-700 font-bold bg-white' : 'border-transparent text-slate-400 hover:text-slate-600 hover:bg-white/60'"
-                                        class="flex-1 min-w-[72px] inline-flex items-center justify-center gap-1 py-2.5 sm:py-3 px-1.5 sm:px-4
-                                               text-[10px] sm:text-[11px] uppercase tracking-wide border-b-2 transition-all whitespace-nowrap">
-                                    <i class="bi bi-clock-history text-[11px]"></i> Riwayat
+                                        class="flex-1 min-w-[72px] inline-flex items-center justify-center gap-1 py-2.5 sm:py-3 px-1.5 sm:px-4 text-[10px] sm:text-[11px] uppercase tracking-wide border-b-2 transition-all whitespace-nowrap">
+                                    <i class="bi bi-clock-history text-[11px]"></i> Progres
                                 </button>
-
                                 <button @click="activeTab = 'layanan'"
                                         :class="activeTab === 'layanan' ? 'border-indigo-600 text-indigo-700 font-bold bg-white' : 'border-transparent text-slate-400 hover:text-slate-600 hover:bg-white/60'"
-                                        class="flex-1 min-w-[72px] inline-flex items-center justify-center gap-1 py-2.5 sm:py-3 px-1.5 sm:px-4
-                                               text-[10px] sm:text-[11px] uppercase tracking-wide border-b-2 transition-all whitespace-nowrap">
+                                        class="flex-1 min-w-[72px] inline-flex items-center justify-center gap-1 py-2.5 sm:py-3 px-1.5 sm:px-4 text-[10px] sm:text-[11px] uppercase tracking-wide border-b-2 transition-all whitespace-nowrap">
                                     <i class="bi bi-plus-circle text-[11px]"></i>
                                     <span class="hidden xs:inline">Tambah</span> Item
                                 </button>
-
                             @else
                                 @foreach(['Progres', 'Riwayat', 'Item'] as $lockedTab)
                                     <button disabled
-                                            class="flex-1 min-w-[72px] inline-flex items-center justify-center gap-1 py-2.5 sm:py-3 px-1.5 sm:px-4
-                                                   text-[10px] sm:text-[11px] uppercase tracking-wide border-b-2 border-transparent
-                                                   text-slate-300 cursor-not-allowed whitespace-nowrap">
+                                            class="flex-1 min-w-[72px] inline-flex items-center justify-center gap-1 py-2.5 sm:py-3 px-1.5 sm:px-4 text-[10px] sm:text-[11px] uppercase tracking-wide border-b-2 border-transparent text-slate-300 cursor-not-allowed whitespace-nowrap">
                                         <i class="bi bi-lock-fill text-[10px]"></i> {{ $lockedTab }}
                                     </button>
                                 @endforeach
                             @endif
-
                             <button @click="activeTab = 'rincian'"
                                     :class="activeTab === 'rincian' ? 'border-indigo-600 text-indigo-700 font-bold bg-white' : 'border-transparent text-slate-400 hover:text-slate-600 hover:bg-white/60'"
-                                    class="flex-1 min-w-[72px] inline-flex items-center justify-center gap-1 py-2.5 sm:py-3 px-1.5 sm:px-4
-                                           text-[10px] sm:text-[11px] uppercase tracking-wide border-b-2 transition-all whitespace-nowrap">
+                                    class="flex-1 min-w-[72px] inline-flex items-center justify-center gap-1 py-2.5 sm:py-3 px-1.5 sm:px-4 text-[10px] sm:text-[11px] uppercase tracking-wide border-b-2 transition-all whitespace-nowrap">
                                 <i class="bi bi-receipt text-[11px]"></i> Rincian
                             </button>
                         </div>
 
-                        {{-- ════════════════════════════════
+                        {{-- ══════════════════════════════
                              TAB CONTENTS
-                        ═════════════════════════════════ --}}
+                        ══════════════════════════════ --}}
                         <div class="p-3 sm:p-5 bg-white">
-
                             @if(!$isSelesai)
 
-                                {{-- ──────────────────────────────────
-                                     TAB 1: UPDATE PROGRES
-                                ─────────────────────────────────── --}}
+                                {{-- ── TAB 1: UPDATE PROGRES ──────── --}}
                                 <div x-show="activeTab === 'update'">
                                     <form wire:submit.prevent="updateProgres({{ $order['id'] }})" class="space-y-3.5 sm:space-y-4">
-
                                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                                             <div>
                                                 <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
@@ -196,11 +365,19 @@
                                                     <option value="dibatalkan">Batalkan</option>
                                                 </select>
                                             </div>
-
                                             <div>
                                                 <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
                                                     Upload Bukti (Foto)
                                                 </label>
+                                                @if($bukti_pengerjaan)
+                                                    <div class="mb-2.5 relative w-20 h-20 rounded-xl overflow-hidden border border-slate-200 shadow-sm bg-slate-50">
+                                                        <img src="{{ $bukti_pengerjaan->temporaryUrl() }}" class="w-full h-full object-cover">
+                                                        <button type="button" wire:click="$set('bukti_pengerjaan', null)"
+                                                                class="absolute top-1 right-1 w-5 h-5 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center shadow transition-transform active:scale-90">
+                                                            <i class="bi bi-x text-xs leading-none"></i>
+                                                        </button>
+                                                    </div>
+                                                @endif
                                                 <div class="relative group">
                                                     <input type="file" wire:model="bukti_pengerjaan"
                                                            class="absolute inset-0 opacity-0 cursor-pointer z-10 w-full h-full">
@@ -215,7 +392,6 @@
                                                 </div>
                                             </div>
                                         </div>
-
                                         <div>
                                             <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
                                                 Catatan Tambahan <span class="normal-case font-normal text-slate-400">(Opsional)</span>
@@ -224,7 +400,6 @@
                                                       class="w-full text-xs sm:text-sm border-slate-200 rounded-lg bg-slate-50 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
                                                       placeholder="Contoh: Penggantian freon berhasil..."></textarea>
                                         </div>
-
                                         <div class="flex items-center justify-end gap-2 pt-2.5 border-t border-slate-100">
                                             <button type="button" @click="openUpdate = false"
                                                     class="px-3 sm:px-4 py-2 text-xs font-semibold text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition">
@@ -238,17 +413,13 @@
                                     </form>
                                 </div>
 
-                                {{-- ──────────────────────────────────
-                                     TAB 2: RIWAYAT (TIMELINE)
-                                ─────────────────────────────────── --}}
+                                {{-- ── TAB 2: RIWAYAT (TIMELINE) ──── --}}
                                 <div x-show="activeTab === 'riwayat'" style="display: none;">
                                     <div class="relative border-l-2 border-indigo-100 ml-2 sm:ml-3 space-y-4 sm:space-y-5 pb-2">
                                         @forelse($order->lacak_pesanan as $riwayat)
                                             <div class="relative pl-5 sm:pl-6">
                                                 <div class="absolute -left-[9px] top-1 w-4 h-4 bg-indigo-500 rounded-full border-4 border-white shadow-sm ring-1 ring-indigo-200"></div>
-
                                                 <div class="bg-slate-50 border border-slate-100 p-3 sm:p-3.5 rounded-xl shadow-sm">
-                                                    {{-- Status atas, tanggal bawah di mobile; berdampingan di sm+ --}}
                                                     <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-1 sm:gap-2 mb-1">
                                                         <h4 class="text-[11px] font-bold uppercase tracking-wide
                                                             {{ $riwayat->status_order === 'selesai' ? 'text-amber-600' : 'text-indigo-700' }}">
@@ -260,13 +431,11 @@
                                                             {{ $riwayat->created_at->format('d M Y, H:i') }}
                                                         </span>
                                                     </div>
-
                                                     @if($riwayat->note)
                                                         <p class="text-xs text-slate-600 mt-1.5 leading-relaxed whitespace-pre-wrap border-l-2 border-slate-200 pl-2 italic">
                                                             {{ $riwayat->note }}
                                                         </p>
                                                     @endif
-
                                                     @if($riwayat->foto_bukti)
                                                         <a href="{{ asset('storage/'.$riwayat->foto_bukti) }}" target="_blank"
                                                            class="mt-2.5 inline-block w-20 h-20 sm:w-24 sm:h-24 rounded-lg overflow-hidden border border-slate-200 shadow-sm hover:opacity-80 hover:shadow-md transition">
@@ -283,9 +452,7 @@
                                     </div>
                                 </div>
 
-                                {{-- ──────────────────────────────────
-                                     TAB 3: TAMBAH ITEM / SPAREPART
-                                ─────────────────────────────────── --}}
+                                {{-- ── TAB 3: TAMBAH ITEM ─────────── --}}
                                 <div x-show="activeTab === 'layanan'" style="display: none;"
                                      x-data="{
                                          isiOtomatis(e) {
@@ -296,14 +463,11 @@
                                              }
                                          }
                                      }">
-
                                     <form wire:submit.prevent="tambahLayanan({{ $order['id'] }})"
                                           class="bg-indigo-50/40 border border-indigo-100 p-3 sm:p-4 rounded-xl mb-3 sm:mb-4 space-y-3">
-
                                         <h4 class="text-[11px] sm:text-xs font-bold text-indigo-800 uppercase tracking-wide flex items-center gap-1.5">
                                             <i class="bi bi-plus-square text-indigo-500"></i> Tambah Item / Sparepart
                                         </h4>
-
                                         @if(!empty($order['jasa']['layanan_tambahan']))
                                             <div>
                                                 <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
@@ -324,7 +488,6 @@
                                                 </select>
                                             </div>
                                         @endif
-
                                         <div class="grid grid-cols-1 sm:grid-cols-12 gap-3">
                                             <div class="sm:col-span-8">
                                                 <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Nama Item</label>
@@ -348,7 +511,6 @@
                                                 @enderror
                                             </div>
                                         </div>
-
                                         <div>
                                             <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
                                                 Deskripsi <span class="normal-case font-normal text-slate-400">(Opsional)</span>
@@ -360,13 +522,20 @@
                                                 <span class="text-[10px] text-red-500 mt-1 block">{{ $message }}</span>
                                             @enderror
                                         </div>
-
-                                        {{-- Upload foto: full-width di mobile, flex-row di sm+ --}}
                                         <div class="flex flex-col gap-2.5 sm:flex-row sm:items-end sm:gap-3 pt-1">
                                             <div class="flex-1">
                                                 <label class="block text-[10px] font-bold text-indigo-600 uppercase tracking-wider mb-1.5">
                                                     Upload Foto <span class="normal-case font-normal text-indigo-400">(Opsional)</span>
                                                 </label>
+                                                @if($foto_layanan_baru)
+                                                    <div class="mb-2.5 relative w-20 h-20 rounded-xl overflow-hidden border border-slate-200 shadow-sm bg-slate-50">
+                                                        <img src="{{ $foto_layanan_baru->temporaryUrl() }}" class="w-full h-full object-cover">
+                                                        <button type="button" wire:click="$set('foto_layanan_baru', null)"
+                                                                class="absolute top-1 right-1 w-5 h-5 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center shadow transition-transform active:scale-90">
+                                                            <i class="bi bi-x text-xs leading-none"></i>
+                                                        </button>
+                                                    </div>
+                                                @endif
                                                 <input type="file" wire:model="foto_layanan_baru" accept="image/*"
                                                        class="w-full text-xs file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0
                                                               file:text-xs file:font-semibold file:bg-indigo-100 file:text-indigo-700
@@ -390,8 +559,6 @@
                                             </div>
                                         </div>
                                     </form>
-
-                                    {{-- Daftar Item Tambahan --}}
                                     <div class="border border-slate-200 rounded-xl overflow-hidden">
                                         <div class="px-3 sm:px-4 py-2.5 bg-slate-50 border-b border-slate-200">
                                             <h4 class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Daftar Item Tambahan</h4>
@@ -399,7 +566,6 @@
                                         <div class="divide-y divide-slate-100">
                                             @forelse($order['detail_order'] as $detail)
                                                 <div class="px-3 sm:px-4 py-3 flex gap-2.5 sm:gap-3 hover:bg-slate-50/70 transition-colors">
-
                                                     @if(!empty($detail['foto']))
                                                         <a href="{{ asset('storage/'.$detail['foto']) }}" target="_blank"
                                                            class="w-10 h-10 sm:w-12 sm:h-12 shrink-0 rounded-lg overflow-hidden border border-slate-200 shadow-sm hover:opacity-80 transition">
@@ -410,7 +576,6 @@
                                                             <i class="bi bi-box-seam text-base sm:text-lg"></i>
                                                         </div>
                                                     @endif
-
                                                     <div class="flex-1 min-w-0">
                                                         <div class="flex justify-between items-start gap-1.5">
                                                             <span class="text-xs font-bold text-slate-800 leading-snug min-w-0 break-words">{{ $detail['nama_layanan_tambahan'] }}</span>
@@ -453,23 +618,54 @@
 
                             @endif
 
-                            {{-- ──────────────────────────────────
-                                 TAB 4: RINCIAN PESANAN (Selalu Ada)
-                            ─────────────────────────────────── --}}
+                            {{-- ── TAB 4: RINCIAN (Selalu Ada) ───── --}}
                             <div x-show="activeTab === 'rincian'" style="display: none;">
-
                                 @if($isSelesai)
-                                    <div class="mb-3.5 flex gap-2 sm:gap-2.5 bg-amber-50 border border-amber-200 p-3 sm:p-3.5 rounded-xl">
+                                    <div class="mb-4 flex gap-2 sm:gap-2.5 bg-amber-50 border border-amber-200 p-3 sm:p-3.5 rounded-xl">
                                         <i class="bi bi-info-circle-fill text-amber-500 text-sm sm:text-base shrink-0 mt-0.5"></i>
                                         <p class="text-[11px] sm:text-xs text-amber-800 leading-relaxed">
-                                            Pekerjaan ini sudah <strong>selesai</strong>. Semua form update dikunci hingga proses pembayaran dari pelanggan selesai.
+                                            @if($isSudahDibayar)
+                                                Pelanggan telah melakukan konfirmasi pembayaran. Silakan periksa saldo atau bukti transfer Anda sebelum menekan tombol <strong>Konfirmasi Pembayaran</strong>.
+                                            @else
+                                                Pekerjaan ini sudah <strong>selesai</strong>. Semua form update dikunci hingga proses pembayaran dari pelanggan selesai.
+                                            @endif
                                         </p>
                                     </div>
                                 @endif
-
                                 <div class="space-y-3.5 sm:space-y-4">
-
-                                    {{-- Info Waktu & Tipe --}}
+                                    @if(($order->jasa->tipe_layanan ?? 'panggilan') === 'panggilan')
+                                        <div class="space-y-3">
+                                            <h3 class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Lokasi Pengerjaan</h3>
+                                            <div class="p-3 bg-indigo-50/50 border border-indigo-100 rounded-xl flex items-start gap-3">
+                                                <div class="w-8 h-8 rounded-lg bg-white flex items-center justify-center text-indigo-600 shrink-0 shadow-sm">
+                                                    <i class="bi bi-geo-alt-fill"></i>
+                                                </div>
+                                                <div class="min-w-0">
+                                                    <p class="text-xs font-bold text-slate-800">{{ $order->customer->user->name }}</p>
+                                                    <p class="text-[11px] text-slate-600 leading-relaxed mt-0.5">
+                                                        {{ $order->customer->detail_alamat }}, {{ $order->customer->kelurahan }},
+                                                        {{ $order->customer->kecamatan }}, {{ $order->customer->kabupaten }}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            @if($order->customer->latitude && $order->customer->longitude)
+                                                <div class="rounded-xl overflow-hidden border border-slate-200 h-[200px] relative shadow-inner">
+                                                    @livewire('services.map', [
+                                                        'lat'          => $order->customer->latitude,
+                                                        'lng'          => $order->customer->longitude,
+                                                        'customerName' => $order->customer->user->name
+                                                    ], key('map-order-'.$order->id))
+                                                </div>
+                                                <a href="https://www.google.com/maps/search/?api=1&query={{ $order->customer->latitude }},{{ $order->customer->longitude }}"
+                                                   target="_blank"
+                                                   class="inline-flex items-center gap-1.5 text-[10px] font-bold text-indigo-600 hover:text-indigo-700 bg-white px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm transition-all">
+                                                    <i class="bi bi-cursor-fill"></i>
+                                                    Buka di Google Maps
+                                                </a>
+                                            @endif
+                                        </div>
+                                        <hr class="border-slate-100">
+                                    @endif
                                     <div class="bg-slate-50 border border-slate-100 p-3 sm:p-4 rounded-xl grid grid-cols-2 gap-3 sm:gap-4">
                                         <div>
                                             <span class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Jadwal Servis</span>
@@ -491,14 +687,11 @@
                                             </span>
                                         </div>
                                     </div>
-
-                                    {{-- Breakdown Tagihan --}}
                                     <div class="border border-slate-200 rounded-xl overflow-hidden">
                                         <div class="px-3 sm:px-4 py-2.5 bg-slate-50 border-b border-slate-200">
                                             <h4 class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Breakdown Tagihan</h4>
                                         </div>
                                         <div class="p-3 sm:p-4 space-y-3">
-
                                             <div class="flex justify-between items-center gap-2">
                                                 <span class="text-xs sm:text-sm text-slate-600 font-medium min-w-0 break-words">
                                                     Jasa Dasar ({{ $order['jasa']['nama_jasa'] ?? 'Servis' }})
@@ -507,7 +700,6 @@
                                                     Rp {{ number_format($order['jasa']['harga_jasa'] ?? 0, 0, ',', '.') }}
                                                 </span>
                                             </div>
-
                                             @if(count($order['detail_order'] ?? []) > 0)
                                                 <div class="border-t border-slate-100 pt-3 space-y-2">
                                                     <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-2">
@@ -533,8 +725,6 @@
                                                     @endforeach
                                                 </div>
                                             @endif
-
-                                            {{-- Total Akhir --}}
                                             <div class="border-t border-slate-200 pt-3 flex justify-between items-end gap-2">
                                                 <div class="min-w-0">
                                                     <span class="block text-[11px] sm:text-xs font-bold text-slate-800 uppercase tracking-wide">Total Tagihan</span>
@@ -546,7 +736,6 @@
                                             </div>
                                         </div>
                                     </div>
-
                                 </div>
                             </div>
 
@@ -556,13 +745,11 @@
 
             </div>{{-- end card --}}
         @empty
-
             <div class="py-12 sm:py-16 text-center bg-slate-50/70 rounded-2xl border-2 border-dashed border-slate-200">
                 <i class="bi bi-clipboard-x text-4xl sm:text-5xl text-slate-300 mb-3 block"></i>
                 <p class="text-sm font-semibold text-slate-400">Belum ada pesanan aktif.</p>
                 <p class="text-xs text-slate-300 mt-1">Semua pekerjaan sudah selesai atau belum ada yang masuk.</p>
             </div>
-
         @endforelse
 
         <div class="mt-4 pt-4 border-t border-slate-100">

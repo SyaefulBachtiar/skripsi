@@ -3,7 +3,9 @@
 namespace App\Livewire\Services\DashboardTechnician;
 
 use App\Events\OrderMasuk;
+use App\Events\PesananMasuk;
 use App\Models\ChatMessages;
+use App\Models\ChatRooms;
 use App\Models\Jasa;
 use App\Models\LacakPesanan;
 use App\Models\Order;
@@ -47,13 +49,37 @@ class ListAntrian extends Component
             'status_order' => 'dikonfirmasi',
         ]);
 
-        $order = Order::find($id_order);
+        $order = Order::with('jasa', 'customer')->find($id_order);
 
-        // Ambil ID User Customer dari Order
-        if ($order) {
-            $customerUserId = $order->customer->user_id;
-            broadcast(new OrderMasuk($customerUserId, 'Status pesanan Anda telah diperbarui.'))->toOthers();
+        if (!$order) {
+            session()->flash('error', 'Data pesanan tidak ditemukan.');
+            return $this->redirect(request()->header('Referer'), navigate: true);
         }
+
+        $tipe = $order->jasa->tipe_layanan;
+
+        if ($tipe === 'panggilan') {
+            $pesanOtomatis = "Terimakasih telah menunggu. Pesanan Anda telah dikonfirmasi. Teknisi akan datang ke lokasi Anda sesuai jadwal yang telah dipilih. Mohon pastikan ada orang di lokasi saat teknisi tiba.";
+        } else {
+            $pesanOtomatis = "Terimakasih telah menunggu. Pesanan Anda telah dikonfirmasi. Silakan bawa perangkat Anda ke lokasi bengkel kami sesuai dengan jadwal yang telah Anda pilih.";
+        }
+
+        $chatRoomId = ChatRooms::where('order_id', $order->id)->value('id');
+
+        if ($chatRoomId) {
+            ChatMessages::create([
+                'chat_room_id' => $chatRoomId,
+                'sender_id'    => Auth::id(),
+                'message'      => $pesanOtomatis,
+                'is_read'      => false
+            ]);
+
+            // Trigger event chat realtime
+            broadcast(new PesananMasuk($chatRoomId))->toOthers();
+        }
+
+        $customerUserId = $order->customer->user_id;
+        broadcast(new OrderMasuk($customerUserId, 'Status pesanan Anda telah diperbarui.'))->toOthers();        
 
         session()->flash('success', 'Pesanan berhasil dikonfirmasi!');
 
@@ -62,7 +88,10 @@ class ListAntrian extends Component
 
     public function tolak ($id_order)
     {
-        dd($id_order);
+        LacakPesanan::create([
+            'id_order' => $id_order,
+            'status_order' => 'ditolak',
+        ]);
     }
 
     public function render()
@@ -74,7 +103,7 @@ class ListAntrian extends Component
                     $q->where('status_order', 'menunggu_konfirmasi');
                 })
                 ->with([
-                        'customer:id,user_id', 
+                        'customer:id,user_id,detail_alamat,kecamatan,kelurahan,kabupaten,latitude,longitude', 
                         'customer.user:id,name,avatar',
                         'chat_room' => function ($query) {
                                 $query->select('id', 'order_id')
@@ -85,7 +114,7 @@ class ListAntrian extends Component
                             }
                         ]);
                     }])
-                ->select('id', 'id_technician', 'nama_jasa')
+                ->select('id', 'id_technician', 'nama_jasa', 'tipe_layanan')
                 ->where('id_technician', Auth::user()->technician->id)
                 ->paginate(5);
 

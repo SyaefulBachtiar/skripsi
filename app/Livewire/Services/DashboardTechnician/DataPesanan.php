@@ -3,6 +3,9 @@
 namespace App\Livewire\Services\DashboardTechnician;
 
 use App\Events\OrderMasuk;
+use App\Events\PesananMasuk;
+use App\Models\ChatMessages;
+use App\Models\ChatRooms;
 use App\Models\DetailOrder;
 use App\Models\LacakPesanan;
 use App\Models\Order;
@@ -108,6 +111,77 @@ class DataPesanan extends Component
         $this->redirect(request()->header('Referer') ?? route('dashboard'));
     }
 
+    public function konfirmasiPembayaran($orderId)
+    {
+        try {
+            $order = \App\Models\Order::findOrFail($orderId);
+
+            // Tambah status baru di tracking timeline
+            \App\Models\LacakPesanan::create([
+                'id_order' => $order->id,
+                'status_order' => 'selesai_total', // sesuaikan dengan enum status skripsi kamu
+                'note' => 'Pembayaran telah diverifikasi oleh teknisi. Terima kasih telah menggunakan Servisio!',
+            ]);
+
+            // Kirim notifikasi sistem ke chat room customer
+            $chatRoomId = \App\Models\ChatRooms::where('order_id', $order->id)->value('id');
+            if ($chatRoomId) {
+                \App\Models\ChatMessages::create([
+                    'chat_room_id' => $chatRoomId,
+                    'sender_id' => Auth::id(),
+                    'message' => 'Pembayaran Anda telah diverifikasi oleh teknisi. Transaksi selesai!',
+                    'is_read' => false
+                ]);
+                broadcast(new \App\Events\PesananMasuk($chatRoomId))->toOthers();
+            }
+
+            // Beritahu customer via Pusher
+            broadcast(new \App\Events\OrderMasuk($order->customer->user_id, 'Pembayaran Anda telah diverifikasi oleh teknisi!'))->toOthers();
+
+            session()->flash('success', 'Pembayaran berhasil dikonfirmasi!');
+        } catch (\Exception $e) {
+            session()->flash('error', 'Gagal memverifikasi pembayaran: ' . $e->getMessage());
+        }
+    }
+
+    public function tolakPembayaran($orderId)
+    {
+        
+        try {
+            $order = Order::with('customer')->findOrFail($orderId);
+
+            // Kembalikan status ke 'selesai' (Menunggu Pembayaran kembali)
+            LacakPesanan::create([
+                'id_order' => $order->id,
+                'status_order' => 'pembayaran_ditolak', // Status dikembalikan agar tombol bayar di customer muncul lagi
+                'note' => 'Pembayaran ditolak teknisi karena dana belum masuk atau bukti tidak valid.',
+            ]);
+
+            // Kirim peringatan otomatis ke Chat Room
+            $chatRoomId = ChatRooms::where('order_id', $order->id)->value('id');
+            if ($chatRoomId) {
+                ChatMessages::create([
+                    'chat_room_id' => $chatRoomId,
+                    'sender_id'    => Auth::id(),
+                    'message'      => '⚠️ Peringatan Sistem: Teknisi menolak konfirmasi pembayaran Anda karena dana belum masuk atau bukti tidak valid. Silakan kirimkan bukti transfer yang sah di sini atau lakukan pembayaran ulang.',
+                    'is_read'      => false
+                ]);
+                broadcast(new PesananMasuk($chatRoomId))->toOthers();
+            }
+
+            // Beritahu customer secara realtime agar halaman Lacak Pesanan mereka ter-refresh
+            $customerUserId = $order->customer->user_id;
+            broadcast(new OrderMasuk($customerUserId, 'Pembayaran Anda ditolak oleh teknisi. Silakan cek detail pesanan.'))->toOthers();
+
+            session()->flash('warning', 'Pembayaran ditolak. Status pesanan dikembalikan menjadi Menunggu Pembayaran.');
+
+            return $this->redirect(request()->header('Referer'), navigate: true);
+        } catch (\Exception $e) {
+            session()->flash('error', 'Gagal menolak pembayaran: ' . $e->getMessage());
+            return $this->redirect(request()->header('Referer'), navigate: true);
+        }
+    }
+
     public function render()
     {
         $data = Order::whereHas('jasa', function ($query) {
@@ -117,12 +191,13 @@ class DataPesanan extends Component
             $query->where('status_order', '!=', 'keranjang')
                 ->where('status_order', '!=', 'menunggu_konfirmasi')
                 ->where('status_order', '!=', 'dibatalkan')
-                ->where('status_order', '!=', 'sudah_dibayar');
+                ->where('status_order', '!=', 'selesai_total');
         })
         ->with([
             'latestStatus',
             'jasa', 
             'detail_order',
+            'customer.user',
             'lacak_pesanan' => function ($q) {
                 $q->latest();
             }

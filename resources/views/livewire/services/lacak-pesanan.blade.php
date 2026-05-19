@@ -5,27 +5,30 @@
                 ? collect($item->lacak_pesanan)
                 : collect([$item->lacak_pesanan]);
             $latestStatus   = $lacakCollection->last()?->status_order ?? '-';
-            $isSelesai      = $lacakCollection->contains('status_order', 'selesai');
-            $isSudahDibayar = $lacakCollection->contains('status_order', 'sudah_dibayar');
+            // $latestStatus   = $lacakCollection->first()?->status_order ?? '-';
+            $isSelesai      = $latestStatus === 'selesai';
+            $isSudahDibayar = $latestStatus === 'sudah_dibayar' || $latestStatus === 'selesai_total';
             $sudahReview    = \App\Models\Review::where('id_order', $item->id)->exists();
 
             $statusConfig = match($latestStatus) {
-                'selesai'             => ['badge' => 'bg-green-100 text-green-800',  'dot' => 'bg-green-500',  'ring' => 'ring-green-100'],
-                'sudah_dibayar'       => ['badge' => 'bg-teal-100 text-teal-800',    'dot' => 'bg-teal-500',   'ring' => 'ring-teal-100'],
-                'dikonfirmasi'        => ['badge' => 'bg-blue-100 text-blue-800',    'dot' => 'bg-blue-500',   'ring' => 'ring-blue-100'],
-                'dikerjakan'          => ['badge' => 'bg-indigo-100 text-indigo-800','dot' => 'bg-indigo-500', 'ring' => 'ring-indigo-100'],
-                'menunggu_konfirmasi' => ['badge' => 'bg-amber-100 text-amber-800',  'dot' => 'bg-amber-400',  'ring' => 'ring-amber-100'],
-                'dibatalkan'          => ['badge' => 'bg-red-100 text-red-800',      'dot' => 'bg-red-500',    'ring' => 'ring-red-100'],
-                default               => ['badge' => 'bg-gray-100 text-gray-600',    'dot' => 'bg-gray-400',   'ring' => 'ring-gray-100'],
+                'selesai'             => ['badge' => 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400',  'dot' => 'bg-amber-500',  'ring' => 'ring-amber-100'],
+                'sudah_dibayar'       => ['badge' => 'bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-400',    'dot' => 'bg-teal-500',   'ring' => 'ring-teal-100'],
+                'selesai_total'       => ['badge' => 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',  'dot' => 'bg-green-500',  'ring' => 'ring-green-100'],
+                'dikonfirmasi'        => ['badge' => 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',    'dot' => 'bg-blue-500',   'ring' => 'ring-blue-100'],
+                'dikerjakan'          => ['badge' => 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-400','dot' => 'bg-indigo-500', 'ring' => 'ring-indigo-100'],
+                'menunggu_konfirmasi' => ['badge' => 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400', 'dot' => 'bg-orange-400', 'ring' => 'ring-orange-100'],
+                'dibatalkan'          => ['badge' => 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',      'dot' => 'bg-red-500',    'ring' => 'ring-red-100'],
+                default               => ['badge' => 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400',    'dot' => 'bg-gray-400',   'ring' => 'ring-gray-100'],
             };
 
             $tlDot = fn($s) => match($s) {
-                'selesai','dikerjakan' => 'bg-green-500 ring-green-100',
-                'sudah_dibayar'        => 'bg-teal-500 ring-teal-100',
-                'dikonfirmasi'         => 'bg-blue-500 ring-blue-100',
-                'menunggu_konfirmasi'  => 'bg-amber-400 ring-amber-100',
-                'dibatalkan'           => 'bg-red-500 ring-red-100',
-                default                => 'bg-gray-400 ring-gray-100',
+                'selesai_total'        => 'bg-green-500 ring-green-100 dark:ring-green-950',
+                'selesai', 'dikerjakan'=> 'bg-indigo-500 ring-indigo-100 dark:ring-indigo-950',
+                'sudah_dibayar'        => 'bg-teal-500 ring-teal-100 dark:ring-teal-950',
+                'dikonfirmasi'         => 'bg-blue-500 ring-blue-100 dark:ring-blue-950',
+                'menunggu_konfirmasi'  => 'bg-orange-400 ring-orange-100 dark:ring-orange-950',
+                'dibatalkan'           => 'bg-red-500 ring-red-100 dark:ring-red-950',
+                default                => 'bg-gray-400 ring-gray-100 dark:ring-gray-950',
             };
         @endphp
 
@@ -212,14 +215,12 @@
                             </div>
                         </div>
 
-                        {{-- Tombol Bayar --}}
-                        @if($latestStatus === 'selesai')
+                        {{-- Tombol Bayar Sekarang --}}
+                        @if($isSelesai)
                             <button type="button"
                                     wire:click="bayarPesanan({{ $item->id }})"
                                     wire:loading.attr="disabled"
-                                    class="mt-3 w-full flex items-center justify-center gap-2 py-3
-                                           bg-green-600 hover:bg-green-700 active:scale-[0.98] disabled:opacity-60
-                                           text-white text-sm font-semibold rounded-xl transition-all">
+                                    class="mt-3 w-full flex items-center justify-center gap-2 py-3 bg-green-600 hover:bg-green-700 active:scale-[0.98] disabled:opacity-60 text-white text-sm font-semibold rounded-xl transition-all">
                                 <span wire:loading.remove wire:target="bayarPesanan({{ $item->id }})">
                                     <i class="bi bi-wallet2 text-base"></i> Bayar sekarang
                                 </span>
@@ -232,7 +233,7 @@
                 @endif
 
                 {{-- ── Form Review ── --}}
-                @if($isSudahDibayar && !$sudahReview)
+                @if($latestStatus === 'selesai_total' && !$sudahReview)
                     <div class="px-4 py-4">
                         <div class="bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-800/50 rounded-xl p-4">
                             <p class="flex items-center gap-2 text-sm font-semibold text-amber-800 dark:text-amber-300 mb-3">
