@@ -236,11 +236,6 @@
         @endforelse
     </div>
 
-    {{-- ════════════════════════════════════════════
-         BOTTOM BAR: INPUT / PANEL PEMBAYARAN
-         Fixed ke bawah, lebar penuh di semua layar.
-         Tidak pakai max-w-md agar tidak terpotong.
-    ════════════════════════════════════════════ --}}
     <div class="fixed bottom-0 inset-x-0 bg-white/95 backdrop-blur-lg border-t border-gray-200 z-50 shadow-[0_-4px_20px_-8px_rgba(0,0,0,0.08)]">
         <div class="w-full max-w-2xl mx-auto px-3 py-2.5 sm:px-4 sm:py-3">
 
@@ -250,7 +245,7 @@
                 $statusPesanan = $data_pesanan->order->lacak_pesanan->first()->status_order ?? '';
             @endphp
 
-            @if($statusPesanan === 'sudah_dibayar')
+            @if($statusPesanan === 'selesai_total')
                 {{-- ── Panel Lunas (Berlaku untuk Customer & Teknisi) ── --}}
                 <div class="flex items-center gap-3 bg-green-50 px-3 py-3 rounded-xl border border-green-200">
                     <div class="w-10 h-10 bg-green-100 text-green-600 rounded-full flex items-center justify-center shrink-0 shadow-sm">
@@ -264,7 +259,7 @@
                     </div>
                 </div>
 
-            @elseif($statusPesanan === 'selesai' && $isCustomer)
+            @elseif($statusPesanan === 'selesai' || $statusPesanan === 'pembayaran_ditolak' && $isCustomer)
                 {{-- ── Panel Pembayaran (Hanya Customer jika status selesai) ── --}}
                 <div class="flex items-center gap-3 mb-3 bg-blue-50 px-3 py-2.5 rounded-xl border border-blue-100">
                     <div class="w-9 h-9 sm:w-10 sm:h-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center shrink-0">
