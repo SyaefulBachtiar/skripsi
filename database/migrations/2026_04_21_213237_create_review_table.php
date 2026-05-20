@@ -18,7 +18,7 @@ return new class extends Migration
             $table->foreignId('id_jasa')->constrained('jasa')->onDelete('cascade');
             $table->integer('rating');
             $table->string('text_comment');
-            $table->string('foto_bukti')->nullable();
+            $table->string('foto_review')->nullable();
             $table->timestamps();
         });
     }

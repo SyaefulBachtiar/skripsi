@@ -64,7 +64,7 @@ new class extends Component
         $user->save();
 
         // Update tampilan foto saat ini
-        $this->current_avatar = $user->profile_photo_url;
+        $this->current_avatar = $user->avatar;
         $this->avatar = null; // Reset input file
 
         $this->dispatch('profile-updated', name: $user->name);

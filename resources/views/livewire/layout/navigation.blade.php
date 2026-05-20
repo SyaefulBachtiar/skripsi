@@ -214,7 +214,17 @@ new class extends Component
      {{-- Bottom bar --}}
     @auth
         @if(auth()->user()->role !== 'admin')
-            <nav class="{{ request()->routeIs('rincian.pesanan') || request()->routeIs('chat.room') ? 'hidden' : '' }} flex sm:hidden fixed bottom-0 w-full bg-white/80 dark:bg-slate-900/80 backdrop-blur-lg border-t border-slate-200 dark:border-slate-800 z-[9999] pb-safe">
+            <nav 
+                x-data="{ 
+                    // Deteksi secara realtime berdasarkan URL asli di browser client
+                    isHiddenRoute() {
+                        const path = window.location.pathname;
+                        return path.includes('rincian-pesanan') || path.includes('chat-room'); {{-- Sesuaikan kata kunci URL slug route kamu --}}
+                    }
+                }"
+                :class="isHiddenRoute() ? 'hidden' : 'flex'"
+                class="sm:hidden fixed bottom-0 w-full bg-white/80 dark:bg-slate-900/80 backdrop-blur-lg border-t border-slate-200 dark:border-slate-800 z-[9999] pb-safe"
+            >
                 <div class="flex justify-around items-center w-full h-16 px-2">
                     @php
                         // Helper untuk styling link aktif
