@@ -23,7 +23,7 @@ new class extends Component
     {
         $this->name = Auth::user()->name;
         $this->email = Auth::user()->email;
-        $this->current_avatar = Auth::user()->profile_photo_url;
+        $this->current_avatar = Auth::user()->avatar;
     }
 
     /**
