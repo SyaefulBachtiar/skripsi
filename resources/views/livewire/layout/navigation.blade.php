@@ -24,6 +24,17 @@ new class extends Component
         ];
     }
 
+    public function refreshDataPesanan()
+    {
+        // KUNCI UTAMA: Paksa Eloquent menarik data paling segar dari database detik ini juga
+        $this->data_pesanan->refresh(); 
+        
+        // Jika kamu menggunakan relasi nested, refresh juga order-nya
+        if ($this->data_pesanan->order) {
+            $this->data_pesanan->order->refresh();
+        }
+    }
+
     public function getUnreadCount () 
      {
         $this->unreadCount = 0;

@@ -25,10 +25,11 @@ class FormTechnician extends Form
     public array $experience_list = [];
 
     #[Validate([
-        'bio' => 'required|string|min:5'
+        'bio' => 'required|string|min:5|max:100',
     ], message: [
         'bio.required' => 'Deskripsi wajib diisi.',
         'bio.min' => 'Deskripsi minimal 5 karakter.',
+        'bio.max' => 'Deskripsi tidak boleh melebihi 100 karakter'
     ])]
     public string $bio = '';
 

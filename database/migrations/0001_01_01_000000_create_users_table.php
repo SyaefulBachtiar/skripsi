@@ -35,7 +35,7 @@ return new class extends Migration
             $table->json('spesialisasi')->nullable();
             $table->json('pengalaman')->nullable();
             $table->json('sertifikat')->nullable();
-            $table->string('deskripsi', 100)->nullable();
+            $table->text('deskripsi')->nullable();
             $table->text('detail_alamat')->nullable();
             $table->string('provinsi', 50)->nullable();
             $table->string('kabupaten', 50)->nullable();

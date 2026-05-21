@@ -1,5 +1,6 @@
 @php
-    $statusPesanan = $data_pesanan->order->lacak_pesanan->first()->status_order ?? '';
+    $realtimeOrder = $data_pesanan->order->fresh();
+    $statusPesanan = $realtimeOrder->lacak_pesanan->last()->status_order ?? '';
 @endphp
 <div class="flex flex-col h-full {{ $statusPesanan === 'selesai' ? 'pb-20' : 'pb-0' }}">
     <div
@@ -240,9 +241,7 @@
         <div class="w-full max-w-2xl mx-auto px-3 py-2.5 sm:px-4 sm:py-3">
 
             @php
-                $isCustomer    = auth()->user()->role === 'customer';
-                // Ambil status pesanan (jika undefined, anggap kosong)
-                $statusPesanan = $data_pesanan->order->lacak_pesanan->first()->status_order ?? '';
+                $isCustomer = auth()->user()->customer()->exists();
             @endphp
 
             @if($statusPesanan === 'selesai_total')
@@ -254,12 +253,12 @@
                     <div class="flex-1 min-w-0">
                         <p class="text-[10px] font-bold text-green-600 uppercase tracking-wider mb-0.5">Pesanan Selesai</p>
                         <p class="text-sm font-bold text-green-800 truncate">
-                            Tagihan sebesar Rp {{ number_format($data_pesanan->order->total_harga, 0, ',', '.') }} telah lunas dibayar.
+                            Rp {{ number_format($realtimeOrder->total_harga, 0, ',', '.') }}
                         </p>
                     </div>
                 </div>
 
-            @elseif($statusPesanan === 'selesai' || $statusPesanan === 'pembayaran_ditolak' && $isCustomer)
+            @elseif(($statusPesanan === 'selesai' || $statusPesanan === 'pembayaran_ditolak') && $isCustomer)
                 {{-- ── Panel Pembayaran (Hanya Customer jika status selesai) ── --}}
                 <div class="flex items-center gap-3 mb-3 bg-blue-50 px-3 py-2.5 rounded-xl border border-blue-100">
                     <div class="w-9 h-9 sm:w-10 sm:h-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center shrink-0">
@@ -268,7 +267,7 @@
                     <div class="flex-1 min-w-0">
                         <p class="text-[10px] font-bold text-blue-500 uppercase tracking-wider mb-0.5">Total Tagihan Servis</p>
                         <p class="text-lg sm:text-xl font-black text-blue-700 tabular-nums">
-                            Rp {{ number_format($data_pesanan->order->total_harga, 0, ',', '.') }}
+                            Rp {{ number_format($realtimeOrder->total_harga, 0, ',', '.') }}
                         </p>
                     </div>
                 </div>

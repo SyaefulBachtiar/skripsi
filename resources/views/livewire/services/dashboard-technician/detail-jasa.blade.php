@@ -380,7 +380,7 @@
                 </div>
             </div>
 
-            @if(auth()->user()->id !== $jasa->technician->user_id)
+            {{-- @if(auth()->user()->id !== $jasa->technician->user_id)
                 <button class="p-2.5 rounded-xl bg-gray-50 text-gray-400 hover:text-rose-500 hover:bg-rose-50 transition border border-gray-200 shrink-0">
                     <i class="bi bi-bookmark-fill text-lg"></i>
                 </button>
@@ -389,7 +389,7 @@
                     <i class="bi bi-pencil-square text-green-600"></i>
                     <span class="text-sm font-medium text-green-700">Edit</span>
                 </a>
-            @endif
+            @endif --}}
         </div>
 
         {{-- Harga --}}

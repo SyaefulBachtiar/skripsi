@@ -28,6 +28,15 @@ class DataPesanan extends Component
     public $deskripsi_layanan_baru;
     public $foto_layanan_baru;
 
+    protected function getListeners()
+    {
+        return [
+            "echo-private:App.Models.User." . Auth::id() . ",.OrderMasuk" => '$refresh',
+            "echo-private:App.Models.User." . Auth::id() . ",.PesananMasuk" => '$refresh',
+            'refreshMessages' => '$refresh'
+        ];
+    }
+
     public function updateProgres($orderId)
     {
         $this->validate([

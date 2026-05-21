@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Services;
 
+use App\Events\OrderMasuk;
 use App\Events\PesananMasuk;
 use App\Models\ChatMessages;
 use App\Models\ChatRooms;
@@ -151,13 +152,17 @@ class KontenChatMessage extends Component
 
         // Kirim pesan notifikasi ke chat
         $statusTeks = $isApproved ? 'menyetujui' : 'menolak';
-        ChatMessages::create([
+        $msgSystem = ChatMessages::create([
             'chat_room_id' => $this->roomChatId,
             'sender_id'    => Auth::id(), // ID Pelanggan
             'message'      => "Pelanggan telah {$statusTeks} penambahan item: {$detail->nama_layanan_tambahan}",
             'type'         => 'system',
             'is_read'      => false
         ]);
+
+        broadcast(new PesananMasuk($msgSystem->chat_room_id))->toOthers();
+
+        broadcast(new OrderMasuk($order->jasa->technician->user_id))->toOthers();
 
         // Refresh data agar total harga terupdate di header chat
         $this->data_pesanan->refresh();
@@ -192,15 +197,18 @@ class KontenChatMessage extends Component
             ]);
 
             // 5. Kirim Notifikasi ke Chat Room (Pesan Sistem)
-            ChatMessages::create([
+            $msgSystem = ChatMessages::create([
                 'chat_room_id' => $this->roomChatId,
                 'sender_id'    => Auth::id(), // ID Pelanggan
                 'message'      => 'Pelanggan telah menyelesaikan pembayaran sebesar Rp ' . number_format($order->total_harga, 0, ',', '.'),
                 'type'         => 'system',
                 'is_read'      => false
             ]);
+            // dd($order->jasa->technician->user_id);
+            broadcast(new PesananMasuk($msgSystem->chat_room_id))->toOthers();
 
-            // Refresh data agar chat terbaru dan UI ter-update
+            broadcast(new OrderMasuk($order->jasa->technician->user_id))->toOthers();
+
             $this->data_pesanan->refresh();
             
             session()->flash('success', 'Pembayaran berhasil diselesaikan!');
