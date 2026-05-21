@@ -114,7 +114,6 @@
                     multiple 
                     accept="image/*"
                 > --}}
-                {{-- Ganti baris input file --}}
                 <input 
                     type="file" 
                     wire:model="temp_foto_kegiatan" 

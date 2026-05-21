@@ -19,6 +19,7 @@ return new class extends Migration
             $table->integer('rating');
             $table->string('text_comment');
             $table->string('foto_review')->nullable();
+            $table->string('reply_comment')->nullable();
             $table->timestamps();
         });
     }

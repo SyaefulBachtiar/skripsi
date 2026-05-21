@@ -16,7 +16,8 @@ class Review extends Model
         'id_jasa',
         'rating',
         'text_comment',
-        'foto_review'
+        'foto_review',
+        'reply_comment',
     ];
 
     protected $casts = [
