@@ -90,7 +90,7 @@ Route::middleware(['auth'])->group(function () {
 
 
     // Route Customer
-    Route::middleware(['role:customer'])
+    Route::middleware(['role:customer,admin'])
         ->group(function () {
 
             // Route To Page Lacak
@@ -159,9 +159,9 @@ Route::middleware(['auth'])->group(function () {
 Route::view('atur-alamat', 'pages.atur-alamat')
     ->name('atur_alamat');
 
-Route::view('dashboard', 'dashboard')
-    ->middleware(['auth', 'verified'])
-    ->name('dashboard');
+// Route::view('dashboard', 'dashboard')
+//     ->middleware(['auth', 'verified'])
+//     ->name('dashboard');
 
 Route::view('profile', 'profile')
     ->middleware(['auth'])

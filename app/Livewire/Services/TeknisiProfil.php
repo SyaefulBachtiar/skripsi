@@ -45,7 +45,11 @@ class TeknisiProfil extends Component
             $query->select('id', 'name', 'avatar');
         }])
         ->select('id', 'user_id', 'spesialisasi', 'pengalaman', 'sertifikat', 'deskripsi')
+        ->with('review')
+        ->withAvg('review as rating', 'rating')
         ->findOrFail($this->id_technician);
+
+        // dd($technician->toArray());
 
         // 2. Olah Sugesti Dropdown Jasa (Berdasarkan apa yang diketik)
         $options_nama_jasa = [];

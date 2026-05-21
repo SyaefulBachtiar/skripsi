@@ -14,17 +14,15 @@ class RoleMiddleware
      *
      * @param  Closure(Request): (Response)  $next
      */
-    public function handle(Request $request, Closure $next, $role): Response
+    public function handle(Request $request, Closure $next, ...$roles): Response
     {
         if (!Auth::check()) {
             return redirect()->route('login');
         }
 
-        $userRole = Auth::user()->role;
-
-        if ($userRole !== $role) {
+        if (!in_array(Auth::check() ? Auth::user()->role : null, $roles)) {
             // Jangan redirect ke login lagi! Berikan 403 Forbidden
-            abort(403, 'Anda tidak memiliki akses ke halaman ini.');
+            return redirect()->route('beranda')->with('error', 'Anda tidak memiliki hak akses ke halaman tersebut.');
         }
         return $next($request);
     }
