@@ -30,7 +30,7 @@ Route::view('beranda', 'pages.customer.beranda')
 Route::middleware(['auth'])->group(function () {
 
     // Route Technician
-    Route::middleware(['role:technician'])
+    Route::middleware(['role:technician,admin'])
         ->prefix('teknisi')
         ->group(function () {
 
@@ -90,7 +90,7 @@ Route::middleware(['auth'])->group(function () {
 
 
     // Route Customer
-    Route::middleware(['role:customer,admin'])
+    Route::middleware(['role:customer,admin,technician'])
         ->group(function () {
 
             // Route To Page Lacak
