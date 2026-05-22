@@ -18,31 +18,26 @@
         </style>
         @vite(['resources/css/app.css', 'resources/js/app.js'])
         @auth
-            <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignal.js" async></script>
+            <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
             <script>
-                window.OneSignal = window.OneSignal || [];
-        
-                function initOneSignal() {
-                    // Cek apakah SDK sudah load (bukan array lagi)
-                    if (Array.isArray(window.OneSignal)) {
-                        // Belum siap, coba lagi 500ms lagi
-                        setTimeout(initOneSignal, 500);
-                        return;
-                    }
-                    
-                    OneSignal.init({
+                window.OneSignalDeferred = window.OneSignalDeferred || [];
+
+                OneSignalDeferred.push(async function(OneSignal) {
+                    await OneSignal.init({
                         appId: "{{ env('ONESIGNAL_APP_ID') }}",
                         allowLocalhostAsSecureOrigin: true,
                     });
 
+                    console.log('✅ [OneSignal] Init selesai.');
+                    window._oneSignalInstance = OneSignal;
                     window._oneSignalReady = true;
                     window.dispatchEvent(new CustomEvent('onesignal-ready'));
-                    console.log('✅ [OneSignal] Init selesai, keys:', Object.keys(OneSignal));
-                }
 
-                // Mulai cek setelah halaman load
-                window.addEventListener('load', function() {
-                    initOneSignal();
+                    // Auto login kalau sudah granted
+                    if (OneSignal.Notifications.permission === 'granted') {
+                        await OneSignal.login('{{ Auth::id() }}');
+                        console.log('✅ [OneSignal] Auto login berhasil.');
+                    }
                 });
             </script>
         @endauth
@@ -169,16 +164,18 @@
             <script>
 
                 window.aktifkanNotifikasi = function() {
-                    if (!window._oneSignalReady) {
+                    if (!window._oneSignalReady || !window._oneSignalInstance) {
                         console.warn('OneSignal belum siap');
                         return;
                     }
+                    
+                    var OneSignal = window._oneSignalInstance;
+                    
                     OneSignal.Notifications.requestPermission().then(function(permission) {
                         console.log('Permission:', permission);
                         if (permission === 'granted') {
                             OneSignal.login('{{ Auth::id() }}').then(function() {
                                 console.log('✅ Login OneSignal berhasil');
-                                // Update Alpine state
                                 window.dispatchEvent(new CustomEvent('onesignal-subscribed'));
                             });
                         }
