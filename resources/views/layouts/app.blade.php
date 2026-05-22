@@ -20,33 +20,21 @@
         @auth
             <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignal.js" async></script>
             <script>
-                window.addEventListener('load', function() {
-                    window.OneSignal = window.OneSignal || [];
-                    OneSignal.push(function() {
-                        OneSignal.init({
-                            appId: "{{ env('ONESIGNAL_APP_ID') }}",
-                            allowLocalhostAsSecureOrigin: true,
-                            serviceWorkerParam: { scope: '/' },
-                        }).then(function() {
-                            console.log('✅ [OneSignal] Init selesai.');
-                            
-                            // Cek status subscription
-                            var permission = OneSignal.Notifications.permission;
-                            console.log('📋 [OneSignal] Permission:', permission);
-                            
-                            // Dispatch event setelah benar-benar siap
-                            window.dispatchEvent(new CustomEvent('onesignal-ready'));
-                            
-                            // Auto login kalau sudah granted
-                            if (permission === 'granted') {
-                                OneSignal.login('{{ Auth::id() }}').then(function() {
-                                    console.log('✅ [OneSignal] Auto login berhasil.');
-                                });
-                            }
-                        }).catch(function(err) {
-                            console.error('❌ [OneSignal] Init gagal:', err);
-                        });
+                window.OneSignal = window.OneSignal || [];
+                OneSignal.push(function() {
+                    OneSignal.init({
+                        appId: "{{ env('ONESIGNAL_APP_ID') }}",
+                        allowLocalhostAsSecureOrigin: true,
                     });
+                    
+                    OneSignal.on('subscriptionChange', function(isSubscribed) {
+                        console.log('✅ [OneSignal] Subscription changed:', isSubscribed);
+                    });
+
+                    // Tandai siap setelah push callback jalan
+                    window._oneSignalReady = true;
+                    window.dispatchEvent(new CustomEvent('onesignal-ready'));
+                    console.log('✅ [OneSignal] Init selesai.');
                 });
             </script>
         @endauth
