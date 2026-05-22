@@ -513,19 +513,27 @@
                 <div class="flex flex-wrap gap-2">
                     @if($jasa->is_setiap_hari)
                         @foreach(range(0, 6) as $day)
-                            @php $date = now()->addDays($day); @endphp
-                            <label class="cursor-pointer" wire:key="date-{{ $date->format('Y-m-d') }}">
+                            @php 
+                                $date = now()->addDays($day); 
+                                $formattedDate = $date->format('Y-m-d');
+                                
+                                // Cek apakah SEMUA jam ketersediaan teknisi sudah penuh di tanggal ini
+                                $allTimesBooked = isset($bookedDates[$formattedDate]) && 
+                                                  count(array_intersect($jasa->ketersediaan_jam, $bookedDates[$formattedDate])) === count($jasa->ketersediaan_jam);
+                            @endphp
+                            <label class="{{ $allTimesBooked ? 'cursor-not-allowed opacity-40' : 'cursor-pointer' }}" wire:key="date-{{ $formattedDate }}">
                                 <input 
                                     type="radio" 
                                     name="order_date" 
-                                    value="{{ $date->format('Y-m-d') }}" 
+                                    value="{{ $formattedDate }}" 
                                     class="peer sr-only" 
                                     wire:model.live="order_date"
+                                    @if($allTimesBooked) disabled @endif
                                 >
                                 <div class="flex flex-col items-center justify-center w-16 h-20 bg-white border border-gray-200 rounded-xl transition-all
-                                            peer-checked:bg-indigo-600 peer-checked:text-white peer-checked:border-indigo-600 peer-checked:shadow-md
-                                            hover:border-indigo-300">
-                                    <span class="text-[10px] uppercase font-bold opacity-60 peer-checked:opacity-80">{{ $date->translatedFormat('D') }}</span>
+                                    peer-checked:bg-indigo-600 peer-checked:text-white peer-checked:border-indigo-600 peer-checked:shadow-md
+                                    {{ $allTimesBooked ? 'bg-gray-100 border-gray-200 text-gray-400' : 'hover:border-indigo-300' }}">
+                                    <span class="text-[10px] uppercase font-bold opacity-60">{{ $date->translatedFormat('D') }}</span>
                                     <span class="text-xl font-bold">{{ $date->format('d') }}</span>
                                     <span class="text-[10px] font-medium opacity-70">{{ $date->translatedFormat('M') }}</span>
                                 </div>
@@ -538,18 +546,28 @@
                                     <p class="text-red-600 text-sm font-medium">Jadwal teknisi tidak tersedia</p>
                                 </div>
                             @else
-                                @php $carbonTgl = \Carbon\Carbon::parse($tgl); @endphp
-                                <label class="cursor-pointer">
+                                @php 
+                                    $carbonTgl = \Carbon\Carbon::parse($tgl); 
+                                    $formattedDate = $carbonTgl->format('Y-m-d');
+                                    
+                                    // Cek apakah penuh
+                                    $allTimesBooked = isset($bookedDates[$formattedDate]) && 
+                                                      count(array_intersect($jasa->ketersediaan_jam, $bookedDates[$formattedDate])) === count($jasa->ketersediaan_jam);
+                                    
+                                    $isPast = $carbonTgl->isPast() && !$carbonTgl->isToday();
+                                @endphp
+                                <label class="{{ ($allTimesBooked || $isPast) ? 'cursor-not-allowed opacity-40' : 'cursor-pointer' }}">
                                     <input 
                                         type="radio" 
                                         name="order_date" 
-                                        value="{{ $carbonTgl->format('Y-m-d') }}" 
+                                        value="{{ $formattedDate }}" 
                                         class="peer sr-only" 
                                         wire:model.live="order_date"
+                                        @if($allTimesBooked || $isPast) disabled @endif
                                     >
                                     <div class="flex flex-col items-center justify-center w-16 h-20 bg-white border border-gray-200 rounded-xl transition-all
                                                 peer-checked:bg-indigo-600 peer-checked:text-white peer-checked:border-indigo-600 peer-checked:shadow-md
-                                                {{ $carbonTgl->isPast() && !$carbonTgl->isToday() ? 'opacity-40 pointer-events-none' : 'hover:border-indigo-300' }}">
+                                                {{ ($allTimesBooked || $isPast) ? 'bg-gray-100 border-gray-200 text-gray-400' : 'hover:border-indigo-300' }}">
                                         <span class="text-[10px] uppercase font-bold opacity-60">{{ $carbonTgl->translatedFormat('D') }}</span>
                                         <span class="text-xl font-bold">{{ $carbonTgl->format('d') }}</span>
                                         <span class="text-[10px] font-medium opacity-70">{{ $carbonTgl->translatedFormat('M') }}</span>
@@ -564,7 +582,6 @@
                     @endif
                 </div>
 
-                {{-- Error Tanggal --}}
                 @error('order_date')
                     <p class="mt-2 text-sm text-red-600 flex items-center gap-1">
                         <i class="bi bi-exclamation-circle-fill text-xs"></i>
@@ -576,30 +593,42 @@
             {{-- Pilih Jam --}}
             <div>
                 <h3 class="text-sm font-bold text-gray-800 uppercase tracking-wide mb-3">Jam Tersedia <span class="text-red-500">*</span></h3>
-                <div class="grid grid-cols-3 sm:grid-cols-4 gap-2">
-                    @forelse($jasa->ketersediaan_jam as $jam)
-                        <label class="cursor-pointer">
-                            <input 
-                                type="radio" 
-                                name="order_time" 
-                                value="{{ $jam }}" 
-                                class="peer sr-only" 
-                                wire:model.live="order_time"
-                            >
-                            <div class="py-3 text-center bg-white border border-gray-200 rounded-xl text-sm font-semibold text-gray-700 transition-all
-                                        peer-checked:bg-indigo-600 peer-checked:text-white peer-checked:border-indigo-600 peer-checked:shadow-md
-                                        hover:border-indigo-300">
-                                {{ $jam }}
+                
+                @if(empty($order_date))
+                    <div class="p-3 bg-gray-50 rounded-xl text-center text-xs text-gray-400 italic border border-dashed border-gray-200">
+                        <i class="bi bi-calendar-event mr-1"></i> Silakan pilih tanggal terlebih dahulu untuk melihat jam tersedia.
+                    </div>
+                @else
+                    <div class="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                        @forelse($jasa->ketersediaan_jam as $jam)
+                            @php
+                                $cleanJam = substr($jam, 0, 5);
+                                // Cek apakah jam ini sudah dibooking pada tanggal yang sedang aktif dipilih
+                                $isTimeBooked = in_array($cleanJam, $bookedTimesForSelectedDate);
+                            @endphp
+                            <label class="{{ $isTimeBooked ? 'cursor-not-allowed opacity-40' : 'cursor-pointer' }}">
+                                <input 
+                                    type="radio" 
+                                    name="order_time" 
+                                    value="{{ $cleanJam }}" 
+                                    class="peer sr-only" 
+                                    wire:model.live="order_time"
+                                    @if($isTimeBooked) disabled @endif
+                                >
+                                <div class="py-3 text-center bg-white border border-gray-200 rounded-xl text-sm font-semibold text-gray-700 transition-all
+                                            peer-checked:bg-indigo-600 peer-checked:text-white peer-checked:border-indigo-600 peer-checked:shadow-md
+                                            {{ $isTimeBooked ? 'bg-gray-100 border-gray-200 text-gray-400 line-through' : 'hover:border-indigo-300' }}">
+                                    {{ $cleanJam }}
+                                </div>
+                            </label>
+                        @empty
+                            <div class="col-span-full p-4 bg-gray-50 rounded-xl border border-gray-200 text-center">
+                                <p class="text-gray-500 text-sm italic">Jam tidak tersedia</p>
                             </div>
-                        </label>
-                    @empty
-                        <div class="col-span-full p-4 bg-gray-50 rounded-xl border border-gray-200 text-center">
-                            <p class="text-gray-500 text-sm italic">Jam tidak tersedia</p>
-                        </div>
-                    @endforelse
-                </div>
+                        @endforelse
+                    </div>
+                @endif
 
-                {{-- Error Jam --}}
                 @error('order_time')
                     <p class="mt-2 text-sm text-red-600 flex items-center gap-1">
                         <i class="bi bi-exclamation-circle-fill text-xs"></i>

@@ -22,6 +22,8 @@ class DetailJasa extends Component
     public $layanan_tambahan = [];
     public $pesanan_di_keranjang = [];
     public bool $alamatLengkap = true;
+    public $bookedDates = [];
+    public $bookedTimesForSelectedDate = [];
 
     public function mount ($id_jasa) {
 
@@ -44,6 +46,8 @@ class DetailJasa extends Component
 
         // dd($this->jasa->toArray());
 
+        $this->loadBookedSchedules();
+
         foreach ($this->jasa->layanan_tambahan as $index => $grup) {
             $this->layanan_tambahan[$index] = [];
         }
@@ -60,15 +64,16 @@ class DetailJasa extends Component
             // dd($keranjang);
             $this->order_date = (string) Carbon::parse($keranjang->order_date)->format('Y-m-d');
             $this->order_time = substr($keranjang->order_time, 0, 5);
+
+            $this->updatedOrderDate($this->order_date);
+
             $savedKeluhan = $keranjang->keluhan ?? [];
             $daftarKeluhanJasa = $this->jasa->keluhan ?? [];
 
             foreach ($savedKeluhan as $item) {
                 if (in_array($item, $daftarKeluhanJasa)) {
-                    // Jika ada di daftar, masukkan ke checkbox
                     $this->keluhan[] = $item;
                 } else {
-                    // Jika tidak ada di daftar, masukkan ke textarea manual
                     $this->keluhan_manual = $item;
                 }
             }
@@ -92,11 +97,48 @@ class DetailJasa extends Component
         }
     }
 
+    public function loadBookedSchedules()
+    {
+        $statusPenuh = ['konfirmasi', 'dikerjakan', 'selesai'];
+
+        $activeOrders = Order::where('id_jasa', $this->jasa->id)
+            ->whereHas('latestStatus', function($q) use ($statusPenuh) {
+                $q->whereIn('status_order', $statusPenuh);
+            })
+            ->get();
+
+        $this->bookedDates = [];
+        foreach ($activeOrders as $order) {
+            $tgl = Carbon::parse($order->order_date)->format('Y-m-d');
+            $jam = substr($order->order_time, 0, 5);
+            
+            // Format simpan: $this->bookedDates['2026-05-22'][] = '10:00'
+            $this->bookedDates[$tgl][] = $jam;
+        }
+    }
+
+    public function updatedOrderDate($value)
+    {
+        $this->order_time = '';
+        
+        if (isset($this->bookedDates[$value])) {
+            $this->bookedTimesForSelectedDate = $this->bookedDates[$value];
+        } else {
+            $this->bookedTimesForSelectedDate = [];
+        }
+    }
+
     public function submitOrder()
     {
 
         if ($this->jasa->tipe_layanan === 'panggilan' && !$this->alamatLengkap) {
             session()->flash('error', 'Lengkapi alamat Anda terlebih dahulu sebelum memesan.');
+            return;
+        }
+
+        $this->loadBookedSchedules();
+        if (isset($this->bookedDates[$this->order_date]) && in_array($this->order_time, $this->bookedDates[$this->order_date])) {
+            $this->addError('order_time', 'Maaf, jadwal pada tanggal dan jam ini baru saja dipesan orang lain.');
             return;
         }
 
