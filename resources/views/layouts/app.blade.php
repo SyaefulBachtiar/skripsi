@@ -18,7 +18,7 @@
         </style>
         @vite(['resources/css/app.css', 'resources/js/app.js'])
         @auth
-            <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignal.js" defer></script>
+            <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignal.js" async></script>
             <script>
                 window.addEventListener('load', function() {
                     window.OneSignal = window.OneSignal || [];
@@ -115,19 +115,8 @@
                     </div>
                     <button 
                         type="button"
-                        @click="
-                            window.OneSignal.Notifications.requestPermission().then(function(permission) {
-                                console.log('Permission result:', permission);
-                                if (permission === 'granted') {
-                                    isSubscribed = true;
-                                    window.OneSignal.login('{{ Auth::id() }}').then(function() {
-                                        console.log('✅ Login OneSignal berhasil');
-                                    }).catch(function(e) { console.error(e); });
-                                }
-                            }).catch(function(err) {
-                                console.error('Request permission error:', err);
-                            });
-                        "
+                        @click="window.aktifkanNotifikasi()"
+                        @onesignal-subscribed.window="isSubscribed = true"
                         class="px-3 py-1.5 bg-white text-indigo-700 text-[11px] font-bold rounded-xl hover:bg-indigo-50 active:scale-95 transition-all shadow-sm shrink-0"
                     >
                         Aktifkan
@@ -183,11 +172,24 @@
         @auth
             <script>
 
-                console.log('OneSignal:', typeof OneSignal);
-                console.log('Permission:', Notification.permission);
-                console.log('OneSignal Notifications:', OneSignal.Notifications?.permission);
-
-                navigator.serviceWorker.getRegistrations().then(r => console.log('SW:', r));
+                window.aktifkanNotifikasi = function() {
+                    if (!window._oneSignalReady) {
+                        console.warn('OneSignal belum siap');
+                        return;
+                    }
+                    OneSignal.Notifications.requestPermission().then(function(permission) {
+                        console.log('Permission:', permission);
+                        if (permission === 'granted') {
+                            OneSignal.login('{{ Auth::id() }}').then(function() {
+                                console.log('✅ Login OneSignal berhasil');
+                                // Update Alpine state
+                                window.dispatchEvent(new CustomEvent('onesignal-subscribed'));
+                            });
+                        }
+                    }).catch(function(err) {
+                        console.error('Error:', err);
+                    });
+                };
 
                 function pingOnline() {
                     fetch('/ping-online', {
@@ -202,16 +204,6 @@
                 document.addEventListener('livewire:initialized', function() {
                     pingOnline();
                     setInterval(pingOnline, 60000);
-                });
-
-                window.addEventListener('onesignal-ready', function () {
-                    OneSignal.push(function () {
-                        OneSignal.login('{{ Auth::id() }}').then(function () {
-                            console.log('✅ [OneSignal] External ID terdaftar: {{ Auth::id() }}');
-                        }).catch(function(err) {
-                            console.warn('⚠️ [OneSignal] Login gagal:', err);
-                        });
-                    });
                 });
             </script>
         @endauth
