@@ -77,8 +77,9 @@
             x-init="initInteractionListener()"
             @play-notif-sound.window="playNotification()"
             @onesignal-ready.window="
-                if (window.OneSignal && OneSignal.Notifications) {
-                    isSubscribed = (OneSignal.Notifications.permission === 'granted');
+                if (window._oneSignalInstance) {
+                    isSubscribed = window._oneSignalInstance.Notifications.permission === true 
+                        || window._oneSignalInstance.Notifications.permission === 'granted';
                 }
             "
         >
@@ -173,10 +174,13 @@
                     
                     OneSignal.Notifications.requestPermission().then(function(permission) {
                         console.log('Permission:', permission);
-                        if (permission === 'granted') {
+                        // v16 return boolean true/false, bukan string 'granted'
+                        if (permission === true || permission === 'granted') {
                             OneSignal.login('{{ Auth::id() }}').then(function() {
                                 console.log('✅ Login OneSignal berhasil');
                                 window.dispatchEvent(new CustomEvent('onesignal-subscribed'));
+                            }).catch(function(e) {
+                                console.error('Login error:', e);
                             });
                         }
                     }).catch(function(err) {
