@@ -18,64 +18,49 @@ new class extends Component
     protected function getListeners()
     {
         return [
-            "echo-private:App.Models.User." . Auth::id() . ",.PesananMasuk" => '$refresh',
-            "echo-private:App.Models.User." . Auth::id() . ",.OrderMasuk" => '$refresh',
-            'refreshMessages' => '$refresh'
+            'refreshMessages' => 'getUnreadCount',
         ];
     }
 
-    public function refreshDataPesanan()
-    {
-        // KUNCI UTAMA: Paksa Eloquent menarik data paling segar dari database detik ini juga
-        $this->data_pesanan->refresh(); 
-        
-        // Jika kamu menggunakan relasi nested, refresh juga order-nya
-        if ($this->data_pesanan->order) {
-            $this->data_pesanan->order->refresh();
-        }
-    }
-
     public function getUnreadCount () 
-     {
+    {
         $this->unreadCount = 0;
 
         if (Auth::check()) {
-        $user = Auth::user();
+            $user = Auth::user();
 
-        if ($user->role === 'technician') {
-            $technician = $user->technician;
+            if ($user->role === 'technician') {
+                $technician = $user->technician;
 
-            if ($technician) {
-                $this->unreadCount = ChatMessages::where('sender_id', '!=', Auth::id())
-                    ->where('is_read', false)
-                    ->whereHas('chat_room', function ($q) use ($technician) {
-                        $q->where('technician_id', $technician->id); 
-                    })
-                    ->count();
-            }
-            
-        } elseif ($user->role === 'customer') {
-            $customer = $user->customer;
+                if ($technician) {
+                    $this->unreadCount = ChatMessages::where('sender_id', '!=', Auth::id())
+                        ->where('is_read', false)
+                        ->whereHas('chat_room', function ($q) use ($technician) {
+                            $q->where('technician_id', $technician->id); 
+                        })
+                        ->count();
+                }
+                
+            } elseif ($user->role === 'customer') {
+                $customer = $user->customer;
 
-            if ($customer) {                  
-                $this->unreadCount = ChatMessages::where('sender_id', '!=', Auth::id())
-                    ->where('is_read', false)
-                    ->whereHas('chat_room', function ($q) use ($customer) {
-                        $q->where('customer_id', $customer->id); 
-                    })
-                    ->count();
+                if ($customer) {                  
+                    $this->unreadCount = ChatMessages::where('sender_id', '!=', Auth::id())
+                        ->where('is_read', false)
+                        ->whereHas('chat_room', function ($q) use ($customer) {
+                            $q->where('customer_id', $customer->id); 
+                        })
+                        ->count();
+                }
             }
         }
-    }
 
         // dd($this->unreadCount);
     }
 
-    public function with()
+    public function mount(): void
     {
-        return [
-            'unreadCount' => $this->getUnreadCount(),
-        ];
+        $this->getUnreadCount ();
     }
 
     public function logout(Logout $logout): void
@@ -263,18 +248,15 @@ new class extends Component
                         </a>
                         
                         {{-- Pesan --}}
-                        <a href="{{ route('pesan_technician') }}" class="relative flex-1 flex flex-col items-center justify-center transition-all duration-300 {{ request()->routeIs('pesan_technician') ? $activeClass : $inactiveClass }}">
-
-                            {{-- Notifikasi Badge --}}
-                            @if($unreadCount > 0)
-                                <span class="absolute -top-2 right-1/2 translate-x-4 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white ring-2 ring-white dark:ring-gray-900">
-                                    {{ $unreadCount > 99 ? '99+' : $unreadCount }}
-                                </span>
-                            @endif
-
-                            <i class="bi {{ request()->routeIs('pesan_technician') ? 'bi-chat-dots-fill' : 'bi-chat-dots' }} text-xl"></i>
+                        <a href="{{ route('pesan_technician') }}" class="relative flex-1 flex flex-col items-center justify-center transition-all duration-300 {{ request()->routeIs('pesan') ? $activeClass : $inactiveClass }}">
+                            <span 
+                                x-show="$wire.unreadCount > 0"
+                                x-text="$wire.unreadCount > 99 ? '99+' : $wire.unreadCount"
+                                class="absolute -top-2 right-1/2 translate-x-4 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white ring-2 ring-white dark:ring-gray-900"
+                            ></span>
+                            <i class="bi {{ request()->routeIs('pesan') ? 'bi-chat-dots-fill' : 'bi-chat-dots' }} text-xl"></i>
                             <span class="text-[10px] font-medium mt-1">Pesan</span>
-                            @if(request()->routeIs('pesan_technician'))
+                            @if(request()->routeIs('pesan'))
                                 <div class="absolute -top-[17px] w-8 h-1 bg-blue-600 rounded-b-full"></div>
                             @endif
                         </a>
@@ -335,5 +317,34 @@ new class extends Component
                 </div>
             </nav>
         @endif
+    @endauth
+
+    @auth
+        <script>
+            function attachNavEcho() {
+                if (!window.Echo) return;
+                if (window._navEchoAttached) return;
+                window._navEchoAttached = true;
+
+                window.Echo.private('App.Models.User.{{ Auth::id() }}')
+                    .listen('.PesananMasuk', function () {
+                        console.log('🔔 [Nav] PesananMasuk diterima');
+                        Livewire.dispatch('refreshMessages');
+                        window.dispatchEvent(new CustomEvent('play-notif-sound'));
+                    })
+                    .listen('.OrderMasuk', function () {
+                        console.log('🔔 [Nav] OrderMasuk diterima');
+                        Livewire.dispatch('refreshMessages');
+                        window.dispatchEvent(new CustomEvent('play-notif-sound'));
+                    });
+
+                console.log('📡 [Nav] Echo listener aktif.');
+            }
+
+            // Untuk load pertama
+            document.addEventListener('livewire:initialized', attachNavEcho);
+            // Untuk navigasi antar halaman (wire:navigate)
+            document.addEventListener('livewire:navigated', attachNavEcho);
+        </script>
     @endauth
 </div>

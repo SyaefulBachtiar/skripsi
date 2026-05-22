@@ -11,6 +11,7 @@ use App\Models\LacakPesanan;
 use App\Models\Order;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
@@ -30,9 +31,27 @@ class KontenChatMessage extends Component
     {
         return [
             "echo-private:servisio-chat.{$this->roomChatId},.PesananMasuk" => '$refresh',
-            "echo-private:App.Models.User." . Auth::id() . ",.OrderMasuk" => '$refresh',
             'refreshMessages' => '$refresh'
         ];
+    }
+
+    private function getRecipientUserId(): ?string
+    {
+        $room = ChatRooms::with(['technician', 'customer'])
+            ->find($this->roomChatId);
+        
+        if (!$room) return null;
+
+        Log::info('DEBUG getRecipientUserId', [
+            'auth_id' => Auth::id(),
+            'technician_user_id' => $room->technician->user_id ?? 'null',
+            'customer_user_id' => $room->customer->user_id ?? 'null',
+        ]);
+
+        return (Auth::id() === $room->technician->user_id)
+            ? $room->customer->user_id
+            : $room->technician->user_id;
+        
     }
 
     public function mount () {
@@ -142,9 +161,9 @@ class KontenChatMessage extends Component
         // Update status persetujuan
         $detail->update(['acc_customer' => $isApproved]);
 
-        // Jika ditolak, kembalikan (kurangi) harga pesanan karena sebelumnya sudah ditambah oleh teknisi
+         $order = Order::with('jasa.technician')->find($detail->id_order);
+
         if (!$isApproved) {
-            $order = Order::find($detail->id_order);
             if ($order) {
                 $order->decrement('total_harga', $detail->harga_layanan_tambahan);
             }
@@ -160,9 +179,11 @@ class KontenChatMessage extends Component
             'is_read'      => false
         ]);
 
-        broadcast(new PesananMasuk($msgSystem->chat_room_id))->toOthers();
-
-        broadcast(new OrderMasuk($order->jasa->technician->user_id))->toOthers();
+        $recipientUserId = $this->getRecipientUserId();
+        broadcast(new PesananMasuk($msgSystem->chat_room_id, $recipientUserId))->toOthers();
+        if ($order) {
+            broadcast(new OrderMasuk($order->jasa->technician->user_id))->toOthers();
+        }
 
         // Refresh data agar total harga terupdate di header chat
         $this->data_pesanan->refresh();
@@ -204,9 +225,8 @@ class KontenChatMessage extends Component
                 'type'         => 'system',
                 'is_read'      => false
             ]);
-            // dd($order->jasa->technician->user_id);
-            broadcast(new PesananMasuk($msgSystem->chat_room_id))->toOthers();
-
+            $recipientUserId = $this->getRecipientUserId();
+            broadcast(new PesananMasuk($msgSystem->chat_room_id, $recipientUserId))->toOthers();
             broadcast(new OrderMasuk($order->jasa->technician->user_id))->toOthers();
 
             $this->data_pesanan->refresh();
@@ -254,7 +274,8 @@ class KontenChatMessage extends Component
             $this->reset(['photo', 'photoPreview', 'message']);
             $this->dispatch('scroll-to-bottom');
 
-            broadcast(new PesananMasuk($this->roomChatId))->toOthers();
+            $recipientUserId = $this->getRecipientUserId();
+            broadcast(new PesananMasuk($this->roomChatId, $recipientUserId))->toOthers();
 
         } catch (\Exception $e) {
             session()->flash('error', 'Gagal mengirim foto: ' . $e->getMessage());
@@ -314,7 +335,8 @@ class KontenChatMessage extends Component
             $this->reset(['photo', 'photoPreview', 'message']);
             $this->dispatch('scroll-to-bottom');
 
-            broadcast(new PesananMasuk($this->roomChatId))->toOthers();
+            $recipientUserId = $this->getRecipientUserId();
+            broadcast(new PesananMasuk($this->roomChatId, $recipientUserId))->toOthers();
 
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             // Jika user mencoba kirim pesan ke room yang bukan miliknya

@@ -20,7 +20,6 @@ class KontenPesan extends Component
     protected function getListeners()
     {
         return [
-            "echo-private:App.Models.User." . Auth::id() . ",.PesananMasuk" => '$refresh',
             'refreshMessages' => '$refresh'
         ];
     }
@@ -34,7 +33,10 @@ class KontenPesan extends Component
                     'is_read' => true
                 ]);
 
-            broadcast(new PesananMasuk($id))->toOthers();
+            // $room = ChatRooms::with(['technician'])->find($id);
+            // $recipientUserId = $room ? $room->technician->user_id : null;
+
+            // broadcast(new PesananMasuk($id, $recipientUserId))->toOthers();
             return $this->redirect(route('chat.room', ['id' => $id]), navigate: true);
         } catch (Exception $e) {
             session()->flash('error', 'gagal', $e);

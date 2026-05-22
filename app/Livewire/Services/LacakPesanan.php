@@ -23,8 +23,6 @@ class LacakPesanan extends Component
     protected function getListeners()
     {
         return [
-            "echo-private:App.Models.User." . Auth::id() . ",.OrderMasuk" => '$refresh',
-            "echo-private:App.Models.User." . Auth::id() . ",.PesananMasuk" => '$refresh',
             'refreshMessages' => '$refresh'
         ];
     }

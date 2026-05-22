@@ -13,6 +13,7 @@
         "laravolt/indonesia": "^0.41.0",
         "livewire/livewire": "^3.6.4",
         "livewire/volt": "^1.7.0",
+        "norkunas/onesignal-php-api": "^2.15",
         "pusher/pusher-php-server": "^7.2"
     },
     "require-dev": {

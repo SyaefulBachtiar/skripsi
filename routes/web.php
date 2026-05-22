@@ -9,6 +9,13 @@ use Livewire\Volt\Volt;
 
 Route::view('/', 'welcome');
 
+Route::post('/ping-online', function () {
+    if (Auth::check()) {
+        Auth::user()->update(['last_seen_at' => now()]);
+    }
+    return response()->json(['ok' => true]);
+})->middleware('auth');
+
 // Route To Page Beranda
 Route::view('beranda', 'pages.customer.beranda')
     ->name('beranda');

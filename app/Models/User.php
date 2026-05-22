@@ -36,6 +36,7 @@ class User extends Authenticatable
         'role',
         'google_id',
         'avatar',
+        'last_seen_at',
     ];
 
     /**
@@ -61,6 +62,7 @@ class User extends Authenticatable
             'id' => 'string',
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'last_seen_at' => 'datetime',
         ];
     }
 

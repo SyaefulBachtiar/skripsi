@@ -31,8 +31,6 @@ class DataPesanan extends Component
     protected function getListeners()
     {
         return [
-            "echo-private:App.Models.User." . Auth::id() . ",.OrderMasuk" => '$refresh',
-            "echo-private:App.Models.User." . Auth::id() . ",.PesananMasuk" => '$refresh',
             'refreshMessages' => '$refresh'
         ];
     }
@@ -133,7 +131,7 @@ class DataPesanan extends Component
             ]);
 
             // Kirim notifikasi sistem ke chat room customer
-            $chatRoomId = \App\Models\ChatRooms::where('order_id', $order->id)->value('id');
+            $chatRoomId = ChatRooms::where('order_id', $order->id)->value('id');
             if ($chatRoomId) {
                 \App\Models\ChatMessages::create([
                     'chat_room_id' => $chatRoomId,
@@ -141,11 +139,15 @@ class DataPesanan extends Component
                     'message' => 'Pembayaran Anda telah diverifikasi oleh teknisi. Transaksi selesai!',
                     'is_read' => false
                 ]);
-                broadcast(new \App\Events\PesananMasuk($chatRoomId))->toOthers();
+
+                $room = ChatRooms::with(['technician', 'customer'])->find($chatRoomId);
+                $recipientUserId = $room ? $room->customer->user_id : null;
+
+                broadcast(new PesananMasuk($chatRoomId, $recipientUserId))->toOthers();
             }
 
             // Beritahu customer via Pusher
-            broadcast(new \App\Events\OrderMasuk($order->customer->user_id, 'Pembayaran Anda telah diverifikasi oleh teknisi!'))->toOthers();
+            broadcast(new OrderMasuk($order->customer->user_id, 'Pembayaran Anda telah diverifikasi oleh teknisi!'))->toOthers();
 
             session()->flash('success', 'Pembayaran berhasil dikonfirmasi!');
         } catch (\Exception $e) {
@@ -175,7 +177,10 @@ class DataPesanan extends Component
                     'message'      => '⚠️ Peringatan Sistem: Teknisi menolak konfirmasi pembayaran Anda karena dana belum masuk atau bukti tidak valid. Silakan kirimkan bukti transfer yang sah di sini atau lakukan pembayaran ulang.',
                     'is_read'      => false
                 ]);
-                broadcast(new PesananMasuk($chatRoomId))->toOthers();
+            
+                $room = ChatRooms::with(['technician', 'customer'])->find($chatRoomId);
+                $recipientUserId = $room ? $room->customer->user_id : null;
+                broadcast(new PesananMasuk($chatRoomId, $recipientUserId))->toOthers();
             }
 
             // Beritahu customer secara realtime agar halaman Lacak Pesanan mereka ter-refresh

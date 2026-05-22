@@ -22,6 +22,7 @@ return new class extends Migration
             $table->string('role', 10)->nullable();
             $table->string('google_id')->nullable()->unique();
             $table->string('avatar')->nullable();
+            $table->timestamp('last_seen_at')->nullable();
             $table->rememberToken();
             $table->timestamps();
         });

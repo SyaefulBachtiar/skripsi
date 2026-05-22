@@ -21,8 +21,6 @@ class ListAntrian extends Component
     protected function getListeners()
     {
         return [
-            "echo-private:App.Models.User." . Auth::id() . ",.OrderMasuk" => '$refresh',
-            "echo-private:App.Models.User." . Auth::id() . ",.PesananMasuk" => '$refresh',
             'refreshMessages' => '$refresh'
         ];
     }
@@ -74,8 +72,10 @@ class ListAntrian extends Component
                 'is_read'      => false
             ]);
 
-            // Trigger event chat realtime
-            broadcast(new PesananMasuk($chatRoomId))->toOthers();
+            $room = ChatRooms::with(['technician', 'customer'])->find($chatRoomId);
+            $recipientUserId = $room ? $room->customer->user_id : null;
+
+            broadcast(new PesananMasuk($chatRoomId, $recipientUserId))->toOthers();
         }
 
         $customerUserId = $order->customer->user_id;

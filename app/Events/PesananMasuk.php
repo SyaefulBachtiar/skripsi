@@ -15,13 +15,15 @@ class PesananMasuk implements ShouldBroadcast
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
     public $roomChatId;
+    public $recipientUserId;
 
     /**
      * Create a new event instance.
      */
-    public function __construct($roomChatId)
+    public function __construct($roomChatId, $recipientUserId = null)
     {
         $this->roomChatId = $roomChatId;
+        $this->recipientUserId = $recipientUserId;
     }
 
     /**
@@ -31,16 +33,16 @@ class PesananMasuk implements ShouldBroadcast
      */
     public function broadcastOn(): array
     {
-        $room = \App\Models\ChatRooms::find($this->roomChatId);
-
-        $recipientUserId = (auth()->id() === $room->technician->user_id) 
-        ? $room->customer->user_id 
-        : $room->technician->user_id;
-
-        return [
+        $channels = [
             new PrivateChannel('servisio-chat.' . $this->roomChatId),
-            new PrivateChannel('App.Models.User.' . $recipientUserId),
         ];
+
+        // Hanya tambah user channel kalau recipientUserId dikirim
+        if ($this->recipientUserId) {
+            $channels[] = new PrivateChannel('App.Models.User.' . $this->recipientUserId);
+        }
+
+        return $channels;
     }
 
     public function broadcastAs(): string
