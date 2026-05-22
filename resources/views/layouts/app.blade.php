@@ -18,15 +18,35 @@
         </style>
         @vite(['resources/css/app.css', 'resources/js/app.js'])
         @auth
-            <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignal.js" async=""></script>
+            <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignal.js" defer></script>
             <script>
-                window.OneSignal = window.OneSignal || [];
-                OneSignal.push(function() {
-                    OneSignal.init({
-                        appId: "{{ env('ONESIGNAL_APP_ID') }}",
-                        allowLocalhostAsSecureOrigin: true
+                window.addEventListener('load', function() {
+                    window.OneSignal = window.OneSignal || [];
+                    OneSignal.push(function() {
+                        OneSignal.init({
+                            appId: "{{ env('ONESIGNAL_APP_ID') }}",
+                            allowLocalhostAsSecureOrigin: true,
+                            serviceWorkerParam: { scope: '/' },
+                        }).then(function() {
+                            console.log('✅ [OneSignal] Init selesai.');
+                            
+                            // Cek status subscription
+                            var permission = OneSignal.Notifications.permission;
+                            console.log('📋 [OneSignal] Permission:', permission);
+                            
+                            // Dispatch event setelah benar-benar siap
+                            window.dispatchEvent(new CustomEvent('onesignal-ready'));
+                            
+                            // Auto login kalau sudah granted
+                            if (permission === 'granted') {
+                                OneSignal.login('{{ Auth::id() }}').then(function() {
+                                    console.log('✅ [OneSignal] Auto login berhasil.');
+                                });
+                            }
+                        }).catch(function(err) {
+                            console.error('❌ [OneSignal] Init gagal:', err);
+                        });
                     });
-                    window.dispatchEvent(new CustomEvent('onesignal-ready'));
                 });
             </script>
         @endauth
@@ -96,18 +116,16 @@
                     <button 
                         type="button"
                         @click="
-                            OneSignal.push(function() {
-                                OneSignal.Notifications.requestPermission().then(function(permission) {
-                                    console.log('Permission:', permission);
-                                    if (permission === 'granted') {
-                                        isSubscribed = true;
-                                        OneSignal.login('{{ Auth::id() }}').then(function() {
-                                            console.log('✅ Subscribed dan login berhasil');
-                                        });
-                                    }
-                                }).catch(function(err) {
-                                    console.error('Error:', err);
-                                });
+                            window.OneSignal.Notifications.requestPermission().then(function(permission) {
+                                console.log('Permission result:', permission);
+                                if (permission === 'granted') {
+                                    isSubscribed = true;
+                                    window.OneSignal.login('{{ Auth::id() }}').then(function() {
+                                        console.log('✅ Login OneSignal berhasil');
+                                    }).catch(function(e) { console.error(e); });
+                                }
+                            }).catch(function(err) {
+                                console.error('Request permission error:', err);
                             });
                         "
                         class="px-3 py-1.5 bg-white text-indigo-700 text-[11px] font-bold rounded-xl hover:bg-indigo-50 active:scale-95 transition-all shadow-sm shrink-0"
@@ -170,7 +188,7 @@
                 console.log('OneSignal Notifications:', OneSignal.Notifications?.permission);
 
                 navigator.serviceWorker.getRegistrations().then(r => console.log('SW:', r));
-                
+
                 function pingOnline() {
                     fetch('/ping-online', {
                         method: 'POST',
