@@ -21,20 +21,28 @@
             <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignal.js" async></script>
             <script>
                 window.OneSignal = window.OneSignal || [];
-                OneSignal.push(function() {
+        
+                function initOneSignal() {
+                    // Cek apakah SDK sudah load (bukan array lagi)
+                    if (Array.isArray(window.OneSignal)) {
+                        // Belum siap, coba lagi 500ms lagi
+                        setTimeout(initOneSignal, 500);
+                        return;
+                    }
+                    
                     OneSignal.init({
                         appId: "{{ env('ONESIGNAL_APP_ID') }}",
                         allowLocalhostAsSecureOrigin: true,
                     });
-                    
-                    OneSignal.on('subscriptionChange', function(isSubscribed) {
-                        console.log('✅ [OneSignal] Subscription changed:', isSubscribed);
-                    });
 
-                    // Tandai siap setelah push callback jalan
                     window._oneSignalReady = true;
                     window.dispatchEvent(new CustomEvent('onesignal-ready'));
-                    console.log('✅ [OneSignal] Init selesai.');
+                    console.log('✅ [OneSignal] Init selesai, keys:', Object.keys(OneSignal));
+                }
+
+                // Mulai cek setelah halaman load
+                window.addEventListener('load', function() {
+                    initOneSignal();
                 });
             </script>
         @endauth
