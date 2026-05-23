@@ -1,6 +1,7 @@
 @php
     $realtimeOrder = $data_pesanan->order->fresh();
     $statusPesanan = $realtimeOrder->lacak_pesanan->last()->status_order ?? '';
+    $isCustomer = auth()->user()->customer()->exists();
 @endphp
 <div class="flex flex-col h-full {{ $statusPesanan === 'selesai' ? 'pb-20' : 'pb-0' }}">
     <div
@@ -30,14 +31,16 @@
                     <h1 class="text-xs sm:text-sm font-bold text-gray-900 truncate">{{ $data_pesanan->order->jasa->nama_jasa }}</h1>
                 </div>
 
-                <a
-                    href="{{ route('rincian.pesanan', $data_pesanan->order_id) }}"
-                    wire:navigate
-                    class="shrink-0 flex flex-col items-center justify-center gap-0.5 p-2 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-100 transition-colors"
-                >
-                    <i class="bi bi-file-earmark-text text-base sm:text-lg leading-none"></i>
-                    <span class="text-[9px] sm:text-[10px] font-semibold leading-none">Detail</span>
-                </a>
+                @if ($isCustomer)
+                    <a
+                        href="{{ route('rincian.pesanan', $data_pesanan->order_id) }}"
+                        wire:navigate
+                        class="shrink-0 flex flex-col items-center justify-center gap-0.5 p-2 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-100 transition-colors"
+                    >
+                        <i class="bi bi-file-earmark-text text-base sm:text-lg leading-none"></i>
+                        <span class="text-[9px] sm:text-[10px] font-semibold leading-none">Detail</span>
+                    </a>
+                @endif
             </div>
 
             {{-- Baris Bawah: Jadwal, Status, Total --}}
@@ -102,17 +105,51 @@
 
                 @if($msg->type === 'status')
                     {{-- Bubble: Update Status --}}
-                    <div class="flex justify-center my-3 w-full px-2">
-                        <div class="bg-indigo-50 border border-indigo-100 px-3 sm:px-4 py-2.5 rounded-xl text-center shadow-sm w-full max-w-xs sm:max-w-sm">
-                            <div class="flex items-center justify-center gap-1.5 mb-1">
-                                <i class="bi bi-info-circle-fill text-indigo-500 text-[11px]"></i>
-                                <span class="text-[10px] font-bold text-indigo-700 uppercase tracking-wider">Update Status Pesanan</span>
+                    <div class="flex justify-center my-5 w-full px-4">
+                        <div class="w-full max-w-sm sm:max-w-md flex flex-col items-center">
+                            
+                            {{-- Penanda Garis & Badge Status Otomatis --}}
+                            <div class="w-full flex items-center justify-center gap-3 mb-2">
+                                <div class="h-[1px] bg-slate-200 dark:bg-slate-700/50 flex-1"></div>
+                                <div class="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 px-2.5 py-0.5 rounded-full border border-slate-200 dark:border-slate-700">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse"></span>
+                                    <span class="text-[9px] font-bold text-slate-500 dark:text-slate-400 tracking-wider uppercase">Info Pesanan</span>
+                                </div>
+                                <div class="h-[1px] bg-slate-200 dark:bg-slate-700/50 flex-1"></div>
                             </div>
-                            <p class="text-xs sm:text-sm font-bold text-gray-800">{{ $msg->message }}</p>
-                            @if($msg->note)
-                                <p class="text-[11px] text-gray-500 mt-1 italic leading-snug">"{{ $msg->note }}"</p>
-                            @endif
-                            <span class="text-[9px] text-gray-400 mt-1.5 block">{{ $msg->created_at->format('H:i') }}</span>
+
+                            {{-- Isi Konten Utama --}}
+                            <div class="text-center px-2 w-full">
+                                {{-- Status Teks Utama --}}
+                                <p class="text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-300 leading-relaxed">
+                                    {{ $msg->message }}
+                                </p>
+
+                                {{-- Catatan / Note (Tampil tanpa background kotak kaku) --}}
+                                @if($msg->note)
+                                    <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1 max-w-xs mx-auto text-center font-normal leading-snug">
+                                        <span class="text-slate-400 dark:text-slate-600 font-serif text-xs">“</span>{{ $msg->note }}<span class="text-slate-400 dark:text-slate-600 font-serif text-xs">”</span>
+                                    </p>
+                                @endif
+
+                                {{-- Foto Bukti (Rapi, Sejajar, & Aspek Rasio Dikunci) --}}
+                                @if (isset($msg->foto_bukti) && $msg->foto_bukti)
+                                    <div class="mt-3 max-w-[240px] sm:max-w-[280px] mx-auto overflow-hidden rounded-xl border border-slate-200/70 dark:border-slate-700/60 shadow-sm bg-slate-50">
+                                        <img 
+                                            src="{{ asset('storage/' . $msg->foto_bukti) }}" 
+                                            alt="{{ $msg->message }}"
+                                            class="w-full h-40 object-cover hover:scale-102 transition-transform duration-300"
+                                            loading="lazy"
+                                        >
+                                    </div>
+                                @endif
+
+                                {{-- Jam / Waktu Tipis di Bagian Bawah --}}
+                                <span class="text-[9px] font-medium text-slate-400 dark:text-slate-500 mt-2 block tracking-wide">
+                                    {{ \Carbon\Carbon::parse($msg->created_at)->format('H:i') }}
+                                </span>
+                            </div>
+
                         </div>
                     </div>
 
@@ -240,23 +277,128 @@
     <div class="fixed bottom-0 inset-x-0 bg-white/95 backdrop-blur-lg border-t border-gray-200 z-50 shadow-[0_-4px_20px_-8px_rgba(0,0,0,0.08)]">
         <div class="w-full max-w-2xl mx-auto px-3 py-2.5 sm:px-4 sm:py-3">
 
-            @php
-                $isCustomer = auth()->user()->customer()->exists();
-            @endphp
-
             @if($statusPesanan === 'selesai_total')
-                {{-- ── Panel Lunas (Berlaku untuk Customer & Teknisi) ── --}}
-                <div class="flex items-center gap-3 bg-green-50 px-3 py-3 rounded-xl border border-green-200">
-                    <div class="w-10 h-10 bg-green-100 text-green-600 rounded-full flex items-center justify-center shrink-0 shadow-sm">
-                        <i class="bi bi-check-circle-fill text-xl"></i>
+                @if($isCustomer)
+                    @if(!$hasReviewed)
+                        {{-- FORM INPUT RATING INTERAKTIF (MODERN BADGE STYLE) --}}
+                        <div 
+                            class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm"
+                            x-data="{ currentRating: @entangle('rating') }"
+                        >
+                            <div class="text-center mb-3">
+                                <span class="inline-block px-2.5 py-0.5 bg-indigo-50 text-indigo-600 rounded-full text-[10px] font-black uppercase tracking-wider mb-1">
+                                    Penilaian Layanan
+                                </span>
+                                <h3 class="text-xs sm:text-sm font-bold text-gray-800">Bagaimana hasil kerja teknisi kami?</h3>
+                            </div>
+
+                            <form wire:submit.prevent="simpanReview" class="space-y-3">
+                                {{-- Interaksi Klik Bintang Berubah Warna --}}
+                                <div class="flex justify-center items-center gap-2 py-1">
+                                    <template x-for="i in 5">
+                                        <button 
+                                            type="button" 
+                                            @click="currentRating = i"
+                                            class="transition-transform active:scale-90"
+                                        >
+                                            <i 
+                                                class="bi text-2xl" 
+                                                :class="i <= currentRating ? 'bi-star-fill text-amber-400' : 'bi-star text-gray-200'"
+                                            ></i>
+                                        </button>
+                                    </template>
+                                </div>
+
+                                {{-- Input Kolom Komentar Teks --}}
+                                <div>
+                                    <textarea 
+                                        wire:model.defer="text_comment" 
+                                        placeholder="Tulis testimoni atau masukan untuk teknisi..."
+                                        rows="2"
+                                        class="w-full text-xs sm:text-sm bg-slate-50 border border-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-100 rounded-xl p-2.5 resize-none outline-none transition"
+                                    ></textarea>
+                                    @error('text_comment') <span class="text-[10px] text-red-500 font-semibold block mt-0.5">{{ $message }}</span> @enderror
+                                </div>
+
+                                {{-- Input Unggah Foto Review Opsional ── --}}
+                                <div class="flex items-center justify-between gap-4 bg-slate-50 border border-slate-100 rounded-xl p-2">
+                                    <div class="flex items-center gap-2">
+                                        <input 
+                                            type="file" 
+                                            id="review-photo" 
+                                            wire:model="foto_review" 
+                                            accept="image/*" 
+                                            class="hidden"
+                                        >
+                                        <label 
+                                            for="review-photo" 
+                                            class="px-3 py-1.5 bg-white border border-slate-200 text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg text-[11px] font-bold cursor-pointer transition flex items-center gap-1.5 shadow-sm"
+                                        >
+                                            <i class="bi bi-camera-fill"></i>
+                                            <span>{{ $foto_review ? 'Ganti Foto' : 'Tambah Foto' }}</span>
+                                        </label>
+                                        <span class="text-[10px] text-gray-400 font-medium">Opsional (Bisa kosong)</span>
+                                    </div>
+
+                                    {{-- Preview mini jika foto review dipilih --}}
+                                    @if($foto_review)
+                                        <div class="w-10 h-10 rounded-lg overflow-hidden border border-gray-200 bg-white shadow-sm">
+                                            <img src="{{ $foto_review->temporaryUrl() }}" class="w-full h-full object-cover">
+                                        </div>
+                                    @endif
+                                </div>
+                                @error('foto_review') <span class="text-[10px] text-red-500 font-semibold block">{{ $message }}</span> @enderror
+
+                                {{-- Tombol Kirim Form --}}
+                                <button 
+                                    type="submit"
+                                    wire:loading.attr="disabled"
+                                    class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-400 text-white font-bold text-xs sm:text-sm rounded-xl transition shadow-md shadow-indigo-100 flex items-center justify-center gap-2"
+                                >
+                                    <span wire:loading.remove wire:target="simpanReview">Kirim Ulasan</span>
+                                    <span wire:loading wire:target="simpanReview" class="flex items-center gap-1">
+                                        <i class="bi bi-arrow-repeat animate-spin"></i> Menyimpan...
+                                    </span>
+                                </button>
+                            </form>
+                        </div>
+                    @else
+                        <div class="flex items-center gap-3 bg-green-50 px-3 py-3 rounded-xl border border-green-200">
+                            <div class="w-10 h-10 bg-green-100 text-green-600 rounded-full flex items-center justify-center shrink-0 shadow-sm">
+                                <i class="bi bi-check-circle-fill text-xl"></i>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center justify-between gap-2">
+                                    <p class="text-[10px] font-bold text-green-600 uppercase tracking-wider mb-0.5">Pesanan Selesai</p>
+                                    
+                                    {{-- Link Menuju Halaman Riwayat (Hanya untuk Customer) --}}
+                                    @if($isCustomer)
+                                        <a href="{{ route('riwayat') }}" wire:navigate class="text-[10px] font-bold text-blue-600 hover:text-blue-700 hover:underline inline-flex items-center transition-colors">
+                                            <span>Lihat Riwayat</span>
+                                            <i class="bi bi-arrow-right-short text-sm text-base"></i>
+                                        </a>
+                                    @endif
+                                </div>
+                                <p class="text-sm font-bold text-green-800 truncate">
+                                    Rp {{ number_format($realtimeOrder->total_harga, 0, ',', '.') }}
+                                </p>
+                            </div>
+                        </div>
+                    @endif
+                @else
+                    {{-- ── PANEL SLOTS UNTUK TEKNISI (HANYA RANGKUMAN TAMPILAN SUKSES) ── --}}
+                    <div class="flex items-center gap-3 bg-green-50 px-3 py-3 rounded-xl border border-green-200">
+                        <div class="w-10 h-10 bg-green-100 text-green-600 rounded-full flex items-center justify-center shrink-0 shadow-sm">
+                            <i class="bi bi-check-circle-fill text-xl"></i>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-[10px] font-bold text-green-600 uppercase tracking-wider mb-0.5">Pesanan Selesai & Lunas</p>
+                            <p class="text-sm font-bold text-green-800 truncate">
+                                Rp {{ number_format($realtimeOrder->total_harga, 0, ',', '.') }}
+                            </p>
+                        </div>
                     </div>
-                    <div class="flex-1 min-w-0">
-                        <p class="text-[10px] font-bold text-green-600 uppercase tracking-wider mb-0.5">Pesanan Selesai</p>
-                        <p class="text-sm font-bold text-green-800 truncate">
-                            Rp {{ number_format($realtimeOrder->total_harga, 0, ',', '.') }}
-                        </p>
-                    </div>
-                </div>
+                @endif
 
             @elseif(($statusPesanan === 'selesai' || $statusPesanan === 'pembayaran_ditolak') && $isCustomer)
                 {{-- ── Panel Pembayaran (Hanya Customer jika status selesai) ── --}}

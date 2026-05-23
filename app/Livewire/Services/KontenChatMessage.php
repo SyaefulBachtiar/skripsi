@@ -9,6 +9,8 @@ use App\Models\ChatRooms;
 use App\Models\DetailOrder;
 use App\Models\LacakPesanan;
 use App\Models\Order;
+use App\Models\Review;
+use App\Services\OneSignalService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -26,6 +28,11 @@ class KontenChatMessage extends Component
 
     public $photo;
     public $photoPreview;
+
+    public $rating = 5; 
+    public $text_comment = '';
+    public $foto_review; 
+    public $hasReviewed = false;
 
     protected function getListeners()
     {
@@ -54,6 +61,16 @@ class KontenChatMessage extends Component
         
     }
 
+    private function kirimPushNotification(string $recipientUserId, string $title, string $body): void
+    {
+        app(OneSignalService::class)->sendToUser(
+            recipientUserId: $recipientUserId,
+            title: $title,
+            body: $body,
+            data: ['type' => 'payment_received', 'room_id' => $this->roomChatId]
+        );
+    }
+
     public function mount () {
 
         ChatMessages::where('chat_room_id', $this->roomChatId)
@@ -77,7 +94,77 @@ class KontenChatMessage extends Component
             abort(404, 'Percakapan tidak ditemukan');
         }
 
-            // dd($this->data_pesanan->toArray());
+        $this->hasReviewed = Review::where('id_order', $this->data_pesanan->order_id)->exists();
+    }
+
+    public function simpanReview()
+    {
+        // Pastikan hanya customer yang bisa mengeksekusi ini
+        if (!auth()->user()->customer()->exists()) {
+            return;
+        }
+
+        $this->validate([
+            'rating' => 'required|integer|min:1|max:5',
+            'text_comment' => 'required|string|min:5|max:1000',
+            'foto_review' => 'nullable|image|max:5120', // Nullable berarti Opsional (Bisa dikosongkan)
+        ], [
+            'rating.required' => 'Mohon pilih jumlah bintang terlebih dahulu.',
+            'rating.integer'  => 'Format penilaian harus berupa angka.',
+            'rating.min'      => 'Minimal penilaian adalah 1 bintang.',
+            'rating.max'      => 'Maksimal penilaian adalah 5 bintang.',
+
+            'text_comment.required' => 'Kolom komentar atau testimoni wajib diisi.',
+            'text_comment.min'      => 'Komentar terlalu pendek, berikan masukan minimal 5 karakter.',
+            'text_comment.max'      => 'Komentar terlalu panjang, maksimal 1000 karakter.',
+
+            'foto_review.image' => 'File yang diunggah harus berupa gambar (jpg, jpeg, png).',
+            'foto_review.max'   => 'Ukuran foto terlalu besar, maksimal adalah 5 MB.',
+        ]);
+
+        try {
+
+            $room_chat = ChatRooms::find($this->roomChatId);
+            $order = Order::find($room_chat->order_id);
+
+            $pathFoto = null;
+            if ($this->foto_review) {
+                // Simpan ke storage jika customer mengunggah foto lampiran fisik
+                $pathFoto = $this->foto_review->store('review-photos', 'public');
+            }
+
+            // Daftarkan ke database review
+            Review::create([
+                'id_technician' => $room_chat->technician_id,
+                'id_order'      => $room_chat->order_id,
+                'id_jasa'       => $order->jasa->id,
+                'rating'        => $this->rating,
+                'text_comment'  => strip_tags($this->text_comment),
+                'foto_review'   => $pathFoto ? [$pathFoto] : null, // Bungkus dalam array mengikuti cast format model
+            ]);
+
+            ChatMessages::create([
+                'chat_room_id' => $this->roomChatId,
+                'sender_id'    => Auth::id(),
+                'message'      => "Pelanggan telah memberikan ulasan bintang {$this->rating} ⭐",
+                'type'         => 'system',
+                'is_read'      => false
+            ]);
+
+            $this->hasReviewed = true;
+            $this->reset(['text_comment', 'foto_review']);
+
+            session()->flash('success', 'Terima kasih! Ulasan Anda berhasil disimpan.');
+            
+            $recipientUserId = $this->getRecipientUserId();
+            broadcast(new PesananMasuk($this->roomChatId, $recipientUserId))->toOthers();
+            
+            $this->dispatch('scroll-to-bottom');
+
+        } catch (\Exception $e) {
+            session()->flash('error', 'Gagal menyimpan ulasan: ' . $e->getMessage());
+            dd('gagal menyimpan ulasan: ', $e->getMessage());
+        }
     }
 
     public function updatedPhoto()
@@ -129,6 +216,7 @@ class KontenChatMessage extends Component
                 'id'         => 'track_'.$track->id,
                 'message'    => ucwords(str_replace('_', ' ', $track->status_order)),
                 'note'       => $track->note ?? null,
+                'foto_bukti' => $track->foto_bukti,
                 'type'       => 'status',
                 'created_at' => Carbon::parse($track->created_at),
             ]);
@@ -181,8 +269,18 @@ class KontenChatMessage extends Component
 
         $recipientUserId = $this->getRecipientUserId();
         broadcast(new PesananMasuk($msgSystem->chat_room_id, $recipientUserId))->toOthers();
+
         if ($order) {
             broadcast(new OrderMasuk($order->jasa->technician->user_id))->toOthers();
+        }
+
+        if ($recipientUserId) {
+            $statusTeks = $isApproved ? 'menyetujui' : 'menolak';
+            $this->kirimPushNotification(
+                $recipientUserId,
+                'Update Layanan — Servisio',
+                "Pelanggan telah {$statusTeks} penambahan item: {$detail->nama_layanan_tambahan}"
+            );
         }
 
         // Refresh data agar total harga terupdate di header chat
@@ -227,6 +325,15 @@ class KontenChatMessage extends Component
             ]);
             $recipientUserId = $this->getRecipientUserId();
             broadcast(new PesananMasuk($msgSystem->chat_room_id, $recipientUserId))->toOthers();
+
+            if ($recipientUserId) {
+                $this->kirimPushNotification(
+                    $recipientUserId,
+                    'Pembayaran Diterima — Servisio',
+                    'Pelanggan telah menyelesaikan pembayaran.'
+                );
+            }
+
             broadcast(new OrderMasuk($order->jasa->technician->user_id))->toOthers();
 
             $this->data_pesanan->refresh();
@@ -276,6 +383,14 @@ class KontenChatMessage extends Component
 
             $recipientUserId = $this->getRecipientUserId();
             broadcast(new PesananMasuk($this->roomChatId, $recipientUserId))->toOthers();
+
+            if ($recipientUserId) {
+                $this->kirimPushNotification(
+                    $recipientUserId,
+                    'Foto Baru — Servisio',
+                    Auth::user()->name . ' mengirim sebuah foto.'
+                );
+            }
 
         } catch (\Exception $e) {
             session()->flash('error', 'Gagal mengirim foto: ' . $e->getMessage());
@@ -337,6 +452,16 @@ class KontenChatMessage extends Component
 
             $recipientUserId = $this->getRecipientUserId();
             broadcast(new PesananMasuk($this->roomChatId, $recipientUserId))->toOthers();
+
+            if ($recipientUserId) {
+                $this->kirimPushNotification(
+                    $recipientUserId,
+                    'Pesan Baru — Servisio',
+                    Auth::user()->name . ': ' . (strlen($this->message) > 60
+                        ? substr($this->message, 0, 60) . '...'
+                        : $this->message)
+                );
+            }
 
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             // Jika user mencoba kirim pesan ke room yang bukan miliknya

@@ -31,11 +31,6 @@ class KontenPesan extends Component
                 ->update([
                     'is_read' => true
                 ]);
-
-            // $room = \App\Models\ChatRooms::with(['customer'])->find($id);
-            // $recipientUserId = $room ? $room->customer->user_id : null;
-
-            // broadcast(new PesananMasuk($id, $recipientUserId))->toOthers();
             
             return $this->redirect(route('chat.room', ['id' => $id]), navigate: true);
         } catch (Exception $e) {

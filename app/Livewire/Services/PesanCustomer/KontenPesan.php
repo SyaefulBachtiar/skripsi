@@ -33,10 +33,6 @@ class KontenPesan extends Component
                     'is_read' => true
                 ]);
 
-            // $room = ChatRooms::with(['technician'])->find($id);
-            // $recipientUserId = $room ? $room->technician->user_id : null;
-
-            // broadcast(new PesananMasuk($id, $recipientUserId))->toOthers();
             return $this->redirect(route('chat.room', ['id' => $id]), navigate: true);
         } catch (Exception $e) {
             session()->flash('error', 'gagal', $e);

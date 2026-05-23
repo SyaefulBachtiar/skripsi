@@ -7,6 +7,7 @@ use App\Models\ChatMessages;
 use App\Models\ChatRooms;
 use App\Models\LacakPesanan;
 use App\Models\Order;
+use App\Services\OneSignalService;
 use Exception;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
@@ -76,6 +77,20 @@ class KontenRincianPesanan extends Component
             // Ambil ID User Teknisi dari Jasa
             $technicianUserId = $this->order->jasa->technician->user_id;
             broadcast(new OrderMasuk($technicianUserId, 'Ada pesanan baru masuk!'))->toOthers();
+
+            $namaJasa = $this->order->jasa->nama_jasa ?? 'Layanan Servis';
+            $namaCustomer = $this->order->customer->user->name ?? 'Customer';
+
+            app(OneSignalService::class)->sendToUser(
+                recipientUserId: $technicianUserId,
+                title: '🔔 Pesanan Baru Masuk!',
+                body: "{$namaCustomer} telah memesan jasa [{$namaJasa}]. Segera cek aplikasi untuk melakukan konfirmasi.",
+                data: [
+                    'type' => 'new_order',
+                    'order_id' => $this->order->id,
+                    'room_chat_id' => $chatRoom->id
+                ]
+            );
 
             return $this->redirect(route('chat.room', ['id' => $chatRoom->id]), navigate: true);
 

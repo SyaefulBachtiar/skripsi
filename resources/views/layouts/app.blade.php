@@ -46,7 +46,7 @@
         <div 
             class="min-h-screen bg-gray-100 dark:bg-gray-900 overflow-hidden relative"
             x-data="{
-                isSubscribed: false,
+                isSubscribed: true,
                 userHasInteracted: false,
                 playNotification() {
                     if (!this.userHasInteracted) {
@@ -74,14 +74,29 @@
                     });
                 }
             }"
-            x-init="initInteractionListener()"
-            @play-notif-sound.window="playNotification()"
-            @onesignal-ready.window="
-                if (window._oneSignalInstance) {
-                    isSubscribed = window._oneSignalInstance.Notifications.permission === true 
-                        || window._oneSignalInstance.Notifications.permission === 'granted';
+            x-init="
+                initInteractionListener();
+
+                var self = $data;
+
+                var checkSubscription = function() {
+                    if (window._oneSignalInstance) {
+                        var perm = window._oneSignalInstance.Notifications.permission;
+                        self.isSubscribed = (perm === true || perm === 'granted');
+                        console.log('📋 [OneSignal] isSubscribed:', self.isSubscribed);
+                    }
+                };
+
+                if (window._oneSignalReady) {
+                    checkSubscription();
                 }
+
+                window.addEventListener('onesignal-ready', checkSubscription);
+                window.addEventListener('onesignal-subscribed', function() {
+                    self.isSubscribed = true;
+                });
             "
+            @play-notif-sound.window="playNotification()"
         >
             <livewire:layout.navigation />
             <header class="flex sm:hidden">

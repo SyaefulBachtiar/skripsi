@@ -248,7 +248,7 @@ new class extends Component
                         </a>
                         
                         {{-- Pesan --}}
-                        <a href="{{ route('pesan_technician') }}" class="relative flex-1 flex flex-col items-center justify-center transition-all duration-300 {{ request()->routeIs('pesan') ? $activeClass : $inactiveClass }}">
+                        <a href="{{ route('pesan_technician') }}" class="relative flex-1 flex flex-col items-center justify-center transition-all duration-300 {{ request()->routeIs('pesan_technician') ? $activeClass : $inactiveClass }}">
                             <span 
                                 x-show="$wire.unreadCount > 0"
                                 x-text="$wire.unreadCount > 99 ? '99+' : $wire.unreadCount"

@@ -9,6 +9,7 @@ use App\Models\ChatRooms;
 use App\Models\DetailOrder;
 use App\Models\LacakPesanan;
 use App\Models\Order;
+use App\Services\OneSignalService;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -66,6 +67,9 @@ class DataPesanan extends Component
             'foto_bukti'   => $pathFoto,
         ]);
 
+        $statusMentah = $this->status_update;
+        $catatanTeknisi = $this->catatan_progres;
+
         $this->reset(['status_update', 'bukti_pengerjaan', 'catatan_progres']);
         
         $order = Order::find($orderId);
@@ -73,6 +77,23 @@ class DataPesanan extends Component
         if ($order) {
             $customerUserId = $order->customer->user_id;
             broadcast(new OrderMasuk($customerUserId, 'Status pesanan Anda telah diperbarui.'))->toOthers();
+
+            $statusFormat = ucwords(str_replace('_', ' ', $statusMentah)); 
+        
+            $bodyNotification = $catatanTeknisi 
+                ? "Status: {$statusFormat}. \"{$catatanTeknisi}\""
+                : "Status servis perangkat Anda saat ini: Kategori [{$statusFormat}].";
+
+            app(OneSignalService::class)->sendToUser(
+                recipientUserId: $customerUserId,
+                title: '📦 Update Progres Servis',
+                body: $bodyNotification,
+                data: [
+                    'type' => 'order_updated',
+                    'order_id' => $order->id,
+                    'status' => $statusMentah
+                ]
+            );
         }
 
         session()->flash('success', 'Progres berhasil di perbarui!');
@@ -96,7 +117,7 @@ class DataPesanan extends Component
             $pathFoto = $this->foto_layanan_baru->store('layanan-tambahan', 'public');
         }
 
-        DetailOrder::create([
+        $DetailOrder = DetailOrder::create([
             'id_order' => $order->id,
             'nama_layanan_tambahan' => $this->nama_layanan_baru,
             'harga_layanan_tambahan' => $hargaBaru,
@@ -112,6 +133,20 @@ class DataPesanan extends Component
         if ($order) {
             $customerUserId = $order->customer->user_id;
             broadcast(new OrderMasuk($customerUserId, 'Status pesanan Anda telah diperbarui.'))->toOthers();
+
+            $namaItem = $DetailOrder->nama_layanan_tambahan;
+            $biayaFormat = 'Rp ' . number_format($hargaBaru, 0, ',', '.');
+
+            app(OneSignalService::class)->sendToUser(
+                recipientUserId: $customerUserId,
+                title: '🛠️ Persetujuan Biaya Tambahan - Servisio',
+                body: "Teknisi mengajukan: {$namaItem} ({$biayaFormat}). Silahkan cek untuk menyetujui.",
+                data: [
+                    'type' => 'layanan_tambahan',
+                    'order_id' => $order->id,
+                    'room_chat_id' => $order->chat_room->id ?? null
+                ]
+            );
         }
         
         session()->flash('success', 'Layanan/Sparepart tambahan berhasil ditambahkan!');
@@ -130,10 +165,9 @@ class DataPesanan extends Component
                 'note' => 'Pembayaran telah diverifikasi oleh teknisi. Terima kasih telah menggunakan Servisio!',
             ]);
 
-            // Kirim notifikasi sistem ke chat room customer
             $chatRoomId = ChatRooms::where('order_id', $order->id)->value('id');
             if ($chatRoomId) {
-                \App\Models\ChatMessages::create([
+                ChatMessages::create([
                     'chat_room_id' => $chatRoomId,
                     'sender_id' => Auth::id(),
                     'message' => 'Pembayaran Anda telah diverifikasi oleh teknisi. Transaksi selesai!',
@@ -146,8 +180,24 @@ class DataPesanan extends Component
                 broadcast(new PesananMasuk($chatRoomId, $recipientUserId))->toOthers();
             }
 
-            // Beritahu customer via Pusher
             broadcast(new OrderMasuk($order->customer->user_id, 'Pembayaran Anda telah diverifikasi oleh teknisi!'))->toOthers();
+
+            if ($order) {
+                $customerUserId = $order->customer->user_id;
+                $namaJasa = $order->jasa->nama_jasa ?? 'Layanan';
+                $totalBayar = 'Rp ' . number_format($order->total_harga, 0, ',', '.');
+
+                app(OneSignalService::class)->sendToUser(
+                    recipientUserId: $customerUserId,
+                    title: '✅ Pembayaran Berhasil Diverifikasi',
+                    body: "Terima kasih! Pembayaran {$totalBayar} untuk [{$namaJasa}] telah sah diterima. Transaksi selesai.",
+                    data: [
+                        'type' => 'payment_verified',
+                        'order_id' => $order->id,
+                        'room_chat_id' => $chatRoomId
+                    ]
+                );
+            }
 
             session()->flash('success', 'Pembayaran berhasil dikonfirmasi!');
         } catch (\Exception $e) {
@@ -186,6 +236,21 @@ class DataPesanan extends Component
             // Beritahu customer secara realtime agar halaman Lacak Pesanan mereka ter-refresh
             $customerUserId = $order->customer->user_id;
             broadcast(new OrderMasuk($customerUserId, 'Pembayaran Anda ditolak oleh teknisi. Silakan cek detail pesanan.'))->toOthers();
+
+            if ($order) {
+                $namaJasa = $order->jasa->nama_jasa ?? 'Layanan';
+
+                app(OneSignalService::class)->sendToUser(
+                    recipientUserId: $customerUserId,
+                    title: '⚠️ Verifikasi Pembayaran Gagal',
+                    body: "Pembayaran untuk [{$namaJasa}] ditolak teknisi karena bukti tidak valid/belum masuk. Mohon cek ruang chat.",
+                    data: [
+                        'type' => 'payment_rejected',
+                        'order_id' => $order->id,
+                        'room_chat_id' => $chatRoomId
+                    ]
+                );
+            }
 
             session()->flash('warning', 'Pembayaran ditolak. Status pesanan dikembalikan menjadi Menunggu Pembayaran.');
 

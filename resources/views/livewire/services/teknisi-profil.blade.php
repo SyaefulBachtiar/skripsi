@@ -1,11 +1,24 @@
-<div>
+{{-- ── KUNCI FIX 1: Pindahkan x-data modal ke elemen paling luar agar bisa diakses oleh seksi mana pun ── --}}
+<div 
+    x-data="{ 
+        showModal: false, 
+        modalImage: '',
+        openModal(url) {
+            this.modalImage = url;
+            this.showModal = true;
+        }
+    }"
+>
     {{-- Header Section --}}
     <div class="bg-white dark:bg-slate-800 rounded-3xl p-2 shadow-sm border border-gray-100 dark:border-slate-700">
         <div class="flex flex-col sm:flex-row items-center sm:items-start gap-4 p-2 text-center sm:text-left">
             {{-- Foto Profile --}}
-            <div class="w-20 h-20 sm:w-16 sm:h-16 rounded-full overflow-hidden border-2 border-indigo-100 shadow-sm flex-shrink-0">
+            <div 
+                @click="openModal('{{ $data_technician->user->profile_photo_url }}')"
+                class="w-20 h-20 sm:w-16 sm:h-16 rounded-full overflow-hidden border-2 border-indigo-100 shadow-sm flex-shrink-0"
+            >
                 <img 
-                    src="{{ str_starts_with($data_technician->user->avatar, 'http') ? $data_technician->user->avatar : ($data_technician->user->avatar ? asset('storage/' . $data_technician->user->avatar) : asset('default-avatar.png')) }}" 
+                    src="{{ $data_technician->user->profile_photo_url }}" 
                     alt="Profile"
                     class="w-full h-full object-cover"
                 >
@@ -18,7 +31,6 @@
                 
                 <div class="flex items-center justify-center sm:justify-start gap-3 mt-1 text-sm text-gray-500 dark:text-slate-400">
                     <div class="flex items-center gap-1">
-                        {{-- KUNCI FIX: Tampilkan rating asli dari database, bulatkan 1 desimal --}}
                         <span class="font-semibold text-gray-800 dark:text-white text-base">
                             {{ $data_technician->rating ? number_format($data_technician->rating, 1) : '0.0' }}
                         </span>
@@ -26,7 +38,6 @@
                     </div>
                     <span class="text-gray-300">|</span>
                     <div class="flex items-center gap-1">
-                        {{-- KUNCI FIX: Hitung total ulasan yang masuk dari customer --}}
                         <span class="font-semibold text-gray-800 dark:text-white text-base">
                             {{ count($data_technician->review ?? []) }}
                         </span>
@@ -36,21 +47,9 @@
             </div>
         </div>
 
-        {{-- Detail Profile Section --}}
-        <div 
-            x-data="{ 
-                showModal: false, 
-                modalImage: '',
-                openModal(url) {
-                    this.modalImage = url;
-                    this.showModal = true;
-                }
-            }"
-            class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4"
-        >
+        {{-- Detail Profile Section ── --}}
+        <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
             {{-- Deskripsi --}}
-                 {{-- Deskripsi --}}
-
             <div class="bg-gray-50 dark:bg-slate-900/50 rounded-2xl p-4 border border-gray-100 dark:border-slate-700">
                 <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Deskripsi</p>
                 <p class="text-sm text-gray-700 dark:text-slate-300 leading-relaxed whitespace-pre-wrap">{{ $data_technician->deskripsi }}</p>
@@ -102,19 +101,19 @@
             </div>
             @endif
 
-            {{-- Lightbox Modal --}}
+            {{-- Global Lightbox Modal Template --}}
             <template x-teleport="body">
-                <div x-show="showModal" class="fixed inset-0 z-[999] flex items-center justify-center bg-slate-900/90 p-4" style="display: none;" @keydown.escape.window="showModal = false">
+                <div x-show="showModal" class="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-900/90 p-4" style="display: none;" @keydown.escape.window="showModal = false">
                     <button @click="showModal = false" class="absolute top-5 right-5 text-white/70 hover:text-white p-2"><i class="bi bi-x-lg text-3xl"></i></button>
                     <div class="max-w-5xl w-full h-full flex items-center justify-center" @click.away="showModal = false">
-                        <img :src="modalImage" class="max-w-full max-h-full rounded-lg object-contain border border-white/10 shadow-2xl transition-transform duration-300">
+                        <img :src="modalImage" class="max-w-full max-h-full rounded-xl mountaineer object-contain border border-white/10 shadow-2xl transition-all duration-300">
                     </div>
                 </div>
             </template>
         </div>
     </div>
 
-    {{-- ── SEKSI BARU: ULASAN PELANGGAN ── --}}
+    {{-- ── SEKSI ULASAN PELANGGAN (Sekarang Terhubung Sempurna ke Global Modal) ── --}}
     <div class="mt-8 bg-white dark:bg-slate-800 rounded-3xl p-5 shadow-sm border border-gray-100 dark:border-slate-700">
         <h2 class="text-base font-bold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
             <i class="bi bi-chat-left-heart-fill text-indigo-600"></i>
@@ -147,13 +146,15 @@
                         "{{ $rev['text_comment'] ?? 'Tidak ada komentar.' }}"
                     </p>
 
-                    {{-- Foto Lampiran Review --}}
+                    {{-- Foto Lampiran Review (KUNCI FIX 2: Langsung panggil openModal global tanpa deklarasi x-data baru) --}}
                     @if(!empty($fotoReview))
-                        <div class="flex gap-1.5 mb-3" x-data>
+                        <div class="flex gap-1.5 mb-3">
                             @foreach($fotoReview as $imgReview)
                                 <img src="{{ asset('storage/' . $imgReview) }}" 
                                      @click="openModal('{{ asset('storage/' . $imgReview) }}')"
-                                     class="w-12 h-12 rounded-lg object-cover border border-gray-200 dark:border-slate-700 cursor-zoom-in hover:opacity-80 transition-opacity">
+                                     class="w-12 h-12 rounded-lg object-cover border border-gray-200 dark:border-slate-700 cursor-zoom-in hover:opacity-80 transition-opacity"
+                                     loading="lazy"
+                                >
                             @endforeach
                         </div>
                     @endif

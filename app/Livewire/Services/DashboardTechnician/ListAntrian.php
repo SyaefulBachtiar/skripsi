@@ -9,6 +9,7 @@ use App\Models\ChatRooms;
 use App\Models\Jasa;
 use App\Models\LacakPesanan;
 use App\Models\Order;
+use App\Services\OneSignalService;
 use Exception;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
@@ -81,6 +82,13 @@ class ListAntrian extends Component
         $customerUserId = $order->customer->user_id;
         broadcast(new OrderMasuk($customerUserId, 'Status pesanan Anda telah diperbarui.'))->toOthers();        
 
+        app(OneSignalService::class)->sendToUser(
+            recipientUserId: $customerUserId,
+            title: '✅ Pesanan Dikonfirmasi — Servisio',
+            body: 'Pesanan Anda telah dikonfirmasi oleh teknisi. Silakan cek detail pesanan.',
+            data: ['type' => 'order_confirmed', 'order_id' => $id_order]
+        );
+
         session()->flash('success', 'Pesanan berhasil dikonfirmasi!');
 
         return $this->redirect(request()->header('Referer'), navigate: true);
@@ -92,6 +100,39 @@ class ListAntrian extends Component
             'id_order' => $id_order,
             'status_order' => 'ditolak',
         ]);
+
+        $order = Order::with('jasa', 'customer')->find($id_order);
+
+        if (!$order) {
+            session()->flash('error', 'Data pesanan tidak ditemukan.');
+            return $this->redirect(request()->header('Referer'), navigate: true);
+        }
+
+        $chatRoomId = ChatRooms::where('order_id', $order->id)->value('id');
+
+        if ($chatRoomId) {
+            ChatMessages::create([
+                'chat_room_id' => $chatRoomId,
+                'sender_id'    => Auth::id(),
+                'message'      => 'Pesanan anda di tolak',
+                'is_read'      => false
+            ]);
+
+            $room = ChatRooms::with(['technician', 'customer'])->find($chatRoomId);
+            $recipientUserId = $room ? $room->customer->user_id : null;
+
+            broadcast(new PesananMasuk($chatRoomId, $recipientUserId))->toOthers();
+        }
+
+        $customerUserId = $order->customer->user_id;
+        broadcast(new OrderMasuk($customerUserId, 'Status pesanan Anda telah diperbarui.'))->toOthers();        
+
+        app(OneSignalService::class)->sendToUser(
+            recipientUserId: $customerUserId,
+            title: 'Pesanan Ditolak — Servisio',
+            body: 'Pesanan Anda telah ditolak oleh teknisi.',
+            data: ['type' => 'order_reject', 'order_id' => $id_order]
+        );
     }
 
     public function render()
