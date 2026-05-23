@@ -46,7 +46,7 @@
         <div 
             class="min-h-screen bg-gray-100 dark:bg-gray-900 overflow-hidden relative"
             x-data="{
-                isSubscribed: true,
+                isSubscribed: false,
                 userHasInteracted: false,
                 playNotification() {
                     if (!this.userHasInteracted) {
