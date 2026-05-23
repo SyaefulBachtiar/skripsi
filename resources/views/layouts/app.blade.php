@@ -82,8 +82,9 @@
                 var checkSubscription = function() {
                     if (window._oneSignalInstance) {
                         var perm = window._oneSignalInstance.Notifications.permission;
-                        self.isSubscribed = (perm === true || perm === 'granted');
-                        console.log('📋 [OneSignal] isSubscribed:', self.isSubscribed);
+                        var isOptedIn = window._oneSignalInstance.User.PushSubscription.optedIn;
+                        self.isSubscribed = (perm === true || perm === 'granted') && isOptedIn === true;
+                        console.log('📋 [OneSignal] permission:', perm, '| optedIn:', isOptedIn, '| isSubscribed:', self.isSubscribed);
                     }
                 };
 
