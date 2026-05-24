@@ -72,7 +72,13 @@ class KontenPesan extends Component
                     });
                 });
             })
-            ->latest('updated_at')
+            ->orderBy(
+                ChatMessages::select('created_at')
+                    ->whereColumn('chat_room_id', 'chat_rooms.id')
+                    ->latest()
+                    ->limit(1), 
+                'desc'
+            )
             ->paginate(10);
 
         // dd($data_pesan);

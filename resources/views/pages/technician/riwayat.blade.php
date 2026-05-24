@@ -1,7 +1,7 @@
 <x-app-layout>
 
     <x-slot name="title">
-        {{ 'Rincian Pesanan' }}
+        {{ 'Riwayat Pesanan' }}
     </x-slot>
 
     <x-slot name="header">
@@ -13,7 +13,7 @@
             >
                 <i class="bi bi-chevron-left font-bold"></i>
             </a>
-            <h1 class="font-semibold">Rincian Pesanan</h1>
+            <h1 class="font-semibold">Riwayat Pesanan</h1>
         </div>
     </x-slot>
 

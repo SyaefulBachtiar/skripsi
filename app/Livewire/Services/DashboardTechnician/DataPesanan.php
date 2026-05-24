@@ -258,7 +258,8 @@ class DataPesanan extends Component
             $query->where('status_order', '!=', 'keranjang')
                 ->where('status_order', '!=', 'menunggu_konfirmasi')
                 ->where('status_order', '!=', 'dibatalkan')
-                ->where('status_order', '!=', 'selesai_total');
+                ->where('status_order', '!=', 'selesai_total')
+                ->where('status_order', '!=', 'ditolak');
         })
         ->with([
             'latestStatus',
@@ -269,6 +270,13 @@ class DataPesanan extends Component
                 $q->latest();
             }
         ])
+        ->orderBy(
+            LacakPesanan::select('created_at')
+                ->whereColumn('id_order', 'order.id')
+                ->latest()
+                ->limit(1),
+            'desc'
+        )
         ->paginate(10);
 
         // dd($data->toArray());

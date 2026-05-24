@@ -18,12 +18,15 @@ class RiwayatPesananTechnician extends Component
         $this->riwayat = Order::whereHas('jasa', function ($q) use ($id_technician) {
                 $q->where('id_technician', $id_technician);
             })
-            ->whereHas('review')
+            ->whereHas('latestStatus', function ($q) {
+                $q->whereIn('status_order', ['selesai_total', 'ditolak']);
+            })
             ->with([
                 'jasa:id,id_technician,nama_jasa,thumbnails,harga_jasa', 
-                'review:id,id_order,rating,text_comment,foto_review,created_at',
+                'review:id,id_order,rating,text_comment,foto_review,created_at,created_at,reply_comment',
                 'customer:id,user_id',
-                'customer.user:id,avatar',
+                'customer.user:id,name,avatar',
+                'latestStatus',
             ])
             ->latest()
             ->get();
@@ -35,10 +38,12 @@ class RiwayatPesananTechnician extends Component
     {
         $review = Review::findOrFail($reviewId);
         $review->update([
-            'reply_comment' => $text // Pastikan kolom reply_comment ada di tabel review database kamu
+            'reply_comment' => $text 
         ]);
         
         session()->flash('success', 'Balasan ulasan berhasil dikirim!');
+
+        return $this->redirect(request()->header('Referer'), navigate: true);
     }
 
     public function render()

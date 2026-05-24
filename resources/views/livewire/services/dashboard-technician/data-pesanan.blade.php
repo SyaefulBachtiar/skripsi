@@ -1,4 +1,16 @@
-<div class="p-3 sm:p-6 bg-white rounded-2xl shadow-sm border border-slate-200/80">
+<div 
+    class="p-3 sm:p-6 bg-white rounded-2xl shadow-sm border border-slate-200/80"
+    x-data="{
+        showAvatarModal: false,
+        avatarModalImage: '',
+        avatarModalName: '',
+        openAvatarLightbox(url, name) {
+            this.avatarModalImage = url;
+            this.avatarModalName = name;
+            this.showAvatarModal = true;
+        }
+    }"
+>
 
     {{-- ══════════════════════════════════════
          HEADER
@@ -46,22 +58,64 @@
                     {{-- Baris 1: Identitas + Tombol --}}
                     <div class="flex items-center justify-between gap-2">
                         <div class="flex items-center gap-2.5 sm:gap-3.5 min-w-0">
-                            <div class="w-9 h-9 sm:w-11 sm:h-11 bg-white border border-slate-200 rounded-lg sm:rounded-xl flex items-center justify-center shrink-0 shadow-sm">
-                                <i class="bi bi-box-seam text-lg sm:text-xl text-slate-400"></i>
-                            </div>
-                            <div class="min-w-0">
-                                <div class="flex items-center gap-1.5 mb-0.5 flex-wrap">
-                                    <span class="text-[10px] font-bold text-indigo-600 uppercase tracking-widest whitespace-nowrap">
-                                        Order #{{ $order['id'] }}
+                            {{-- Avatar Customer --}}
+                            @php
+                                $customerUser = $order->customer->user ?? null;
+                                $customerAvatar = $customerUser?->avatar;
+                                $customerName = $customerUser?->name ?? 'Customer';
+
+                                $avatarUrl = ($customerAvatar && !str_starts_with($customerAvatar, 'default'))
+                                    ? (Str::startsWith($customerAvatar, ['http://', 'https://']) ? $customerAvatar : asset('storage/' . $customerAvatar))
+                                    : null;
+                            @endphp
+
+                            <div 
+                                @if($avatarUrl) @click="openAvatarLightbox('{{ $avatarUrl }}', '{{ $customerName }}')" @endif
+                                class="w-9 h-9 sm:w-11 sm:h-11 shrink-0 rounded-lg sm:rounded-xl overflow-hidden border border-slate-200 shadow-sm bg-slate-100 flex items-center justify-center transition-transform active:scale-95 {{ $avatarUrl ? 'cursor-zoom-in hover:border-indigo-400' : '' }}"
+                            >
+                                @if($avatarUrl)
+                                    <img src="{{ $avatarUrl }}"
+                                        alt="{{ $customerName }}"
+                                        class="w-full h-full object-cover">
+                                @else
+                                    <span class="text-sm font-bold text-slate-500 uppercase">
+                                        {{ mb_substr($customerName, 0, 1) }}
                                     </span>
+                                @endif
+                            </div>
+
+                            <div class="min-w-0">
+                                {{-- Nama Customer --}}
+                                <div class="flex items-center gap-1.5 mb-0.5 flex-wrap">
+                                    <span class="text-xs font-bold text-slate-800 truncate">{{ $customerName }}</span>
                                     <span class="w-1 h-1 bg-slate-300 rounded-full shrink-0"></span>
-                                    <span class="text-[10px] sm:text-[11px] text-slate-500 font-medium whitespace-nowrap">
+                                    <span class="text-[10px] font-bold text-indigo-600 uppercase tracking-widest whitespace-nowrap">
+                                        #{{ $order['id'] }}
+                                    </span>
+                                </div>
+
+                                {{-- Badge Status + Tanggal --}}
+                                <div class="flex items-center gap-1.5 flex-wrap">
+                                    @php
+                                        $badgeConfig = match($statusOrder) {
+                                            'dikonfirmasi'        => ['bg-blue-50',    'border-blue-200',   'text-blue-700',   'bi-check-circle',         'Dikonfirmasi'],
+                                            'dikerjakan'          => ['bg-indigo-50',  'border-indigo-200', 'text-indigo-700', 'bi-tools',                'Dikerjakan'],
+                                            'menunggu_sparepart'  => ['bg-amber-50',   'border-amber-200',  'text-amber-700',  'bi-hourglass-split',      'Menunggu Sparepart'],
+                                            'hampir_selesai'      => ['bg-teal-50',    'border-teal-200',   'text-teal-700',   'bi-stars',                'Hampir Selesai'],
+                                            'selesai'             => ['bg-orange-50',  'border-orange-200', 'text-orange-700', 'bi-clock',                'Menunggu Pembayaran'],
+                                            'sudah_dibayar'       => ['bg-emerald-50', 'border-emerald-200','text-emerald-700','bi-cash-coin',            'Sudah Dibayar'],
+                                            'pembayaran_ditolak'  => ['bg-rose-50',    'border-rose-200',   'text-rose-700',   'bi-exclamation-octagon',  'Pembayaran Ditolak'],
+                                            default               => ['bg-slate-50',   'border-slate-200',  'text-slate-600',  'bi-circle',               ucwords(str_replace('_', ' ', $statusOrder))],
+                                        };
+                                    @endphp
+                                    <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md border text-[10px] font-bold {{ $badgeConfig[0] }} {{ $badgeConfig[1] }} {{ $badgeConfig[2] }}">
+                                        <i class="bi {{ $badgeConfig[3] }} text-[9px]"></i>
+                                        {{ $badgeConfig[4] }}
+                                    </span>
+                                    <span class="text-[10px] text-slate-400 font-medium whitespace-nowrap">
                                         {{ \Carbon\Carbon::parse($order['order_date'])->format('d M Y') }}
                                     </span>
                                 </div>
-                                <h2 class="text-xs sm:text-sm font-bold text-slate-800 leading-tight truncate">
-                                    Servis &mdash; <span class="text-indigo-700">Jasa #{{ $order['id_jasa'] }}</span>
-                                </h2>
                             </div>
                         </div>
                         <button @click="openUpdate = !openUpdate"
@@ -756,4 +810,24 @@
             {{ $data->links() }}
         </div>
     </div>
+
+    <template x-teleport="body">
+        <div 
+            x-show="showAvatarModal" 
+            class="fixed inset-0 z-[99999] flex flex-col items-center justify-center bg-slate-950/90 p-4" 
+            style="display: none;" 
+            @keydown.escape.window="showAvatarModal = false"
+        >
+            {{-- Tombol Close --}}
+            <button @click="showAvatarModal = false" class="absolute top-5 right-5 text-white/70 hover:text-white p-2 transition-transform active:scale-90">
+                <i class="bi bi-x-lg text-2xl sm:text-3xl"></i>
+            </button>
+            
+            {{-- Kontainer Gambar + Nama Keterangan Atas --}}
+            <div class="max-w-4xl w-full h-full flex flex-col items-center justify-center" @click.away="showAvatarModal = false">
+                <p x-text="avatarModalName" class="text-white/80 font-bold text-sm sm:text-base mb-3 tracking-wide uppercase"></p>
+                <img :src="avatarModalImage" class="max-w-full max-h-[75vh] sm:max-h-[80vh] rounded-2xl object-contain border border-white/10 shadow-2xl transition-all duration-300">
+            </div>
+        </div>
+    </template>
 </div>
