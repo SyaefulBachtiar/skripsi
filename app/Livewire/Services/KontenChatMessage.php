@@ -10,6 +10,7 @@ use App\Models\DetailOrder;
 use App\Models\LacakPesanan;
 use App\Models\Order;
 use App\Models\Review;
+use App\Models\User;
 use App\Services\OneSignalService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -62,11 +63,22 @@ class KontenChatMessage extends Component
 
     private function kirimPushNotification(string $recipientUserId, string $title, string $body, string $type): void
     {
+        $url = null;
+        if ($type === 'message') {
+            $url = url('/chat-room/' . $this->roomChatId);
+        } elseif ($type === 'order') {
+            $recipient = User::find($recipientUserId);
+            $url = $recipient?->role === 'technician'
+                ? url('/pesanan.technician')
+                : url('/lacak');
+        }
+
         app(OneSignalService::class)->sendToUser(
             recipientUserId: $recipientUserId,
             title: $title,
             body: $body,
-            data: ['type' => $type, 'room_id' => $this->roomChatId]
+            data: ['type' => $type, 'room_id' => $this->roomChatId],
+            url: $url
         );
     }
 
@@ -160,12 +172,11 @@ class KontenChatMessage extends Component
 
             if ($recipientUserId) {
                 $user = Auth::user()->name;
-                $type = 'message';
                 $this->kirimPushNotification(
                     $recipientUserId,
                     "Review — Servisio",
                     "{$user} memberikan review.",
-                    $type,
+                    "message",
                 );
             }
             
@@ -213,6 +224,7 @@ class KontenChatMessage extends Component
                 'id'         => 'chat_'.$chat->id,
                 'sender_id'  => $chat->sender_id,
                 'message'    => $chat->message,
+                'foto'       => $chat->attachment,
                 'type'       => $chat->type,
                 'is_read'    => $chat->is_read,
                 'created_at' => Carbon::parse($chat->created_at),
@@ -286,12 +298,11 @@ class KontenChatMessage extends Component
 
         if ($recipientUserId) {
             $statusTeks = $isApproved ? 'menyetujui' : 'menolak';
-            $type = 'order';
             $this->kirimPushNotification(
                 $recipientUserId,
                 'Update Layanan — Servisio',
                 "Pelanggan telah {$statusTeks} penambahan item: {$detail->nama_layanan_tambahan}",
-                $type
+                "order"
             );
         }
 
@@ -341,14 +352,13 @@ class KontenChatMessage extends Component
             broadcast(new OrderMasuk($order->jasa->technician->user_id))->toOthers();
 
             if ($recipientUserId) {
-                $total_bayar = number_format($order->total_harga, 0, ',', '.');
+                $total_bayar = 'Rp ' . number_format($order->total_harga, 0, ',', '.');
                 $nama_jasa = $order->jasa->nama_jasa;
-                $type = 'order';
                 $this->kirimPushNotification(
                     $recipientUserId,
                     'Pembayaran Diterima — Servisio',
-                    'Pelanggan telah menyelesaikan pembayaran sebesar {$total_bayar} untuk {$nama_jasa}.',
-                    $type,
+                    "Pelanggan telah menyelesaikan pembayaran sebesar {$total_bayar} untuk {$nama_jasa}.",
+                    'order'
                 );
             }
 
@@ -421,45 +431,44 @@ class KontenChatMessage extends Component
             return;
         }
 
-        $validatedData = $this->validate([
-            'message' => 'required|string|max:1000',
-        ]);
-
+        if ($this->photo && empty(trim($this->message))) {
+            $this->validate(['photo' => 'image|max:5120']);
+        } else {
+            $this->validate([
+                'message' => 'required|string|max:1000',
+                'photo'   => 'nullable|image|max:5120',
+            ]);
+        }
 
         try {
             $room = ChatRooms::where('id', $this->roomChatId)
                 ->where(function($query) {
-                    $query->whereHas('customer', function($q) {
-                        $q->where('user_id', Auth::id());
-                    })
-                    ->orWhereHas('technician', function($q) {
-                        $q->where('user_id', Auth::id());
-                    });
+                    $query->whereHas('customer', fn($q) => $q->where('user_id', Auth::id()))
+                        ->orWhereHas('technician', fn($q) => $q->where('user_id', Auth::id()));
                 })
                 ->firstOrFail();
 
+            $message = null;
+
             if ($this->photo) {
                 $this->validate(['photo' => 'image|max:5120']);
-                
                 $photoPath = $this->photo->store('chat-photos', 'public');
-
                 ChatMessages::create([
                     'chat_room_id' => $room->id,
                     'sender_id'    => Auth::id(),
-                    'message'      => $photoPath,
+                    'message'      => strip_tags($this->message) ?: '',
+                    'attachment'   => $photoPath,
                     'type'         => 'image',
                     'is_read'      => false
                 ]);
             }
 
-            if (!empty(trim($this->message))) {
-                $this->validate(['message' => 'required|string|max:1000']);
-
+            if (!empty(trim($this->message)) && empty($this->photo)) {
                 $message = ChatMessages::create([
                     'chat_room_id' => $room->id,
                     'sender_id'    => Auth::id(),
                     'message'      => strip_tags($this->message),
-                    'type'         => 'text', // Pastikan type default adalah text
+                    'type'         => 'text',
                     'is_read'      => false
                 ]);
             }
@@ -472,19 +481,20 @@ class KontenChatMessage extends Component
             broadcast(new PesananMasuk($this->roomChatId, $recipientUserId))->toOthers();
 
             if ($recipientUserId) {
-                $type = 'message';
+                $pesanTeks = $message ? $message->message : '[Foto]';
+                $preview = strlen($pesanTeks) > 60
+                    ? substr($pesanTeks, 0, 60) . '...'
+                    : $pesanTeks;
+
                 $this->kirimPushNotification(
                     $recipientUserId,
                     'Pesan Baru — Servisio',
-                    Auth::user()->name . ': ' . ($message->message > 60
-                        ? substr($message->message, 0, 60) . '...'
-                        : $message->message),
-                    $type
+                    Auth::user()->name . ': ' . $preview,
+                    'message'
                 );
             }
 
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-            // Jika user mencoba kirim pesan ke room yang bukan miliknya
             session()->flash('error', 'Akses ditolak atau percakapan tidak ditemukan.');
         } catch (\Exception $e) {
             session()->flash('error', 'Gagal mengirim pesan: ' . $e->getMessage());

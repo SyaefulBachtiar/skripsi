@@ -14,7 +14,8 @@ class ChatMessages extends Model
         'sender_id',
         'message',
         'type',
-        'is_read'
+        'is_read',
+        'attachment',
     ];
 
     public function chat_room (): BelongsTo

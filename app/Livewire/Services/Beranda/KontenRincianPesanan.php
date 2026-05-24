@@ -86,10 +86,11 @@ class KontenRincianPesanan extends Component
                 title: '🔔 Pesanan Baru Masuk!',
                 body: "{$namaCustomer} telah memesan jasa [{$namaJasa}]. Segera cek aplikasi untuk melakukan konfirmasi.",
                 data: [
-                    'type' => 'new_order',
+                    'type' => 'order',
                     'order_id' => $this->order->id,
                     'room_chat_id' => $chatRoom->id
-                ]
+                ],
+                url: url('/teknisi/dashboard')
             );
 
             return $this->redirect(route('chat.room', ['id' => $chatRoom->id]), navigate: true);

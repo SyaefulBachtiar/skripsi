@@ -86,8 +86,10 @@ class ListAntrian extends Component
             recipientUserId: $customerUserId,
             title: '✅ Pesanan Dikonfirmasi — Servisio',
             body: 'Pesanan Anda telah dikonfirmasi oleh teknisi. Silakan cek detail pesanan.',
-            data: ['type' => 'message', 'room_id' => $chatRoomId]
+            data: ['type' => 'message', 'room_id' => $chatRoomId],
+            url: $chatRoomId ? url('/chat-room/' . $chatRoomId) : url('/lacak')
         );
+
 
         session()->flash('success', 'Pesanan berhasil dikonfirmasi!');
 
@@ -131,8 +133,12 @@ class ListAntrian extends Component
             recipientUserId: $customerUserId,
             title: 'Pesanan Ditolak — Servisio',
             body: 'Pesanan Anda telah ditolak oleh teknisi.',
-            data: ['type' => 'message', 'room_id' => $chatRoomId]
+            data: ['type' => 'message', 'room_id' => $chatRoomId],
+            url: $chatRoomId ? url('/chat-room/' . $chatRoomId) : url('/lacak')
         );
+
+        session()->flash('success', 'Pesanan berhasil ditolak.');
+        return $this->redirect(request()->header('Referer'), navigate: true);
     }
 
     public function render()

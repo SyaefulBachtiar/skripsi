@@ -10,8 +10,24 @@
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=plus-jakarta-sans:400,500,600,700,800&display=swap" rel="stylesheet"/>
 
-    <!-- Tailwind Play CDN (ganti dengan Vite di production) -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
+
+    @auth
+        <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+        <script>
+            window.OneSignalDeferred = window.OneSignalDeferred || [];
+            OneSignalDeferred.push(async function(OneSignal) {
+                await OneSignal.init({
+                    appId: "{{ env('ONESIGNAL_APP_ID') }}",
+                    allowLocalhostAsSecureOrigin: true,
+                });
+                if (OneSignal.Notifications.permission === 'granted') {
+                    await OneSignal.login('{{ Auth::id() }}');
+                }
+            });
+        </script>
+    @endauth
+
     <script>
         tailwind.config = {
             theme: {

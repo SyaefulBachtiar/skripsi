@@ -30,7 +30,7 @@ class OneSignalService
     /**
      * Kirim push notification ke user — hanya jika user sedang offline
      */
-    public function sendToUser(string $recipientUserId, string $title, string $body, array $data = []): void
+    public function sendToUser(string $recipientUserId, string $title, string $body, array $data = [], ?string $url = null): void
     {
         if ($this->isUserOnline($recipientUserId)) {
             Log::info('[OneSignal] Skip — user sedang online: ' . $recipientUserId);
@@ -38,17 +38,24 @@ class OneSignalService
         }
 
         try {
-            $response = Http::withHeaders([
-                'Authorization' => 'Basic ' . $this->apiKey,
-                'Content-Type'  => 'application/json',
-            ])->post($this->baseUrl, [
+            $payload = [
                 'app_id'          => $this->appId,
                 'include_aliases' => ['external_id' => [$recipientUserId]],
                 'target_channel'  => 'push',
                 'headings'        => ['en' => $title],
                 'contents'        => ['en' => $body],
                 'data'            => $data,
-            ]);
+            ];
+
+            // Tambahkan URL tujuan langsung di payload
+            if ($url) {
+                $payload['url'] = $url;
+            }
+
+            $response = Http::withHeaders([
+                'Authorization' => 'Basic ' . $this->apiKey,
+                'Content-Type'  => 'application/json',
+            ])->post($this->baseUrl, $payload);
 
             Log::info('[OneSignal] Notifikasi terkirim ke: ' . $recipientUserId, [
                 'status'   => $response->status(),

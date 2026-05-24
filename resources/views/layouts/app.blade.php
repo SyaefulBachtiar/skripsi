@@ -42,21 +42,18 @@
                     OneSignal.Notifications.addEventListener('click', function(event) {
                         var data = event.notification.additionalData;
                         console.log('🔔 [OneSignal] Notifikasi diklik, data:', data);
-
                         if (!data) return;
 
                         var url = null;
 
                         if (data.type === 'message' && data.room_id) {
-                            url = '{{ route("chat.room", ["id" => "__id__"]) }}'.replace('__id__', data.room_id);
+                            url = '{{ url("/chat-room") }}/' + data.room_id;
                         } else if (data.type === 'order') {
-                            @auth
-                                @if(auth()->check() && auth()->user()->role === 'technician')
-                                    url = '{{ route("pesanan.technician") }}';
-                                @else
-                                    url = '{{ route("lacak") }}';
-                                @endif
-                            @endauth
+                            @if(auth()->check() && auth()->user()->role === 'technician')
+                                url = '{{ route("dashboard_technician") }}';
+                            @else
+                                url = '{{ route("lacak") }}';
+                            @endif
                         }
 
                         if (url) {

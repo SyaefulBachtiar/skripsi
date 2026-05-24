@@ -237,11 +237,12 @@
                             {{-- Bubble Foto --}}
                             <div class="rounded-2xl overflow-hidden shadow-sm {{ $isMine ? 'rounded-br-none' : 'rounded-bl-none' }}">
                                 <img
-                                    src="{{ asset('storage/' . $msg->message) }}"
+                                    src="{{ asset('storage/' . $msg->foto) }}"
                                     alt="Foto"
                                     class="max-w-full max-h-56 sm:max-h-64 object-cover cursor-pointer hover:opacity-90 transition block"
-                                    @click="window.open('{{ asset('storage/' . $msg->message) }}')"
+                                    @click="window.open('{{ asset('storage/' . $msg->foto) }}')"
                                 >
+                                <p>{{ $msg->message }}</p>
                             </div>
                         @else
                             {{-- Bubble Teks --}}

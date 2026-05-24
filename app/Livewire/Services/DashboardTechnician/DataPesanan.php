@@ -88,10 +88,8 @@ class DataPesanan extends Component
                 recipientUserId: $customerUserId,
                 title: '📦 Update Progres Servis',
                 body: $bodyNotification,
-                data: [
-                    'type' => 'order',
-                    'order_id' => $order->id,
-                ]
+                data: ['type' => 'order', 'order_id' => $order->id],
+                url: url('/lacak')
             );
         }
 
@@ -140,10 +138,8 @@ class DataPesanan extends Component
                 recipientUserId: $customerUserId,
                 title: '🛠️ Persetujuan Biaya Tambahan - Servisio',
                 body: "Teknisi mengajukan: {$namaItem} ({$biayaFormat}). Silahkan cek untuk menyetujui.",
-                data: [
-                    'type' => 'pesan',
-                    'room_id' => $order->chat_room->id ?? null
-                ]
+                data: ['type' => 'message', 'room_id' => $order->chat_room->id ?? null],
+                url: $order->chat_room ? url('/chat-room/' . $order->chat_room->id) : url('/lacak')
             );
         }
         
@@ -189,10 +185,8 @@ class DataPesanan extends Component
                     recipientUserId: $customerUserId,
                     title: '✅ Pembayaran Berhasil Diverifikasi',
                     body: "Terima kasih! Pembayaran {$totalBayar} untuk [{$namaJasa}] telah sah diterima. Transaksi selesai.",
-                    data: [
-                        'type' => 'pesan',
-                        'room_id' => $chatRoomId
-                    ]
+                    data: ['type' => 'message', 'room_id' => $chatRoomId],
+                    url: $chatRoomId ? url('/chat-room/' . $chatRoomId) : url('/lacak')
                 );
             }
 
@@ -241,10 +235,8 @@ class DataPesanan extends Component
                     recipientUserId: $customerUserId,
                     title: '⚠️ Verifikasi Pembayaran Gagal',
                     body: "Pembayaran untuk [{$namaJasa}] ditolak teknisi karena bukti tidak valid/belum masuk.",
-                    data: [
-                        'type' => 'pesan',
-                        'room_id' => $chatRoomId
-                    ]
+                    data: ['type' => 'message', 'room_id' => $chatRoomId],
+                    url: $chatRoomId ? url('/chat-room/' . $chatRoomId) : url('/lacak')
                 );
             }
 
