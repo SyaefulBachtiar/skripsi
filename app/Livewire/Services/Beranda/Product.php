@@ -85,12 +85,7 @@ class Product extends Component
 
                     $q->where(function ($sub) use ($word) {
                         $sub->where('nama_jasa', 'like', "%{$word}%")
-                            ->orWhere('deskripsi', 'like', "%{$word}%")
-                            // Mencari hingga ke data spesialisasi teknisinya
-                            ->orWhereHas('technician', function ($t) use ($word) {
-                                $t->where('spesialisasi', 'like', "%{$word}%")
-                                  ->orWhere('deskripsi', 'like', "%{$word}%");
-                            });
+                            ->orWhere('deskripsi', 'like', "%{$word}%");
                     });
                 }
             });

@@ -278,10 +278,9 @@
     <div class="fixed bottom-0 inset-x-0 bg-white/95 backdrop-blur-lg border-t border-gray-200 z-50 shadow-[0_-4px_20px_-8px_rgba(0,0,0,0.08)]">
         <div class="w-full max-w-2xl mx-auto px-3 py-2.5 sm:px-4 sm:py-3">
 
-            @if($statusPesanan === 'selesai_total')
+            @if($statusPesanan === 'selesai_total' || $statusPesanan === 'ditolak')
                 @if($isCustomer)
-                    @if(!$hasReviewed)
-                        {{-- FORM INPUT RATING INTERAKTIF (MODERN BADGE STYLE) --}}
+                    @if(!$hasReviewed && $statusPesanan !== 'ditolak')
                         <div 
                             class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm"
                             x-data="{ currentRating: @entangle('rating') }"
@@ -364,41 +363,88 @@
                             </form>
                         </div>
                     @else
-                        <div class="flex items-center gap-3 bg-green-50 px-3 py-3 rounded-xl border border-green-200">
+                        @if ($statusPesanan === 'ditolak')
+                            <div class="flex items-center gap-3 bg-rose-50 px-3 py-3 rounded-xl border border-rose-200 shadow-sm">
+                                <div class="w-10 h-10 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center shrink-0 shadow-sm">
+                                    <i class="bi bi-x-circle-fill text-xl"></i>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center justify-between gap-2">
+                                        <p class="text-[10px] font-bold text-rose-600 uppercase tracking-wider mb-0.5">Pesanan Ditolak</p>
+                                        
+                                        {{-- Link Kembali ke Beranda untuk Cari Jasa Lain (Hanya untuk Customer) --}}
+                                        @if($isCustomer)
+                                            <a href="{{ route('beranda') }}" wire:navigate class="text-[10px] font-bold text-blue-600 hover:text-blue-700 hover:underline inline-flex items-center gap-0.5 transition-colors">
+                                                <span>Cari Jasa Lain</span>
+                                                <i class="bi bi-arrow-right-short text-base"></i>
+                                            </a>
+                                        @endif
+                                    </div>
+                                    <p class="text-xs font-semibold text-rose-800 leading-snug">
+                                        Maaf, pesanan ini telah ditolak atau dibatalkan oleh teknisi.
+                                    </p>
+                                </div>
+                            </div>
+                        @else
+                            <div class="flex items-center gap-3 bg-green-50 px-3 py-3 rounded-xl border border-green-200">
+                                <div class="w-10 h-10 bg-green-100 text-green-600 rounded-full flex items-center justify-center shrink-0 shadow-sm">
+                                    <i class="bi bi-check-circle-fill text-xl"></i>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center justify-between gap-2">
+                                        <p class="text-[10px] font-bold text-green-600 uppercase tracking-wider mb-0.5">Pesanan Selesai</p>
+                                        
+                                        {{-- Link Menuju Halaman Riwayat (Hanya untuk Customer) --}}
+                                        @if($isCustomer)
+                                            <a href="{{ route('riwayat') }}" wire:navigate class="text-[10px] font-bold text-blue-600 hover:text-blue-700 hover:underline inline-flex items-center transition-colors">
+                                                <span>Lihat Riwayat</span>
+                                                <i class="bi bi-arrow-right-short text-sm text-base"></i>
+                                            </a>
+                                        @endif
+                                    </div>
+                                    <p class="text-sm font-bold text-green-800 truncate">
+                                        Rp {{ number_format($realtimeOrder->total_harga, 0, ',', '.') }}
+                                    </p>
+                                </div>
+                            </div>
+                        @endif
+                    @endif
+                @else
+                    @if ($statusPesanan === 'ditolak')
+                        {{-- ── TAMPILAN PESANAN DITOLAK UNTUK TEKNISI (ARCHIVED BADGE STYLE) ── --}}
+                        <div class="flex items-center gap-3 bg-slate-50 px-3 py-3 rounded-xl border border-slate-200 shadow-sm">
+                            <div class="w-10 h-10 bg-slate-200 text-slate-600 rounded-full flex items-center justify-center shrink-0 shadow-sm">
+                                <i class="bi bi-archive-fill text-lg"></i>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center justify-between gap-2">
+                                    <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-0.5">Pesanan Dibatalkan</p>
+                                    
+                                    {{-- Link Kembali ke Dashboard Utama Teknisi --}}
+                                    <a href="{{ route('dashboard_technician') }}" wire:navigate class="text-[10px] font-bold text-blue-600 hover:text-blue-700 hover:underline inline-flex items-center gap-0.5 transition-colors">
+                                        <span>Ke Dashboard</span>
+                                        <i class="bi bi-arrow-right-short text-base"></i>
+                                    </a>
+                                </div>
+                                <p class="text-xs font-semibold text-slate-700 leading-snug">
+                                    Pesanan ini telah ditolak.
+                                </p>
+                            </div>
+                        </div>
+                    @else
+                        {{-- ── PANEL SLOTS UNTUK TEKNISI (HANYA RANGKUMAN TAMPILAN SUKSES) ── --}}
+                        <div class="flex items-center gap-3 bg-green-50 px-3 py-3 rounded-xl border border-green-200 shadow-sm">
                             <div class="w-10 h-10 bg-green-100 text-green-600 rounded-full flex items-center justify-center shrink-0 shadow-sm">
                                 <i class="bi bi-check-circle-fill text-xl"></i>
                             </div>
                             <div class="flex-1 min-w-0">
-                                <div class="flex items-center justify-between gap-2">
-                                    <p class="text-[10px] font-bold text-green-600 uppercase tracking-wider mb-0.5">Pesanan Selesai</p>
-                                    
-                                    {{-- Link Menuju Halaman Riwayat (Hanya untuk Customer) --}}
-                                    @if($isCustomer)
-                                        <a href="{{ route('riwayat') }}" wire:navigate class="text-[10px] font-bold text-blue-600 hover:text-blue-700 hover:underline inline-flex items-center transition-colors">
-                                            <span>Lihat Riwayat</span>
-                                            <i class="bi bi-arrow-right-short text-sm text-base"></i>
-                                        </a>
-                                    @endif
-                                </div>
+                                <p class="text-[10px] font-bold text-green-600 uppercase tracking-wider mb-0.5">Pesanan Selesai & Lunas</p>
                                 <p class="text-sm font-bold text-green-800 truncate">
                                     Rp {{ number_format($realtimeOrder->total_harga, 0, ',', '.') }}
                                 </p>
                             </div>
                         </div>
                     @endif
-                @else
-                    {{-- ── PANEL SLOTS UNTUK TEKNISI (HANYA RANGKUMAN TAMPILAN SUKSES) ── --}}
-                    <div class="flex items-center gap-3 bg-green-50 px-3 py-3 rounded-xl border border-green-200">
-                        <div class="w-10 h-10 bg-green-100 text-green-600 rounded-full flex items-center justify-center shrink-0 shadow-sm">
-                            <i class="bi bi-check-circle-fill text-xl"></i>
-                        </div>
-                        <div class="flex-1 min-w-0">
-                            <p class="text-[10px] font-bold text-green-600 uppercase tracking-wider mb-0.5">Pesanan Selesai & Lunas</p>
-                            <p class="text-sm font-bold text-green-800 truncate">
-                                Rp {{ number_format($realtimeOrder->total_harga, 0, ',', '.') }}
-                            </p>
-                        </div>
-                    </div>
                 @endif
 
             @elseif(($statusPesanan === 'selesai' || $statusPesanan === 'pembayaran_ditolak') && $isCustomer)
