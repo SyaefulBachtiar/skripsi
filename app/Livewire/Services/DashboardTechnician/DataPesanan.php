@@ -89,9 +89,8 @@ class DataPesanan extends Component
                 title: '📦 Update Progres Servis',
                 body: $bodyNotification,
                 data: [
-                    'type' => 'order_updated',
+                    'type' => 'order',
                     'order_id' => $order->id,
-                    'status' => $statusMentah
                 ]
             );
         }
@@ -142,9 +141,8 @@ class DataPesanan extends Component
                 title: '🛠️ Persetujuan Biaya Tambahan - Servisio',
                 body: "Teknisi mengajukan: {$namaItem} ({$biayaFormat}). Silahkan cek untuk menyetujui.",
                 data: [
-                    'type' => 'layanan_tambahan',
-                    'order_id' => $order->id,
-                    'room_chat_id' => $order->chat_room->id ?? null
+                    'type' => 'pesan',
+                    'room_id' => $order->chat_room->id ?? null
                 ]
             );
         }
@@ -192,9 +190,8 @@ class DataPesanan extends Component
                     title: '✅ Pembayaran Berhasil Diverifikasi',
                     body: "Terima kasih! Pembayaran {$totalBayar} untuk [{$namaJasa}] telah sah diterima. Transaksi selesai.",
                     data: [
-                        'type' => 'payment_verified',
-                        'order_id' => $order->id,
-                        'room_chat_id' => $chatRoomId
+                        'type' => 'pesan',
+                        'room_id' => $chatRoomId
                     ]
                 );
             }
@@ -243,11 +240,10 @@ class DataPesanan extends Component
                 app(OneSignalService::class)->sendToUser(
                     recipientUserId: $customerUserId,
                     title: '⚠️ Verifikasi Pembayaran Gagal',
-                    body: "Pembayaran untuk [{$namaJasa}] ditolak teknisi karena bukti tidak valid/belum masuk. Mohon cek ruang chat.",
+                    body: "Pembayaran untuk [{$namaJasa}] ditolak teknisi karena bukti tidak valid/belum masuk.",
                     data: [
-                        'type' => 'payment_rejected',
-                        'order_id' => $order->id,
-                        'room_chat_id' => $chatRoomId
+                        'type' => 'pesan',
+                        'room_id' => $chatRoomId
                     ]
                 );
             }

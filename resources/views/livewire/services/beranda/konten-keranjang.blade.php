@@ -1,4 +1,20 @@
-<div class="space-y-4">
+<div 
+    class="space-y-4"
+    x-data="{ 
+        openDeleteModal: false, 
+        selectedItemId: null,
+        confirmDelete(id) {
+            this.selectedItemId = id;
+            this.openDeleteModal = true;
+        },
+        executeDelete() {
+            // Panggil fungsi backend Livewire menggunakan API $wire
+            $wire.hapusPesanan(this.selectedItemId);
+            this.openDeleteModal = false;
+            this.selectedItemId = null;
+        }
+    }"
+>
 
     {{-- Header --}}
     <div class="flex items-center justify-between pb-4 border-b border-gray-200">
@@ -51,8 +67,8 @@
                     
                     {{-- Tombol Hapus --}}
                     <button 
-                        wire:click="hapusPesanan({{ $item->id }})"
-                        wire:confirm="Apakah Anda yakin ingin menghapus pesanan ini?"
+                        type="button"
+                        @click="confirmDelete({{ $item->id }})"
                         class="flex-shrink-0 p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all z-10"
                         title="Hapus pesanan"
                         onclick="event.stopPropagation();"
@@ -121,4 +137,67 @@
         {{ $data->links() }}
     </div>
     @endif
+
+    <template x-teleport="body">
+        <div 
+            x-show="openDeleteModal" 
+            class="fixed inset-0 z-[9999] flex items-center justify-center px-4 overflow-hidden"
+            style="display: none;"
+        >
+            {{-- Backdrop Blur Latar Belakang --}}
+            <div 
+                class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity"
+                @click="openDeleteModal = false"
+                x-show="openDeleteModal"
+                x-transition:enter="ease-out duration-300"
+                x-transition:enter-start="opacity-0"
+                x-transition:enter-end="opacity-100"
+                x-transition:leave="ease-in duration-200"
+                x-transition:leave-start="opacity-100"
+                x-transition:leave-end="opacity-0"
+            ></div>
+
+            {{-- Kotak Dialog Card Modal --}}
+            <div 
+                class="bg-white rounded-2xl max-w-sm w-full p-5 shadow-2xl border border-gray-100 relative z-10 text-center"
+                x-show="openDeleteModal"
+                x-transition:enter="ease-out duration-300"
+                x-transition:enter-start="opacity-0 scale-95 translate-y-4"
+                x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+                x-transition:leave="ease-in duration-200"
+                x-transition:leave-start="opacity-100 scale-100 translate-y-0"
+                x-transition:leave-end="opacity-0 scale-95 translate-y-4"
+                @keydown.escape.window="openDeleteModal = false"
+            >
+                {{-- Icon Trash Animatif --}}
+                <div class="w-12 h-12 bg-red-50 rounded-full flex items-center justify-center text-red-500 mx-auto mb-3.5 shadow-inner">
+                    <i class="bi bi-trash3-fill text-xl"></i>
+                </div>
+
+                {{-- Judul dan Deskripsi Kalimat --}}
+                <h3 class="text-sm font-bold text-gray-900">Hapus dari Keranjang?</h3>
+                <p class="text-xs text-gray-500 mt-1.5 leading-relaxed px-2">
+                    Tindakan ini tidak bisa dibatalkan. Pesanan Anda akan dihapus secara permanen dari daftar penyimpanan keranjang.
+                </p>
+
+                {{-- Grid Tombol Aksi --}}
+                <div class="grid grid-cols-2 gap-3 mt-5">
+                    <button 
+                        type="button" 
+                        @click="openDeleteModal = false"
+                        class="w-full py-2.5 bg-gray-50 hover:bg-gray-100 border border-gray-200 text-gray-700 font-semibold text-xs rounded-xl transition active:scale-95 shadow-sm"
+                    >
+                        Kembali
+                    </button>
+                    <button 
+                        type="button" 
+                        @click="executeDelete()"
+                        class="w-full py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold text-xs rounded-xl transition active:scale-95 shadow-md shadow-red-100"
+                    >
+                        Ya, Hapus
+                    </button>
+                </div>
+            </div>
+        </div>
+    </template>
 </div>

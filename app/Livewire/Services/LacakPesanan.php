@@ -2,9 +2,13 @@
 
 namespace App\Livewire\Services;
 
+use App\Events\OrderMasuk;
+use App\Events\PesananMasuk;
 use App\Models\ChatMessages;
+use App\Models\ChatRooms;
 use App\Models\Order;
 use App\Models\Review;
+use App\Services\OneSignalService;
 use Exception;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
@@ -88,6 +92,30 @@ class LacakPesanan extends Component
                     'type'         => 'system',
                     'is_read'      => false
                 ]);
+
+                $recipientUserId = $order->chat_room->technician->user_id;
+                if (!$recipientUserId) {
+                    return;
+                }
+
+                broadcast(new PesananMasuk($order->chat_room->id, $recipientUserId))->toOthers();
+
+                broadcast(new OrderMasuk($order->jasa->technician->user_id, 'Pembayaran!'))->toOthers();
+
+                $namaJasa = $order->jasa->nama_jasa;
+                $harga = number_format($order->total_harga, 0, ',', '.');
+                $user = Auth::user()->name;
+
+                app(OneSignalService::class)->sendToUser(
+                    recipientUserId: $recipientUserId,
+                    title: 'Pembayaran - Servisio',
+                    body: "{$user} melakukan Pembayaran sebesar {$harga} untuk [{$namaJasa}].",
+                    data: [
+                        'type' => 'order',
+                        'order_id' => $order->id,
+                        'room_id'   => $order->chat_room->id,
+                    ]
+                );
             }
 
             session()->flash('success', 'Pembayaran berhasil diselesaikan!');
@@ -126,6 +154,35 @@ class LacakPesanan extends Component
                 'text_comment' => $this->comment,
                 'foto_review' => $uploadedPaths
             ]);
+
+            $room = ChatRooms::where('order_id', $orderId)->first();
+            $order = Order::find($orderId);
+            
+
+            ChatMessages::create([
+                'chat_room_id' => $room->id,
+                'sender_id'    => Auth::id(),
+                'message'      => "Pelanggan telah memberikan ulasan bintang {$this->rating} ⭐",
+                'type'         => 'system',
+                'is_read'      => false
+            ]);
+            
+            broadcast(new PesananMasuk($room->id, $room->technician->user_id))->toOthers();
+
+            broadcast(new OrderMasuk($order->jasa->technician->user_id, 'Pembayaran!'))->toOthers();
+
+            $user = Auth::user()->name;
+
+            app(OneSignalService::class)->sendToUser(
+                recipientUserId: $room->technician->user_id,
+                title: 'Review - Servisio',
+                body: "{ $user } memberikan review.",
+                data: [
+                    'type' => 'message',
+                    'order_id' => $order->id,
+                    'room_id'   => $room->id,
+                ]
+            );
 
             session()->flash('success', 'Ulasan berhasil dikirim, silahkan lihat di Riwayat!');
 

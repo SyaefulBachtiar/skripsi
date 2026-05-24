@@ -38,12 +38,12 @@ class KontenKeranjang extends Component
 
             $order->delete();
 
-            session()->flash('error', 'Pesanan berhasil dihapus dari keranjang.');
+            session()->flash('success', 'Pesanan berhasil dihapus dari keranjang.');
             
             return $this->redirect(request()->header('Referer'), navigate: true);
 
         } catch (\Exception $e) {
-            session()->flash('Gagal menghapus pesanan. Silakan coba lagi.');
+            session()->flash('error', 'Gagal menghapus pesanan: ', $e->getMessage());
 
             return $this->redirect(request()->header('Referer'), navigate: true);
         }

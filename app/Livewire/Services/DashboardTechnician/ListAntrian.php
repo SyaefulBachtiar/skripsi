@@ -86,7 +86,7 @@ class ListAntrian extends Component
             recipientUserId: $customerUserId,
             title: '✅ Pesanan Dikonfirmasi — Servisio',
             body: 'Pesanan Anda telah dikonfirmasi oleh teknisi. Silakan cek detail pesanan.',
-            data: ['type' => 'order_confirmed', 'order_id' => $id_order]
+            data: ['type' => 'message', 'room_id' => $chatRoomId]
         );
 
         session()->flash('success', 'Pesanan berhasil dikonfirmasi!');
@@ -131,7 +131,7 @@ class ListAntrian extends Component
             recipientUserId: $customerUserId,
             title: 'Pesanan Ditolak — Servisio',
             body: 'Pesanan Anda telah ditolak oleh teknisi.',
-            data: ['type' => 'order_reject', 'order_id' => $id_order]
+            data: ['type' => 'message', 'room_id' => $chatRoomId]
         );
     }
 
