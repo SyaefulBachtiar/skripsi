@@ -12,7 +12,7 @@
         </div>
     </x-slot>
 
-    <div class="pt-10">
+    <div class="sm:pt-10 pt-0">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
             <livewire:services.admin.transaksi.view />
         </div>
