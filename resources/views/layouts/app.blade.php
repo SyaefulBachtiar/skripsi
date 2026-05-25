@@ -131,28 +131,30 @@
             </main>
 
             @auth
-                <div 
-                    x-show="!isSubscribed" 
-                    class="fixed bottom-24 left-4 right-4 sm:left-auto sm:right-5 sm:max-w-sm bg-indigo-600 text-white p-3.5 rounded-2xl shadow-2xl z-[9999] flex items-center justify-between gap-3 border border-indigo-500/30 backdrop-blur-md"
-                >
-                    <div class="flex items-center gap-2.5 min-w-0">
-                        <div class="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center shrink-0">
-                            <i class="bi bi-bell-fill text-amber-300 animate-bounce"></i>
-                        </div>
-                        <div class="min-w-0">
-                            <p class="text-xs font-bold truncate">Aktifkan Notifikasi HP</p>
-                            <p class="text-[10px] text-indigo-200 truncate">Agar infonya realtime saat browser ditutup</p>
-                        </div>
-                    </div>
-                    <button 
-                        type="button"
-                        @click="window.aktifkanNotifikasi()"
-                        @onesignal-subscribed.window="isSubscribed = true"
-                        class="px-3 py-1.5 bg-white text-indigo-700 text-[11px] font-bold rounded-xl hover:bg-indigo-50 active:scale-95 transition-all shadow-sm shrink-0"
+                @if (auth()->user()->role !== 'admin')
+                    <div 
+                        x-show="!isSubscribed" 
+                        class="fixed bottom-24 left-4 right-4 sm:left-auto sm:right-5 sm:max-w-sm bg-indigo-600 text-white p-3.5 rounded-2xl shadow-2xl z-[9999] flex items-center justify-between gap-3 border border-indigo-500/30 backdrop-blur-md"
                     >
-                        Aktifkan
-                    </button>
-                </div>
+                        <div class="flex items-center gap-2.5 min-w-0">
+                            <div class="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center shrink-0">
+                                <i class="bi bi-bell-fill text-amber-300 animate-bounce"></i>
+                            </div>
+                            <div class="min-w-0">
+                                <p class="text-xs font-bold truncate">Aktifkan Notifikasi HP</p>
+                                <p class="text-[10px] text-indigo-200 truncate">Agar infonya realtime saat browser ditutup</p>
+                            </div>
+                        </div>
+                        <button 
+                            type="button"
+                            @click="window.aktifkanNotifikasi()"
+                            @onesignal-subscribed.window="isSubscribed = true"
+                            class="px-3 py-1.5 bg-white text-indigo-700 text-[11px] font-bold rounded-xl hover:bg-indigo-50 active:scale-95 transition-all shadow-sm shrink-0"
+                        >
+                            Aktifkan
+                        </button>
+                    </div>
+                @endif
             @endauth
 
             <div class="fixed right-5 bottom-20 flex flex-col gap-3 z-50">

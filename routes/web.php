@@ -145,21 +145,30 @@ Route::middleware(['auth'])->group(function () {
     Route::middleware(['role:admin'])
         ->prefix('admin')
         ->group(function () {
+
             Route::view('dashboard-admin', 'pages.admin.dashboard')
                 ->name('dashboard_admin');
-        });
+
+            Route::view('users', 'pages.admin.users.view')->name('users.view');
+
+            Route::view('ditolak', 'pages.admin.ditolak.view')->name('ditolak.view');
+
+            Route::view('transaksi', 'pages.admin.transaksi.view')->name('transaksi.view');
+    });
 
     // Route To Room Chat
-    Route::get('chat-room/{id}', function ($id) {
-        $order = ChatRooms::select('id', 'technician_id')
-            ->with(['technician:id,nama_asli,foto_wajah'])
-            ->findOrFail($id);
-            // dd($order->technician);
-        return view('pages.chat-room', [
-            'data' => $order
-        ]);
-    })
-    ->name('chat.room');
+    // Route::get('chat-room/{id}', function ($id) {
+    //     $order = ChatRooms::select('id', 'technician_id')
+    //         ->with(['technician:id,nama_asli,foto_wajah'])
+    //         ->findOrFail($id);
+    //         // dd($order->technician);
+    //     return view('pages.chat-room', [
+    //         'data' => $order
+    //     ]);
+    // })
+    // ->name('chat.room');
+
+
 });
 
 // Route To Page Set Address
