@@ -150,8 +150,16 @@ Route::middleware(['auth'])->group(function () {
                 ->name('dashboard_admin');
 
             Route::view('users', 'pages.admin.users.view')->name('users.view');
+            Route::get('users/edit/{id}', function ($id) {
+                return view('pages.admin.users.edit', ['id' => $id]);
+            })->name('users.edit');
 
             Route::view('ditolak', 'pages.admin.ditolak.view')->name('ditolak.view');
+            Route::get('ditolak/detail/{id}', function ($id) {
+                return view('pages.admin.ditolak.edit', [
+                    'id' => $id
+                ]);
+            })->name('ditolak.edit');
 
             Route::view('transaksi', 'pages.admin.transaksi.view')->name('transaksi.view');
     });

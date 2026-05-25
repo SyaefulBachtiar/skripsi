@@ -8,6 +8,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Admin extends Model
 {
+    protected $table = 'admin';
+
     protected $fillable = [
         'user_id',
         'last_login'

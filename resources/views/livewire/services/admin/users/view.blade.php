@@ -124,14 +124,14 @@
                             <td class="px-4 py-3 sm:px-6 align-middle text-center">
                                 <div class="inline-flex items-center gap-1.5">
                                     {{-- Tombol Detail / Edit --}}
-                                    <button 
-                                        type="button" 
-                                        wire:click="editUser('{{ $user->id }}')" 
+                                    <a 
+                                        href="{{ route('users.edit', ['id' => $user->id]) }}"
+                                        wire:navigate
                                         class="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg transition-colors"
                                         title="Detail / Edit User"
                                     >
                                         <i class="bi bi-pencil text-sm"></i>
-                                    </button>
+                                    </a>
                                     
                                     {{-- Tombol Hapus (Jangan munculkan jika akun tersebut adalah Admin yang sedang login) --}}
                                     @if($user->id !== auth()->id())
